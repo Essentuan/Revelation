@@ -23,6 +23,7 @@ uint VoxyMaterialId(uint customId) {
 void voxy_emitFragment(VoxyFragmentParameters parameters) {
 	vec4 baseColor = parameters.sampledColour * parameters.tinting;
 	vec3 flatNormal = VoxyFaceNormal(parameters.face);
+	vec2 lightmap = saturate((parameters.lightMap - 0.03125) * 1.06667);
 
 	albedoOut = vec4(baseColor.rgb, 1.0);
 
@@ -30,7 +31,7 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 		albedoOut = vec4(1.0);
 	#endif
 
-	materialOut.x = Packup2x8U(parameters.lightMap);
+	materialOut.x = Packup2x8U(lightmap);
 	materialOut.y = VoxyMaterialId(parameters.customId);
 	materialOut.zw = uvec2(0u);
 

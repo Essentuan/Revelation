@@ -8,10 +8,19 @@
     },
     "useViewportDims": true,
     "uniforms": [
-        "vxProj"
+        "vxProj",
+        "vxProjInv",
+        "viewPixelSize",
+        "gbufferModelViewInverse",
+        "cameraPosition",
+        "far",
+        "frameCounter",
+        "frameTimeCounter"
     ],
     "samplers": [
-        "vxDepthTexOpaque"
+        "vxDepthTexOpaque",
+        "noisetex",
+        "depthtex0"
     ],
     "opaquePatchData": "void voxy_emitFragment(VoxyFragmentParameters parameters) {}",
     "translucentPatchData": "void voxy_emitFragment(VoxyFragmentParameters parameters) {}"
