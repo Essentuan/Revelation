@@ -1,0 +1,18 @@
+{
+    "version": 1,
+    "excludeLodsFromVanillaDepth": true,
+    "opaqueDrawBuffers": [6, 7, 8],
+    "translucentDrawBuffers": [7, 8, 12],
+    "blending": {
+        "-1": "off"
+    },
+    "useViewportDims": true,
+    "uniforms": [
+        "vxProj"
+    ],
+    "samplers": [
+        "vxDepthTexOpaque"
+    ],
+    "opaquePatchData": "void voxy_emitFragment(VoxyFragmentParameters parameters) {}",
+    "translucentPatchData": "void voxy_emitFragment(VoxyFragmentParameters parameters) {}"
+}
