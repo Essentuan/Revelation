@@ -24,9 +24,16 @@ float ScreenToViewDepthVX(in float depth) {
 	return -vxProj[3].z / (vxProj[2].z + (depth * 2.0 - 1.0));
 }
 
+vec4 VoxyApplyColorState(in vec4 color) {
+	// Mirror Voxy's default color path so translucent alpha is preserved.
+	vec4 outColor = color * uint2vec4RGBA(interData.y);
+	outColor.a += float(interData.w & 0xFFu) * r255;
+	return clamp(outColor, vec4(0.0), vec4(1.0));
+}
+
 void voxy_emitFragment(VoxyFragmentParameters parameters) {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
-	vec4 baseColor = parameters.sampledColour * parameters.tinting;
+	vec4 baseColor = VoxyApplyColorState(parameters.sampledColour * parameters.tinting);
 
 	uint materialId = VoxyMaterialId(parameters.customId);
 	bool waterMask = materialId == 3u;
