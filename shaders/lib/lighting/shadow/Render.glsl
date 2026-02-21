@@ -146,7 +146,7 @@ float ScreenSpaceShadow(in vec3 rayPos, in vec3 viewPos, in float dither, in flo
 	rayPos += (dither + 0.5) * rayStep;
 
 	float viewDist = length(viewPos);
-	float diffTolerance = 5e-4 / viewDist + abs(rayStep.z);
+	float diffTolerance = 5e-4 / viewDist + 1e-4;
     float absorption = exp2(-0.125 * viewDist / sssAmount);
 
 	float result = 1.0;
@@ -154,8 +154,13 @@ float ScreenSpaceShadow(in vec3 rayPos, in vec3 viewPos, in float dither, in flo
 	for (uint i = 0u; i < SCREEN_SPACE_SHADOWS_SAMPLES; ++i, rayPos += rayStep) {
 		if (saturate(rayPos.xy) != rayPos.xy || result < 1e-2) break;
 
-		ivec2 sampleTexel = uvToTexel(rayPos.xy);
-		float sampleDepth = loadDepth0(sampleTexel);
+		vec2 samplePos = rayPos.xy * viewSize + 0.5;
+		vec2 samplePosFloor = floor(samplePos);
+		vec2 samplePosFract = samplePos - samplePosFloor;
+
+		vec4 sh = textureGather(depthtex0, samplePosFloor * viewPixelSize);
+		vec2 temp = mix(sh.wx, sh.zy, vec2(samplePosFract.x));
+		float sampleDepth = mix(temp.x, temp.y, samplePosFract.y);
 
 		#if defined DISTANT_HORIZONS
 			if (sampleDepth > 1.0 - EPS) {

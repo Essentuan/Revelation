@@ -208,35 +208,29 @@ void main() {
 		#endif
 
 		float NdotL = dot(worldNormal, worldLightVector);
-		bool doShadows = NdotL > 1e-3;
 
 		// Shadows and SSS
-        if (doShadows || sssAmount > 1e-3) {
-			vec3 shadow = vec3(1.0);
+        if (NdotL + sssAmount > EPS) {
+			vec3 shadow = vec3(saturate(NdotL * FLT_MAX));
 			float surfaceDepth = 0.0;
+
+			float normalOffsetBase = (approxSqrt(worldDistSquared) * 2e-3 + 2e-2) * (2.0 - saturate(NdotL));
 
 			// PCSS
         	if (distanceFade < EPS) {
-				vec3 normalOffset = flatNormal * (approxSqrt(worldDistSquared) * 2e-3 + 2e-2) * (2.0 - saturate(NdotL));
-				shadow = CalculatePCSS(worldPos, normalOffset, dither, surfaceDepth);
+				shadow *= CalculatePCSS(worldPos, flatNormal * normalOffsetBase, dither, surfaceDepth);
 			}
 
 			#ifdef SCREEN_SPACE_SHADOWS
-				#if defined MC_NORMAL_MAP
-					vec3 viewFlatNormal = mat3(gbufferModelView) * flatNormal;
-				#else
-					#define viewFlatNormal viewNormal
-				#endif
-
-				float contactShadow = ScreenSpaceShadow(screenPos, viewPos, dither, sssAmount);
+				float contactShadow = ScreenSpaceShadow(screenPos, viewPos + viewNormal * normalOffsetBase, dither, sssAmount);
 			#else
-				float contactShadow = float(doShadows);
+				const float contactShadow = 1.0;
 			#endif
 
 			float LdotV = dot(worldLightVector, -worldDir);
 
 			// Subsurface scattering
-			if (sssAmount > 1e-3) {
+			if (sssAmount > EPS) {
 				vec3 beta = approxSqrt(saturate(normalize(albedo)));
 				vec3 sigmaA = oms(beta) * 16.0 / (sssAmount * SUBSURFACE_SCATTERING_STRENGTH);
 				vec3 sigmaS = 4.0 * beta * sssAmount;
@@ -249,7 +243,7 @@ void main() {
 
 				sceneOut += sunlightBase * sss * SUBSURFACE_SCATTERING_BRIGHTNESS;
 			}
-			if (doShadows) {
+			if (dot(shadow, vec3(1.0)) > EPS) {
 				shadow *= contactShadow * sunlightBase;
 
 				// Apply parallax shadows
