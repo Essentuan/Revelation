@@ -79,9 +79,6 @@ vec4 TemporalFilter(in ivec2 texel, in vec3 screenPos, in vec3 worldNormal, out 
         float sumWeight = 0.0;
         float confidence = 0.0;
 
-        #ifdef TAA_ENABLED
-            prevCoord += taaOffset * 0.5;
-        #endif
         prevCoord += (prevTaaOffset - taaOffset) * 0.25;
 
         // Custom bilinear filter
