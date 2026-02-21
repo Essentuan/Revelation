@@ -55,6 +55,9 @@ option.AUTHOR=Author
 option.AUTHOR.comment=Copyright (C) 2024 HaringPro. Apache License 2.0
 
 option.RP_SUPPORT=Resource Pack Support
+option.RENDER_MODE=Render Mode
+value.RENDER_MODE.0=Screenshot
+value.RENDER_MODE.1=Gameplay
 
 # Environment
 option.PLANET_GROUND=Planet Ground

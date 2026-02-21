@@ -52,9 +52,12 @@ screen.Color=色彩
 # OPTIONS
 option.INFO=Revelation
 option.AUTHOR=作者
-option.AUTHOR.comment=版权所有 (C) 2024 HaringPro. Apache-2.0许可证
+option.AUTHOR.comment=版权所有 (C) 2024 HaringPro. Apache-2.0 许可证
 
 option.RP_SUPPORT=PBR资源包支持
+option.RENDER_MODE=渲染模式
+value.RENDER_MODE.0=离线渲染
+value.RENDER_MODE.1=实时渲染
 
 # Environment
 option.PLANET_GROUND=行星地面
