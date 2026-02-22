@@ -207,14 +207,14 @@ void main() {
 			distanceFade = saturate(distanceFade + float(dhTerrainMask));
 		#endif
 
-		float NdotL = dot(worldNormal, worldLightVector);
+		float NdotL = saturate(dot(worldNormal, worldLightVector));
 
 		// Shadows and SSS
         if (NdotL + sssAmount > EPS) {
 			vec3 shadow = vec3(saturate(NdotL * FLT_MAX));
 			float surfaceDepth = 0.0;
 
-			float normalOffsetBase = (approxSqrt(worldDistSquared) * 2e-3 + 2e-2) * (2.0 - saturate(NdotL));
+			float normalOffsetBase = (approxSqrt(worldDistSquared) * 2e-3 + 2e-2) * (2.0 - NdotL);
 
 			// PCSS
         	if (distanceFade < EPS) {
