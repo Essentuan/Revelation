@@ -18,7 +18,7 @@ vec4 CalculateSpecularReflections(Material material, in vec3 worldNormal, in vec
 		vec4 reflection = vec4(0.0, 0.0, 0.0, FP16_MAX);
 		if (skylight > EPS && isEyeInWater == 0) {
 			vec3 skyRadiance = textureBicubic(skyMapTex, ProjectSky(lightDir)).rgb;
-			reflection.rgb = skyRadiance * skylight;
+			reflection.rgb = skyRadiance * smoothstep(0.3, 0.7, skylight);
 		}
 
 		if (ScreenSpaceRaytrace(viewPos, mat3(gbufferModelView) * lightDir, dither, uint(SSRT_MAX_SAMPLES * oms(material.roughness)), screenPos)) {
@@ -43,7 +43,7 @@ vec4 CalculateSpecularReflections(Material material, in vec3 worldNormal, in vec
 		vec3 reflection = vec3(0.0);
 		if (skylight > EPS && isEyeInWater == 0) {
 			vec3 skyRadiance = textureBicubic(skyMapTex, ProjectSky(lightDir)).rgb;
-			reflection = skyRadiance * skylight;
+			reflection = skyRadiance * smoothstep(0.3, 0.7, skylight);
 		}
 
 		if (ScreenSpaceRaytrace(viewPos, mat3(gbufferModelView) * lightDir, dither, SSRT_MAX_SAMPLES, screenPos)) {
