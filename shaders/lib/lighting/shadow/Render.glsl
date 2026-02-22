@@ -154,24 +154,30 @@ float ScreenSpaceShadow(in vec3 rayPos, in vec3 viewPos, in float dither, in flo
 	for (uint i = 0u; i < SCREEN_SPACE_SHADOWS_SAMPLES; ++i, rayPos += rayStep) {
 		if (saturate(rayPos.xy) != rayPos.xy || result < 1e-2) break;
 
-		vec2 samplePos = rayPos.xy * viewSize + 0.5;
-		vec2 samplePosFloor = floor(samplePos);
-		vec2 samplePosFract = samplePos - samplePosFloor;
-
-		vec4 sh = textureGather(depthtex0, samplePosFloor * viewPixelSize);
-		vec2 temp = mix(sh.wx, sh.zy, vec2(samplePosFract.x));
-		float sampleDepth = mix(temp.x, temp.y, samplePosFract.y);
+		ivec2 sampleTexel = uvToTexel(rayPos.xy);
+		float sampleDepth = loadDepth0(sampleTexel);
+		bool hit = abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance;
 
 		#if defined DISTANT_HORIZONS
 			if (sampleDepth > 1.0 - EPS) {
 				sampleDepth = loadDepth0DH(sampleTexel);
 				sampleDepth = ViewToScreenDepth(ScreenToViewDepthDH(sampleDepth));
-			}
+				hit = abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance;
+			} else
 		#endif
+		if (hit) {
+			vec2 samplePos = rayPos.xy * viewSize + 0.5;
+			vec2 samplePosFloor = floor(samplePos);
+			vec2 samplePosFract = samplePos - samplePosFloor;
 
-		if (abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance && rayPos.z > sampleDepth) {
-			result *= absorption;
+			vec4 sh = textureGather(depthtex0, samplePosFloor * viewPixelSize);
+			vec2 temp = mix(sh.wx, sh.zy, vec2(samplePosFract.x));
+			sampleDepth = mix(temp.x, temp.y, samplePosFract.y);
+
+			hit = abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance;
 		}
+
+		result *= saturate(absorption + 1.0 - float(hit));
 	}
 
 	return result;
