@@ -42,7 +42,7 @@ writeonly restrict uniform image2D colorimg2;
 #include "/lib/universal/Random.glsl"
 
 vec4 TemporalFilter(in ivec2 texel, in vec3 screenPos, in vec3 worldNormal, out float viewDistance) {
-	vec3 viewPos = ScreenToViewSpaceRaw(screenPos);
+	vec3 viewPos = ScreenToViewSpace(screenPos);
     vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
     viewDistance = sdot(worldPos);
 
@@ -54,7 +54,11 @@ vec4 TemporalFilter(in ivec2 texel, in vec3 screenPos, in vec3 worldNormal, out 
     worldPos = transMAD(gbufferPreviousModelView, worldPos); // To previous frame's view space
 	worldPos = projMAD(gbufferPreviousProjection, worldPos) * rcp(-worldPos.z); // To previous frame's NDC space
 
+    #ifdef TAA_ENABLED
+        worldPos.xy += taaOffset;
+    #endif
     vec2 prevCoord = worldPos.xy * 0.5 + 0.5;
+    prevCoord += (prevTaaOffset - taaOffset) * 0.25;
 
     float luma = texelFetch(colortex3, texel, 0).r; // We use YCoCg color space
     ivec2 texelEnd = ivec2(halfViewEnd) - 1;
@@ -79,11 +83,9 @@ vec4 TemporalFilter(in ivec2 texel, in vec3 screenPos, in vec3 worldNormal, out 
         float sumWeight = 0.0;
         float confidence = 0.0;
 
-        prevCoord += (prevTaaOffset - taaOffset) * 0.25;
-
         // Custom bilinear filter
         vec2 prevTexel = prevCoord * viewSize * 0.5 - vec2(0.5);
-        ivec2 floorTexel = ivec2(prevTexel);
+        ivec2 floorTexel = ivec2(floor(prevTexel));
         vec2 fractTexel = prevTexel - vec2(floorTexel);
 
         float bilinearWeight[4] = {
