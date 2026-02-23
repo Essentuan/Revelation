@@ -29,8 +29,6 @@ in vec3 vectorData; // Minecraft position in water, vertColor in other materials
 
 flat in uint isWater;
 
-// flat in mat3 tbnMatrix;
-
 //======// Uniform //=============================================================================//
 
 uniform sampler2D tex;

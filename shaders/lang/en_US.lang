@@ -328,7 +328,6 @@ option.GLASS_IOR=Glass IOR
 
 # Misc
 option.DEFAULT_DIELECTRIC_F0=Default Dielectric F0
-option.SELECTION_BOX_WIDTH=Selection Box Width
 option.SELECTION_BOX_COLOR_R=Selection Box Color §4Red
 option.SELECTION_BOX_COLOR_G=Selection Box Color §2Green
 option.SELECTION_BOX_COLOR_B=Selection Box Color §1Blue

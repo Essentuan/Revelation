@@ -328,7 +328,6 @@ option.GLASS_IOR=玻璃折射率
 
 # Misc
 option.DEFAULT_DIELECTRIC_F0=默认电介质F0
-option.SELECTION_BOX_WIDTH=选择框宽度
 option.SELECTION_BOX_COLOR_R=选择框颜色-§4红
 option.SELECTION_BOX_COLOR_G=选择框颜色-§2绿
 option.SELECTION_BOX_COLOR_B=选择框颜色-§1蓝

@@ -1,4 +1,4 @@
-#version 460 core
+#version 460 compatibility
 
 #define SPECULAR_FILTER_SIZE 32.0
 

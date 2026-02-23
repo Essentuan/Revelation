@@ -1,7 +1,13 @@
+/*
+--------------------------------------------------------------------------------
 
-//======// Fix for https://github.com/HaringPro/Revelation/issues/18 //===========================//
+	Revelation Shaders
 
-in ivec2 vaUV2;
+	Copyright (C) 2024 HaringPro
+	Apache License 2.0
+
+--------------------------------------------------------------------------------
+*/
 
 //======// Utility //=============================================================================//
 
@@ -18,22 +24,11 @@ out vec3 worldPos;
 
 //======// Attribute //===========================================================================//
 
-in vec3 vaPosition;
-in vec4 vaColor;
-in vec2 vaUV0;
-in vec3 vaNormal;
-
 in vec4 at_tangent;
 
 //======// Uniform //=============================================================================//
 
 uniform int blockEntityId;
-
-uniform vec3 chunkOffset;
-
-uniform mat3 normalMatrix;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
 
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
@@ -42,15 +37,15 @@ uniform vec2 taaOffset;
 
 //======// Main //================================================================================//
 void main() {
-	vertColor = vaColor;
-	texCoord = vaUV0;
+	vertColor = gl_Color;
+	texCoord = mat2(gl_TextureMatrix[0]) * gl_MultiTexCoord0.xy + gl_TextureMatrix[0][3].xy;
 
-	lightmap = saturate(vec2(vaUV2) * rcp240);
+	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
 	materialID = uint(blockEntityId - 10000);
 
-	vec3 viewPos = transMAD(modelViewMatrix, vaPosition + chunkOffset);
-	gl_Position = diagonal4(projectionMatrix) * viewPos.xyzz + projectionMatrix[3];
+	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
+	gl_Position = diagonal4(gl_ProjectionMatrix) * viewPos.xyzz + gl_ProjectionMatrix[3];
 	worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
 	#ifdef TAA_ENABLED

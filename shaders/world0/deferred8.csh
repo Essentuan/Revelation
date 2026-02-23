@@ -1,4 +1,4 @@
-#version 460 core
+#version 460 compatibility
 
 #define ATROUS_FILTER_SIZE 2
 

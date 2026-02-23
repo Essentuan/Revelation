@@ -1,7 +1,13 @@
+/*
+--------------------------------------------------------------------------------
 
-//======// Fix for https://github.com/HaringPro/Revelation/issues/18 //===========================//
+	Revelation Shaders
 
-in ivec2 vaUV2;
+	Copyright (C) 2024 HaringPro
+	Apache License 2.0
+
+--------------------------------------------------------------------------------
+*/
 
 //======// Utility //=============================================================================//
 
@@ -22,22 +28,11 @@ flat out uint materialID;
 
 //======// Attribute //===========================================================================//
 
-in vec3 vaPosition;
-in vec4 vaColor;
-in vec2 vaUV0;
-in vec3 vaNormal;
-
 in vec4 at_tangent;
 
 //======// Uniform //=============================================================================//
 
 uniform int entityId;
-
-uniform vec3 chunkOffset;
-
-uniform mat3 normalMatrix;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
 
 uniform mat4 gbufferModelViewInverse;
 
@@ -47,31 +42,31 @@ uniform vec2 taaOffset;
 void main() {
 	#if 0
 	// Kill the nametag
-	if (clamp(vaColor.a, 0.24, 0.254) == vaColor.a) {
+	if (clamp(gl_Color.a, 0.24, 0.254) == gl_Color.a) {
 		gl_Position = vec4(-1.0);
 		return;
 	}
 	#endif
 
-	vertColor = vaColor;
-	texCoord = vaUV0;
+	vertColor = gl_Color;
+	texCoord = mat2(gl_TextureMatrix[0]) * gl_MultiTexCoord0.xy + gl_TextureMatrix[0][3].xy;
 
-	lightmap = saturate(vec2(vaUV2) * rcp240);
+	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
-	vec3 viewPos = transMAD(modelViewMatrix, vaPosition + chunkOffset);
+	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
 	// worldPos = transMAD(gbufferModelViewInverse, viewPos);
-	gl_Position = diagonal4(projectionMatrix) * viewPos.xyzz + projectionMatrix[3];
+	gl_Position = diagonal4(gl_ProjectionMatrix) * viewPos.xyzz + gl_ProjectionMatrix[3];
 
 	#ifdef TAA_ENABLED
 		gl_Position.xy += taaOffset * gl_Position.w;
 	#endif
 
 	#if defined MC_NORMAL_MAP
-		tbnMatrix[2] = mat3(gbufferModelViewInverse) * normalize(normalMatrix * vaNormal);
-		tbnMatrix[0] = mat3(gbufferModelViewInverse) * normalize(normalMatrix * at_tangent.xyz);
+		tbnMatrix[2] = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
+		tbnMatrix[0] = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * at_tangent.xyz);
 		tbnMatrix[1] = signMul(cross(tbnMatrix[0], tbnMatrix[2]), at_tangent.w);
 	#else
-		geoNormal = mat3(gbufferModelViewInverse) * normalize(normalMatrix * vaNormal);
+		geoNormal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
 	#endif
 
 	// 829925: Physics mod snow

@@ -1,7 +1,13 @@
+/*
+--------------------------------------------------------------------------------
 
-//======// Fix for https://github.com/HaringPro/Revelation/issues/18 //===========================//
+	Revelation Shaders
 
-in ivec2 vaUV2;
+	Copyright (C) 2024 HaringPro
+	Apache License 2.0
+
+--------------------------------------------------------------------------------
+*/
 
 //======// Utility //=============================================================================//
 
@@ -32,11 +38,6 @@ flat out uint materialID;
 
 //======// Attribute //===========================================================================//
 
-in vec3 vaPosition;
-in vec4 vaColor;
-in vec2 vaUV0;
-in vec3 vaNormal;
-
 in vec4 mc_Entity;
 in vec2 mc_midTexCoord;
 in vec4 at_tangent;
@@ -51,24 +52,20 @@ in vec4 at_tangent;
 
 //======// Main //================================================================================//
 void main() {
-	vertColor = vaColor.rgb;
-	texCoord = vaUV0;
+	vertColor = gl_Color.rgb;
+	texCoord = mat2(gl_TextureMatrix[0]) * gl_MultiTexCoord0.xy + gl_TextureMatrix[0][3].xy;
 
-	#ifdef IS_IRIS
-	    lightmap = saturate((vec2(vaUV2) - 8.0) * rcp(232.0));
-	#else
-		lightmap = saturate(vec2(vaUV2) * rcp240);
-	#endif
+	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
-	vec3 worldPos = transMAD(gbufferModelViewInverse, transMAD(modelViewMatrix, vaPosition + chunkOffset));
+	vec3 worldPos = transMAD(gbufferModelViewInverse, transMAD(gl_ModelViewMatrix, gl_Vertex.xyz));
 
 	materialID = uint(max(mc_Entity.x - 1e4, 1));
 
 	// Encode normal and tangent
-	vec3 normal = mat3(gbufferModelViewInverse) * normalize(normalMatrix * vaNormal);
+	vec3 normal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
 	normalPack = packSnorm2x16(OctEncodeSnorm(normal));
 	#if defined MC_NORMAL_MAP
-		vec3 tangent = mat3(gbufferModelViewInverse) * normalize(normalMatrix * at_tangent.xyz);
+		vec3 tangent = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * at_tangent.xyz);
 		tangentPack.x = packSnorm2x16(OctEncodeSnorm(tangent));
 		tangentPack.y = (floatBitsToUint(at_tangent.w) & 0x80000000u) | 0x3F800000u;
 	#endif
@@ -80,7 +77,7 @@ void main() {
 
 			float time = frameTimeCounter * WAVING_FOLIAGE_SPEED;
 			float intensity = cube(lightmap.y) * (wetness + 1.0) * WAVING_FOLIAGE_STRENGTH;
-			float topVertex = step(vaUV0.y, mc_midTexCoord.y) + float(materialID == 1001u);
+			float topVertex = step(gl_MultiTexCoord0.y, mc_midTexCoord.y) + float(materialID == 1001u);
 			intensity *= step(materialID, 1000u) * 0.25 + 0.75; // Decrease intensity for tall plants
 
 			float noise = textureBicubic(noisetex, (worldPos.xz + time) * 0.005).x * 2.0;
@@ -111,7 +108,7 @@ void main() {
 
 	// Unlabelled foilage detection
 	#ifdef UNLABELLED_FOILAGE_DETECTION
-		if (materialID < 1u && maxOf(abs(vaNormal)) < 0.99) materialID = 1003u;
+		if (materialID < 1u && maxOf(abs(gl_Normal)) < 0.99) materialID = 1003u;
 	#endif
 
 	#if defined PARALLAX || defined AUTO_GENERATED_NORMAL
@@ -121,7 +118,7 @@ void main() {
 		tileOffset = min(texCoord, mc_midTexCoord - minMidCoord);
 	#endif
 
-	gl_Position = diagonal4(projectionMatrix) * transMAD(gbufferModelView, worldPos).xyzz + projectionMatrix[3];
+	gl_Position = diagonal4(gl_ProjectionMatrix) * transMAD(gbufferModelView, worldPos).xyzz + gl_ProjectionMatrix[3];
 
 	#ifdef TAA_ENABLED
 		gl_Position.xy += taaOffset * gl_Position.w;

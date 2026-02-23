@@ -9,7 +9,6 @@ const float EPS 	        = 0.000001;
 const float goldenAngle     = 2.39996322973;
 
 const float rcp255 		    = 0.00392156863;
-const float rcp240		    = 0.00416666667;
 
 const float FP16_MIN        = 6.10e-05;
 const float FP16_MAX        = 65504.0;
