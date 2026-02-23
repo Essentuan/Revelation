@@ -1,8 +1,26 @@
 const float uniformPhase = 0.25 * rPI;
 
+#if 0
+// Standard version
 float RayleighPhase(in float mu) {
-	const float c = 3.0 / 16.0 * rPI;
-	return mu * mu * c + c;
+    const float k = uniformPhase * 0.75;
+	return k * (1.0 + mu * mu);
+}
+#else
+// Depolarized version
+float RayleighPhase(in float mu) {
+    const float pn = 0.03;
+    const float gamma = pn / (2.0 - pn);
+    const float k = uniformPhase * 3.0 / (4.0 * (2.0 * gamma + 1.0));
+    return k * ((3.0 * gamma + 1.0) + (1.0 - gamma) * mu * mu);
+}
+#endif
+
+// Ad hoc Rayleigh phase function
+// From https://old.cescg.org/CESCG-2009/papers/PragueCUNI-Elek-Oskar.pdf
+// See section 4.1.2
+float AdhocRayleighPhase(in float mu) {
+	return uniformPhase * (1.12 + 0.4 * mu);
 }
 
 // Henyey-Greenstein phase function (HG)
@@ -15,7 +33,7 @@ float HenyeyGreensteinPhase(in float mu, in float g) {
 float CornetteShanksPhase(in float mu, in float g) {
 	float gg = g * g;
   	float p1 = oms(gg) * (1.5 / (2.0 + gg));
-  	float p2 = (1.0 + sqr(mu)) / pow1d5((1.0 + gg - 2.0 * g * mu));
+  	float p2 = (1.0 + mu * mu) / pow1d5((1.0 + gg - 2.0 * g * mu));
   	return uniformPhase * p1 * p2;
 }
 
@@ -26,7 +44,7 @@ float CornetteShanksPhase(in float mu, in float g) {
 float DrainePhase(in float mu, in float g, in float a) {
 	float gg = g * g;
 	float p1 = oms(gg) / pow1d5(1.0 + gg - 2.0 * g * mu);
-	float p2 = (1.0 + a * sqr(mu)) / (1.0 + a * (1.0 + 2.0 * gg) / 3.0);
+	float p2 = (1.0 + a * mu * mu) / (1.0 + a * (1.0 + 2.0 * gg) / 3.0);
 	return uniformPhase * p1 * p2;
 }
 
