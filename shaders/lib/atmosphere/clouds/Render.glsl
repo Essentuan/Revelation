@@ -37,7 +37,7 @@ float CloudVolumeOpticalDepth(in vec3 rayPos, in vec3 rayDir, in float noise, in
 	vec3 rayStep = rayDir * stepLength;
 
 	// Early exit if transmittance is too small (optimization)
-	float threshold = -log(0.01) / (cumulusExtinction * stepLength);
+	float threshold = -log(0.005) / (cumulusExtinction * stepLength);
 
     float sumDensity = 0.0;
 	for (uint i = 0u; i < steps && sumDensity < threshold; ++i) {
