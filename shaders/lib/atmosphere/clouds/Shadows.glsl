@@ -67,7 +67,7 @@ float CalculateCloudShadows(in vec3 rayPos, in float dither) {
 	rayPos += rayStep * dither;
 
 	float extinction = 0.0;
-	const float threshold = -log(cloudMinTransmittance) / cumulusExtinction;
+	const float threshold = -log2(0.01) / cumulusExtinction;
 
 	// Raymarch along the light vector
 	for (uint i = 0u; i < uint(steps) && extinction < threshold; ++i, rayPos += rayStep) {
