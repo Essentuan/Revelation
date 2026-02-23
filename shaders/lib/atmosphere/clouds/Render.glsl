@@ -75,8 +75,8 @@ float CloudMultiScatteringApproxOz(in float opticalDepth, in float phase) {
 
 float CloudMultiScatteringApproxHaringPro(in float opticalDepth, in float phase, in float extinction, in float albedo) {
 	// https://zhuanlan.zhihu.com/p/457997155
-	float msV = albedo * oms(exp2(-13.0 * extinction));
-	float msEnergy = msV / (1.0 - msV) * approxExp(-0.2 * opticalDepth - 1.0);
+	float msV = albedo * oms(exp2(-12.0 * extinction));
+	float msEnergy = msV / (1.0 - msV) * exp2(-0.25 * opticalDepth - 1.0);
 
 	float single = exp2(-rLOG2 * opticalDepth) * phase;
 	return single + msEnergy * mix(phase, uniformPhase, msV);
