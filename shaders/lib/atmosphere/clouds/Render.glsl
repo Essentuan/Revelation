@@ -32,17 +32,20 @@
 float CloudVolumeOpticalDepth(in vec3 rayPos, in vec3 rayDir, in float noise, in uint steps) {
 	float rSteps = 1.0 / float(steps);
 	const float rayLength = cumulusThickness * 1.0;
-	float stepLength = rayLength * rSteps * rSteps;
 
+	float stepLength = rayLength * rSteps * rSteps;
 	vec3 rayStep = rayDir * stepLength;
 
+	// Early exit if transmittance is too small (optimization)
+	float threshold = -log(0.01) / (cumulusExtinction * stepLength);
+
     float sumDensity = 0.0;
-	for (uint i = 0u; i < steps; ++i) {
+	for (uint i = 0u; i < steps && sumDensity < threshold; ++i) {
 		float fi = float(i) + noise;
         vec3 samplePos = rayPos + rayStep * sqr(fi);
 
 		float temp;
-		float density = CloudVolumeDensity(samplePos, temp, temp, i < 2u);
+		float density = CloudVolumeDensity(samplePos, temp, temp, i < 3u);
         sumDensity += density * fi;
     }
 
