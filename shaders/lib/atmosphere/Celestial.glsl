@@ -9,7 +9,7 @@
 //================================================================================================//
 
 vec3 RenderSun(in vec3 worldDir, in vec3 sunVector) {
-    const float cosRadius = cos(atmosphereModel.sun_angular_radius * SUN_RADIUS_MULT);
+    const float cosRadius = cos(atmosphereModel.sun_angular_radius);
 	const vec3 sunIlluminance = atmosphereModel.solar_irradiance * SUN_SPECTRAL_RADIANCE_TO_LUMINANCE;
     const vec3 sunRadiance = sunIlluminance / (TAU * oms(cosRadius));
 

@@ -81,22 +81,6 @@ vec3 desaturate(in vec3 color, in float amount) {
     return mix(color, vec3(luminance(color)), amount);
 }
 
-// Modified from https://github.com/Jessie-LC/open-source-utility-code/blob/main/advanced/blackbody.glsl
-vec3 plancks(in float t, in vec3 lambda) {
-    const float h = 6.62607015e-16; // Planck's constant
-    const float c = 2.99792458e17;  // The speed of light in a vacuum
-    const float k = 1.38064852e-5;  // Boltzmann's constant
-
-    vec3 p1 = (2.0 * h * sqr(c)) / pow5(lambda);
-    vec3 p2 = exp(h * c / (lambda * k * t)) - vec3(1.0);
-    return p1 / p2;
-}
-
-vec3 blackbody(in float t) {
-    vec3 color = plancks(t, vec3(660.0, 550.0, 440.0));
-    return color * rcp(maxOf(color)); // Normalize to 1.0
-}
-
 float karisAverage(in vec3 color) {
     return rcp(1.0 + luminance(color));
 }
