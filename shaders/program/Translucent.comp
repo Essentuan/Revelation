@@ -170,7 +170,6 @@ void main() {
 		lightingOut.rgb = global.skyIlluminance * cube(lightmap.y);
 
 		// Blocklight
-		vec3 blocklightColor = blackbody(float(BLOCKLIGHT_TEMPERATURE));
 		lightingOut.rgb += CalculateBlocklightFalloff(lightmap.x) * blocklightColor;
 	}
 

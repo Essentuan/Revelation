@@ -223,8 +223,10 @@ option.SHADOW_DISTORTION_STRENGTH=Shadow Distortion Strength
 option.SCREEN_SPACE_SHADOWS=Screen-Space Shadows
 option.SCREEN_SPACE_SHADOWS_SAMPLES=Screen-Space Shadows Samples
 
-option.BLOCKLIGHT_TEMPERATURE=Blocklight Temperature
-suffix.BLOCKLIGHT_TEMPERATURE=K
+option.BLOCKLIGHT_BRIGHTNESS=Blocklight Brightness
+option.BLOCKLIGHT_COLOR_R=Blocklight Color §4Red
+option.BLOCKLIGHT_COLOR_G=Blocklight Color §2Green
+option.BLOCKLIGHT_COLOR_B=Blocklight Color §1Blue
 option.HANDHELD_LIGHTING=Handheld Lighting
 option.HELD_LIGHT_BRIGHTNESS=Held Light Brightness
 

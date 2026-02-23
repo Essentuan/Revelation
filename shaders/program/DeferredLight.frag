@@ -302,7 +302,6 @@ void main() {
 		#endif
 
 		// Emissive & Blocklight
-		vec3 blocklightColor = blackbody(float(BLOCKLIGHT_TEMPERATURE));
 		#if EMISSIVE_MODE > 0 && defined MC_SPECULAR_MAP
 			sceneOut += material.emissiveness * dot(albedo, vec3(0.75));
 		#endif
