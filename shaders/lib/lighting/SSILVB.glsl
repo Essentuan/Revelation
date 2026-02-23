@@ -259,6 +259,7 @@ vec4 CalculateSSILVB(in vec2 fragCoord, in vec3 viewPos, in vec3 worldNormal, in
                     // vec3 sampleNormal = mat3(gbufferModelView) * FetchSurfaceNormal(sampleTexel);
 
                     vec3 sampleRadiance = texelFetch(colortex4, sampleTexel >> 1, 0).rgb;
+                    sampleRadiance = min(sampleRadiance, 512.0); // clamp to prevent overflow
                     irradiance.rgb += float(bitCount(sampleOccludedBit)) *
                         // fastSqrtNR0(saturate(-dot(sampleNormal, sampleDirFront))) *
                         sampleRadiance;
