@@ -339,10 +339,11 @@ void main() {
 		#ifdef SSILVB_ENABLED
 			#ifdef SVGF_ENABLED
 				float NdotV = abs(dot(worldNormal, worldDir));
-				sceneOut += YCoCgToRGB(UpscaleDiffuseIndirect(texelPos, worldNormal, length(viewPos), NdotV));
+				vec3 radiance = UpscaleDiffuseIndirect(texelPos, worldNormal, length(viewPos), NdotV);
 			#else
-				sceneOut += YCoCgToRGB(texelFetch(colortex3, texelPos >> 1, 0).rgb);
+				vec3 radiance = texelFetch(colortex3, texelPos >> 1, 0).rgb;
 			#endif
+			sceneOut += YCoCgToRGB(radiance);
 		#endif
 
 		// Minimal ambient light
