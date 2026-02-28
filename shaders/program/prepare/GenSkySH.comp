@@ -48,14 +48,6 @@ const ivec3 workGroups = ivec3(1, 1, 1);
 #include "/lib/universal/Random.glsl"
 #include "/lib/atmosphere/Common.glsl"
 
-vec3 sampleUniformSphere(in vec2 xy) {
-    float phi = TAU * xy.x;
-    float cosTheta = xy.y * 2.0 - 1.0;
-    float sinTheta = sqrt(saturate(1.0 - cosTheta * cosTheta));
-
-	return vec3(cossin(phi) * sinTheta, cosTheta);
-}
-
 void ParallelReduceSum(in uint index, in uint samples) {
 	for (uint stride = samples >> 1u; stride > 0u; stride >>= 1u) {
 		if (index < stride) {
@@ -76,7 +68,7 @@ void main() {
     uint index = gl_LocalInvocationIndex;
 
 	// Sample and compute SH coefficients
-	vec3 direction = sampleUniformSphere(R2(index));
+	vec3 direction = SampleUniformSphere(R2(index));
 	vec3 skyRadiance = texture(skyMapTex, ProjectSky(direction)).rgb;
 
 	#ifndef PLANET_GROUND
