@@ -394,21 +394,34 @@ vec3 RRTAndODTFit(in vec3 rgb) {
 
 	return a / b;
 }
+#ifndef HDR_ENABLED
+	vec3 AcademyFit(in vec3 rgb) {
+		rgb *= sRGB_2_AP0;
 
-vec3 AcademyFit(in vec3 rgb) {
-	rgb *= sRGB_2_AP0;
+		// Apply RRT sweeteners
+		rgb = RRTSweeteners(rgb);
 
-	// Apply RRT sweeteners
-	rgb = RRTSweeteners(rgb);
+		// Apply RRT and ODT
+		rgb = RRTAndODTFit(rgb);
 
-	// Apply RRT and ODT
-	rgb = RRTAndODTFit(rgb);
+		// Global desaturation
+		rgb = mix(vec3(dot(rgb, AP1_RGB2Y)), rgb, odtSatFactor);
 
-	// Global desaturation
-	rgb = mix(vec3(dot(rgb, AP1_RGB2Y)), rgb, odtSatFactor);
-
-	return rgb * AP1_2_sRGB;
-}
+		return rgb * AP1_2_sRGB;
+	}
+#else
+	// Use this simpler fit for HDR as of now.
+	// https://knarkowicz.wordpress.com/2016/08/31/hdr-display-first-steps/
+	vec3 AcademyFit(vec3 x){
+		x *= 1.2;
+		x *= sRGB_2_Rec2020;
+		float a = 15.8f;
+		float b = 2.12f;
+		float c = 1.2f;
+		float d = 5.92f;
+		float e = 1.9f;
+		return ( x * ( a * x + b ) ) / ( x * ( c * x + d ) + e ) * Rec2020_2_sRGB;
+	}
 
 //======// ACES Full //===========================================================================//
 

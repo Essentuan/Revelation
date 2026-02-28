@@ -290,3 +290,101 @@ vec3 AgXConfigurable(in vec3 rgb) {
 vec3 AgX_Full(in vec3 rgb) {
     return sRGBToLinear(AgXConfigurable(rgb));
 }
+
+//======// AgX AllenWp, for HDR/SDR use //============================================================================//
+// allenwp tonemapping curve; developed for use in the Godot game engine.
+// Source and details: https://allenwp.com/blog/2025/05/29/allenwp-tonemapping-curve/
+// Input must be a non-negative linear scene value.
+vec3 allenwp_curve(vec3 x) {
+    #ifdef HDR_ENABLED
+        float output_max_value = HdrGamePeakBrightness / HdrGamePaperWhiteBrightness;
+    #else
+        float output_max_value = 1.0;
+    #endif
+	// These constants must match the those in the C++ code that calculates the parameters.
+	// 18% "middle gray" is perceptually 50% of the brightness of reference white.
+	const float awp_crossover_point = 0.1841865;
+	const float awp_shoulder_max = output_max_value - awp_crossover_point;
+    float awp_high_clip = 8.0;
+    awp_high_clip = max(awp_high_clip, output_max_value);
+	float awp_contrast = 1.5;
+	float awp_toe_a = ((1.0 / awp_crossover_point) - 1.0) * pow(awp_crossover_point, awp_contrast);
+    float awp_slope_denom = pow(awp_crossover_point, awp_contrast) + awp_toe_a;
+	float awp_slope = (awp_contrast * pow(awp_crossover_point, awp_contrast - 1.0) * awp_toe_a) / (awp_slope_denom * awp_slope_denom);
+	float awp_w = awp_high_clip - awp_crossover_point;
+	awp_w = awp_w * awp_w;
+	awp_w = awp_w / awp_shoulder_max;
+	awp_w = awp_w * awp_slope;
+
+	// Reinhard-like shoulder:
+	vec3 s = x - awp_crossover_point;
+	vec3 slope_s = awp_slope * s;
+	s = slope_s * (1.0 + s / awp_w) / (1.0 + (slope_s / awp_shoulder_max));
+	s += awp_crossover_point;
+
+	// Sigmoid power function toe:
+	vec3 t = pow(x, vec3(awp_contrast));
+	t = t / (t + awp_toe_a);
+
+	return mix(s, t, lessThan(x, vec3(awp_crossover_point)));
+}
+
+// This is an approximation and simplification of EaryChow's AgX implementation that is used by Blender.
+// This code is based off of the script that generates the AgX_Base_sRGB.cube LUT that Blender uses.
+// Source: https://github.com/EaryChow/AgX_LUT_Gen/blob/main/AgXBasesRGB.py
+// Colorspace transformation source: https://www.colour-science.org:8010/apps/rgb_colourspace_transformation_matrix
+vec3 AgX_AllenWp(vec3 color) {
+	// Input color should be non-negative!
+	// Large negative values in one channel and large positive values in other
+	// channels can result in a colour that appears darker and more saturated than
+	// desired after passing it through the inset matrix. For this reason, it is
+	// best to prevent negative input values.
+	// This is done before the Rec. 2020 transform to allow the Rec. 2020
+	// transform to be combined with the AgX inset matrix. This results in a loss
+	// of color information that could be correctly interpreted within the
+	// Rec. 2020 color space as positive RGB values, but is often not worth
+	// the performance cost of an additional matrix multiplication.
+	//
+	// Additionally, this AgX configuration was created subjectively based on
+	// output appearance in the Rec. 709 color gamut, so it is possible that these
+	// matrices will not perform well with non-Rec. 709 output (more testing with
+	// future wide-gamut displays is be needed).
+	// See this comment from the author on the decisions made to create the matrices:
+	// https://github.com/godotengine/godot-proposals/issues/12317#issuecomment-2835824250
+
+	// Combined Rec. 709 to Rec. 2020 and Blender AgX inset matrices:
+	const mat3 rec709_to_rec2020_agx_inset_matrix = mat3(
+			0.544814746488245, 0.140416948464053, 0.0888104196149096,
+			0.373787398372697, 0.754137554567394, 0.178871756420858,
+			0.0813978551390581, 0.105445496968552, 0.732317823964232);
+
+	// Combined inverse AgX outset matrix and Rec. 2020 to Rec. 709 matrices.
+	const mat3 agx_outset_rec2020_to_rec709_matrix = mat3(
+			1.96488741169489, -0.299313364904742, -0.164352742528393,
+			-0.855988495690215, 1.32639796461980, -0.238183969428088,
+			-0.108898916004672, -0.0270845997150571, 1.40253671195648);
+    #ifdef HDR_ENABLED
+	    float output_max_value = HdrGamePeakBrightness / HdrGamePaperWhiteBrightness;
+    #else
+        float output_max_value = 1.0;
+    #endif
+
+    // Apply inset matrix.
+	color = rec709_to_rec2020_agx_inset_matrix * color * 2.0;
+
+	// Use the allenwp tonemapping curve to match the Blender AgX curve while
+	// providing stability across all variable dyanimc range (SDR, HDR, EDR).
+	color = allenwp_curve(color);
+
+	// Clipping to output_max_value is required to address a cyan colour that occurs
+	// with very bright inputs.
+	color = min(vec3(output_max_value), color);
+
+	// Apply outset to make the result more chroma-laden and then go back to Rec. 709.
+	color = agx_outset_rec2020_to_rec709_matrix * color;
+
+	// Blender's lusRGB.compensate_low_side is too complex for this shader, so
+	// simply return the color, even if it has negative components. These negative
+	// components may be useful for subsequent color adjustments.
+    return color;
+}

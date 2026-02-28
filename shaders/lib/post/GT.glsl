@@ -4,7 +4,11 @@
 // Math: https://www.desmos.com/calculator/gslcdxvipg
 // Source: https://www.slideshare.net/nikuque/hdr-theory-and-practicce-jp
 vec3 GT(in vec3 x) {
-    const float maxDisplayBrightness = 1.0;
+    #ifdef HDR_ENABLED
+        float maxDisplayBrightness = HdrGamePeakBrightness / HdrGamePaperWhiteBrightness;
+    #else
+        const float maxDisplayBrightness = 1.0;
+    #endif
     const float contrast			 = 1.0;
     const float linearStart			 = 0.2;
     const float linearLength		 = 0.1;
@@ -432,7 +436,11 @@ vec3 GT7(in vec3 color) {
     color *= sRGB_2_Rec2020;
 
     GT7ToneMapping tm;
-    initializeAsSDR(tm);
+    #ifdef HDR_ENABLED
+        initializeAsHDR(HdrGamePeakBrightness,tm);
+    #else
+        initializeAsSDR(tm);
+    #endif
 
     applyToneMapping(color, tm);
 
