@@ -422,7 +422,7 @@ vec3 RRTAndODTFit(in vec3 rgb) {
 		float e = 1.9f;
 		return ( x * ( a * x + b ) ) / ( x * ( c * x + d ) + e ) * Rec2020_2_sRGB;
 	}
-
+#endif
 //======// ACES Full //===========================================================================//
 
 vec3 RRT(in vec3 aces) {

@@ -305,7 +305,7 @@ vec3 allenwp_curve(vec3 x) {
 	// 18% "middle gray" is perceptually 50% of the brightness of reference white.
 	const float awp_crossover_point = 0.1841865;
 	const float awp_shoulder_max = output_max_value - awp_crossover_point;
-    float awp_high_clip = 8.0;
+    float awp_high_clip = 12.0;
     awp_high_clip = max(awp_high_clip, output_max_value);
 	float awp_contrast = 1.5;
 	float awp_toe_a = ((1.0 / awp_crossover_point) - 1.0) * pow(awp_crossover_point, awp_contrast);

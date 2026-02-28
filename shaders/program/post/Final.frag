@@ -40,9 +40,21 @@ out vec3 finalOut;
 // Reference: Lou Kramer, FidelityFX CAS, AMD Developer Day 2019,
 // https://gpuopen.com/wp-content/uploads/2019/07/FidelityFX-CAS.pptx
 // https://github.com/GPUOpen-Effects/FidelityFX-CAS
-vec3 FFXCasFilter(in ivec2 texel, in float sharpness) {
-	#define CasLoad(offset) texelFetchOffset(colortex8, texel, 0, offset).rgb
+vec3 AFromPq(in vec3 color) {
+	vec3 p = pow(color, vec3(0.0126833));
+	return pow(saturate(p - vec3(0.835938))/(vec3(18.8516) - vec3(18.6875)*p), vec3(6.27739));
+}
 
+vec3 AToPq(in vec3 color) {
+	vec3 p = pow(color, vec3(0.159302));
+	return pow((vec3(0.835938) + vec3(18.8516) * p)/(vec3(1.0)+vec3(18.6875)*p),vec3(78.8438));
+}
+vec3 FFXCasFilter(in ivec2 texel, in float sharpness) {
+	#ifdef HDR_ENABLED
+		#define CasLoad(offset) AFromPq(texelFetchOffset(colortex8, texel, 0, offset).rgb)
+	#else
+		#define CasLoad(offset) texelFetchOffset(colortex8, texel, 0, offset).rgb
+	#endif
 	#ifndef CAS_ENABLED
 		return CasLoad(ivec2(0, 0));
 	#endif
@@ -93,6 +105,7 @@ void HistogramDisplay(inout vec3 color, in ivec2 texel) {
 	}
 }
 
+
 //======// Main //================================================================================//
 void main() {
     ivec2 texelPos = ivec2(gl_FragCoord.xy);
@@ -104,8 +117,8 @@ void main() {
 		finalOut = texelFetch(colortex4, texelPos, 0).rgb;
 	#else
 		#ifdef HDR_ENABLED
-			// Scale back up to game brightness after CAS 
-			finalOut = FFXCasFilter(texelPos, CAS_STRENGTH) * linearToSRGBSafe(vec3(HdrGamePeakBrightness * HdrGamePaperWhiteBrightness / HdrUIBrightness));
+			// PQ decode back up to game brightness after CAS 
+			finalOut = linearToSRGBSafe(PqToLinear(AToPq(FFXCasFilter(texelPos, CAS_STRENGTH)), HdrUIBrightness) * Rec2020_2_sRGB);
 		#else
 			finalOut = FFXCasFilter(texelPos, CAS_STRENGTH);
 		#endif

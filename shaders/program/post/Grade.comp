@@ -207,10 +207,10 @@ void main() {
 
 		// Working to display space
 		#ifdef HDR_ENABLED
-			// UI brightness scaling
-			color *= HdrGamePaperWhiteBrightness / HdrUIBrightness;
-			// Normalize for FFX CAS
-			color = saturate(linearToSRGBSafe(color) / linearToSRGBSafe(vec3(HdrGamePeakBrightness * HdrGamePaperWhiteBrightness / HdrUIBrightness)));
+			// Normalize for FFX CAS using PQ encoding
+			color *= sRGB_2_Rec2020;
+			color = max(vec3(0.0), color); // Avoid negative values causing issues with PQ encoding
+			color = saturate(linearToPq(color, HdrGamePaperWhiteBrightness));
 		#else
 			color = saturate(linearToSRGB(color));
 		#endif

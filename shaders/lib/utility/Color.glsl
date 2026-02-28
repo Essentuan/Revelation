@@ -35,6 +35,26 @@ const mat3 Rec2020_2_XYZ = mat3(
     0.0000000000, 0.0280726930, 1.0609850577
 );
 
+// https://en.wikipedia.org/wiki/Perceptual_quantizer
+const float PQ_M1 = 2610.0/4096 * 1.0/4;
+const float PQ_M2 = 2523.0/4096 * 128;
+const float PQ_C1 = 3424.0/4096;
+const float PQ_C2 = 2413.0/4096 * 32;
+const float PQ_C3 = 2392.0/4096 * 32;
+
+vec3 linearToPq(vec3 c, float scaling) {
+    c *= scaling / 10000.0;
+    c = pow(c, vec3(PQ_M1));
+    c = (vec3(PQ_C1) + vec3(PQ_C2) * c) / (vec3(1.0) + vec3(PQ_C3) * c);
+    return pow(c, vec3(PQ_M2));
+}
+
+vec3 PqToLinear(vec3 color, float scaling) {
+    vec3 e_m12 = pow(color, vec3(1.0 / PQ_M2));
+    vec3 out_color = pow(max(vec3(0), e_m12 - PQ_C1) / (PQ_C2 - PQ_C3 * e_m12), vec3(1.0 / PQ_M1));
+    return out_color * (10000.0 / scaling);
+}
+
 // https://en.wikipedia.org/wiki/SRGB
 // https://github.com/tobspr/GLSL-Color-Spaces/blob/master/ColorSpaces.inc.glsl
 vec3 linearToSRGB(in vec3 color) {
