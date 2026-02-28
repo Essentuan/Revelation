@@ -1,4 +1,4 @@
-#version 460 core
+#version 460 compatibility
 
 // Vertical blur pass
 #define OFFSET ivec2(0, 1)

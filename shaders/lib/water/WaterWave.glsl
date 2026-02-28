@@ -14,8 +14,12 @@ float FetchNoiseSmooth(in vec2 coord, in float t) {
 }
 
 float CalculateWaterHeight(in vec2 position) {
+	#if RENDER_MODE == 1
+		float waveTime = 0.02 * WATER_WAVE_SPEED * frameTimeCounter;
+	#else
+		float waveTime = 0.0;
+	#endif
 	vec2 pos = 0.0075 * position;
-	float waveTime = 0.02 * WATER_WAVE_SPEED * frameTimeCounter;
 
 	float waveHeight = WATER_WAVE_HEIGHT * 0.4;
 	#if !defined PASS_SHADOW
@@ -41,8 +45,12 @@ float CalculateWaterHeight(in vec2 position) {
 }
 
 float CalculateWaterHeightFull(in vec2 position) {
+	#if RENDER_MODE == 1
+		float waveTime = 0.02 * WATER_WAVE_SPEED * frameTimeCounter;
+	#else
+		float waveTime = 0.0;
+	#endif
 	vec2 pos = 0.0075 * position;
-	float waveTime = 0.02 * WATER_WAVE_SPEED * frameTimeCounter;
 
 	float waveHeight = WATER_WAVE_HEIGHT * 0.4;
 	#if !defined PASS_SHADOW

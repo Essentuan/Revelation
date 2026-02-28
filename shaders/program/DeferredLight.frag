@@ -182,11 +182,11 @@ void main() {
 			}
 		#endif
 		#if TEXTURE_FORMAT == 0 && SUBSURFACE_SCATTERING_MODE > 0 && defined MC_SPECULAR_MAP
-			sssAmount = max(sssAmount, specularTex.b * step(64.5 * r255, specularTex.b));
+			sssAmount = max(sssAmount, specularTex.b * step(64.5 * rcp255, specularTex.b));
 		#endif
 
 		// Remap sss amount to [0, 1] range
-		sssAmount = linearstep(64.0 * r255, 1.0, sssAmount) * eyeSkylightSmooth * SUBSURFACE_SCATTERING_STRENGTH;
+		sssAmount = linearstep(64.0 * rcp255, 1.0, sssAmount) * eyeSkylightSmooth * SUBSURFACE_SCATTERING_STRENGTH;
 
 		// Cloud shadows
 		#ifdef CLOUD_SHADOWS
@@ -207,36 +207,30 @@ void main() {
 			distanceFade = saturate(distanceFade + float(dhTerrainMask));
 		#endif
 
-		float NdotL = dot(worldNormal, worldLightVector);
-		bool doShadows = NdotL > 1e-3;
+		float NdotL = saturate(dot(worldNormal, worldLightVector));
 
 		// Shadows and SSS
-        if (doShadows || sssAmount > 1e-3) {
-			vec3 shadow = vec3(1.0);
+        if (NdotL + sssAmount > EPS) {
+			vec3 shadow = vec3(saturate(NdotL * FLT_MAX));
 			float surfaceDepth = 0.0;
+
+			float normalOffsetBase = (approxSqrt(worldDistSquared) * 2e-3 + 2e-2) * (2.0 - NdotL);
 
 			// PCSS
         	if (distanceFade < EPS) {
-				vec3 normalOffset = flatNormal * (approxSqrt(worldDistSquared) * 2e-3 + 2e-2) * (2.0 - saturate(NdotL));
-				shadow = CalculatePCSS(worldPos, normalOffset, dither, surfaceDepth);
+				shadow *= CalculatePCSS(worldPos, flatNormal * normalOffsetBase, dither, surfaceDepth);
 			}
 
 			#ifdef SCREEN_SPACE_SHADOWS
-				#if defined MC_NORMAL_MAP
-					vec3 viewFlatNormal = mat3(gbufferModelView) * flatNormal;
-				#else
-					#define viewFlatNormal viewNormal
-				#endif
-
-				float contactShadow = ScreenSpaceShadow(screenPos, viewPos, dither, sssAmount);
+				float contactShadow = ScreenSpaceShadow(screenPos, viewPos + viewNormal * normalOffsetBase, dither, sssAmount);
 			#else
-				float contactShadow = float(doShadows);
+				const float contactShadow = 1.0;
 			#endif
 
 			float LdotV = dot(worldLightVector, -worldDir);
 
 			// Subsurface scattering
-			if (sssAmount > 1e-3) {
+			if (sssAmount > EPS) {
 				vec3 beta = approxSqrt(saturate(normalize(albedo)));
 				vec3 sigmaA = oms(beta) * 16.0 / (sssAmount * SUBSURFACE_SCATTERING_STRENGTH);
 				vec3 sigmaS = 4.0 * beta * sssAmount;
@@ -249,7 +243,7 @@ void main() {
 
 				sceneOut += sunlightBase * sss * SUBSURFACE_SCATTERING_BRIGHTNESS;
 			}
-			if (doShadows) {
+			if (dot(shadow, vec3(1.0)) > EPS) {
 				shadow *= contactShadow * sunlightBase;
 
 				// Apply parallax shadows
@@ -308,7 +302,6 @@ void main() {
 		#endif
 
 		// Emissive & Blocklight
-		vec3 blocklightColor = blackbody(float(BLOCKLIGHT_TEMPERATURE));
 		#if EMISSIVE_MODE > 0 && defined MC_SPECULAR_MAP
 			sceneOut += material.emissiveness * dot(albedo, vec3(0.75));
 		#endif
@@ -346,10 +339,11 @@ void main() {
 		#ifdef SSILVB_ENABLED
 			#ifdef SVGF_ENABLED
 				float NdotV = abs(dot(worldNormal, worldDir));
-				sceneOut += YCoCgToRGB(UpscaleDiffuseIndirect(texelPos, worldNormal, length(viewPos), NdotV));
+				vec3 radiance = UpscaleDiffuseIndirect(texelPos, worldNormal, length(viewPos), NdotV);
 			#else
-				sceneOut += YCoCgToRGB(texelFetch(colortex3, texelPos >> 1, 0).rgb);
+				vec3 radiance = texelFetch(colortex3, texelPos >> 1, 0).rgb;
 			#endif
+			sceneOut += YCoCgToRGB(radiance);
 		#endif
 
 		// Minimal ambient light
@@ -364,8 +358,5 @@ void main() {
 
 		// Direct specular lighting
 		sceneOut += specularDirect;
-
-		// Output clamp
-		sceneOut = satU16f(sceneOut);
 	}
 }

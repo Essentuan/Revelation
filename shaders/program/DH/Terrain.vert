@@ -1,3 +1,13 @@
+/*
+--------------------------------------------------------------------------------
+
+	Revelation Shaders
+
+	Copyright (C) 2024 HaringPro
+	Apache License 2.0
+
+--------------------------------------------------------------------------------
+*/
 
 //======// Utility //=============================================================================//
 
@@ -30,10 +40,8 @@ uniform vec2 taaOffset;
 void main() {
 	vertColor = gl_Color.rgb;
 
-	lightmap = mat2(gl_TextureMatrix[1]) * gl_MultiTexCoord1.xy + gl_TextureMatrix[1][3].xy;
-	lightmap = saturate((lightmap - 0.03125) * 1.06667);
+	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
-	// materialID = uint(max0(mc_Entity.x - 1e4));
 	materialID = dhMaterialId == DH_BLOCK_LEAVES ? 13u : 1u;
 
 	flatNormal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);

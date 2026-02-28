@@ -96,7 +96,7 @@ void main() {
 	ivec2 tileOffset = ivec2(halfViewSize.x, 0);
 	ivec2 texelEnd = ivec2(halfViewEnd) - 1;
 
-	vec3 normalDepthData = texelFetch(colortex2, texelPos + tileOffset, 0).rgb;
+	f16vec3 normalDepthData = f16vec3(texelFetch(colortex2, texelPos + tileOffset, 0).rgb);
 	// vec2 depthGradient = vec2(dFdx(normalDepthData.w), dFdy(normalDepthData.w));
 
 	// 0.0625 0.125 0.0625
@@ -106,31 +106,31 @@ void main() {
 
 	const float kernel[8] = {0.0625, 0.125, 0.0625, 0.125, 0.125, 0.0625, 0.125, 0.0625};
 
-	vec4 filteredColVar = imageLoad(colorimg3, texelPos);
-	float centerLuma = filteredColVar.r; // We use YCoCg color space
+	f16vec4 filteredColVar = f16vec4(imageLoad(colorimg3, texelPos));
+	float16_t centerLuma = filteredColVar.r; // We use YCoCg color space
 
 	float frameIndex = texelFetch(colortex2, texelPos, 0).a;
-	float historyFactor = saturate(frameIndex * rcp(12.0)) * 0.9 + 0.1;
+	float16_t historyFactor = float16_t(saturate(frameIndex * rcp(12.0)) * 0.9 + 0.1);
 
 	// float variance = CalculateVariance(ivec2(localPos + padRadius));
-	float variance = filteredColVar.a;
-	float variancePhi = -inversesqrt(variance + EPS);
+	float16_t variance = filteredColVar.a;
+	float16_t variancePhi = float16_t(-inversesqrt(variance + EPS));
 
 	const float sigmaZ = -4.0 * inversesqrt(float(ATROUS_FILTER_SIZE));
 	const float sigmaN = 32.0;
 
-    vec3 worldNormal = OctDecodeSnorm(normalDepthData.xy);
+    f16vec3 worldNormal = f16vec3(OctDecodeSnorm(normalDepthData.xy));
 
-	float sumWeight = 1.0;
+	float16_t sumWeight = float16_t(1.0);
 	// filteredColVar *= vec4(vec3(sumWeight), sumWeight * sumWeight);
 	ivec2 randTexel = texelPos + ivec2((BlueNoise(texelPos, frameCounter + ATROUS_FILTER_SIZE) - 0.5) * float(min(ATROUS_FILTER_SIZE, 8)));
 
 	for (uint i = 0u; i < 9u; ++i) {
 		ivec2 sampleTexel = clamp(randTexel + offset3x3[i] * ATROUS_FILTER_SIZE, ivec2(1), texelEnd);
-		vec3 sampleAux = texelFetch(colortex2, sampleTexel + tileOffset, 0).rgb;
+		f16vec3 sampleAux = f16vec3(texelFetch(colortex2, sampleTexel + tileOffset, 0).rgb);
 
-		vec4 sampleColVar = imageLoad(colorimg3, sampleTexel);
-		float sampleLuma = sampleColVar.r; // We use YCoCg color space
+		f16vec4 sampleColVar = f16vec4(imageLoad(colorimg3, sampleTexel));
+		float16_t sampleLuma = sampleColVar.r; // We use YCoCg color space
 
 		// wN = max(0, N0 · N1) ^ σN
 		float logWeightN = log2(saturate(dot(OctDecodeSnorm(sampleAux.xy), worldNormal))) * sigmaN;
@@ -139,13 +139,13 @@ void main() {
 		// wL = exp(−|L0 − L1| / (σLvar + ε))
 		float logWeightL = abs(sampleLuma - centerLuma) * variancePhi;
 
-		float weight = /* kernel[i] *  */exp2((logWeightN + logWeightZ + logWeightL) * historyFactor);
+		float16_t weight = float16_t(exp2((logWeightN + logWeightZ + logWeightL) * historyFactor));
 
-		filteredColVar += sampleColVar * vec4(vec3(weight), weight * weight);
+		filteredColVar += sampleColVar * f16vec4(f16vec3(weight), weight * weight);
 		sumWeight += weight;
 	}
 
-	sumWeight = rcp(sumWeight);
-	filteredColVar *= vec4(vec3(sumWeight), sumWeight * sumWeight);
-	imageStore(colorimg3, texelPos, filteredColVar);
+	sumWeight = float16_t(1.0) / sumWeight;
+	filteredColVar *= f16vec4(f16vec3(sumWeight), sumWeight * sumWeight);
+	imageStore(colorimg3, texelPos, min(filteredColVar, FP16_MAX));
 }

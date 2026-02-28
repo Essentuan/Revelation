@@ -42,7 +42,7 @@ writeonly restrict uniform image2D colorimg2;
 #include "/lib/universal/Random.glsl"
 
 vec4 TemporalFilter(in ivec2 texel, in vec3 screenPos, in vec3 worldNormal, out float viewDistance) {
-	vec3 viewPos = ScreenToViewSpaceRaw(screenPos);
+	vec3 viewPos = ScreenToViewSpace(screenPos);
     vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
     viewDistance = sdot(worldPos);
 
@@ -54,7 +54,11 @@ vec4 TemporalFilter(in ivec2 texel, in vec3 screenPos, in vec3 worldNormal, out 
     worldPos = transMAD(gbufferPreviousModelView, worldPos); // To previous frame's view space
 	worldPos = projMAD(gbufferPreviousProjection, worldPos) * rcp(-worldPos.z); // To previous frame's NDC space
 
+    #ifdef TAA_ENABLED
+        worldPos.xy += taaOffset;
+    #endif
     vec2 prevCoord = worldPos.xy * 0.5 + 0.5;
+    prevCoord += (prevTaaOffset - taaOffset) * 0.25;
 
     float luma = texelFetch(colortex3, texel, 0).r; // We use YCoCg color space
     ivec2 texelEnd = ivec2(halfViewEnd) - 1;
@@ -79,10 +83,8 @@ vec4 TemporalFilter(in ivec2 texel, in vec3 screenPos, in vec3 worldNormal, out 
         float sumWeight = 0.0;
         float confidence = 0.0;
 
-        prevCoord += (prevTaaOffset - taaOffset) * 0.25;
-
         // Custom bilinear filter
-        vec2 prevTexel = prevCoord * 0.5 * viewSize - vec2(0.5);
+        vec2 prevTexel = prevCoord * viewSize * 0.5 - vec2(0.5);
         ivec2 floorTexel = ivec2(floor(prevTexel));
         vec2 fractTexel = prevTexel - vec2(floorTexel);
 
@@ -193,7 +195,7 @@ void main() {
             // Vanilla lightmap blending
             float blocklight = Unpack2x8UX(loadMaterialPack(renderTexel).x);
             blocklight = pow5(blocklight) * exp2(-16.0 * indirectCurrent.x * exposure.value);
-            indirectCurrent.rgb += RGBToYCoCg(blackbody(float(BLOCKLIGHT_TEMPERATURE))) * saturate(blocklight) * SSILVB_BLENDED_LIGHTMAP;
+            indirectCurrent.rgb += RGBToYCoCg(blocklightColor) * saturate(blocklight) * SSILVB_BLENDED_LIGHTMAP;
 
             imageStore(colorimg2, texelPos, indirectHistory);
             imageStore(colorimg2, texelPos + ivec2(halfViewSize.x, 0), vec4(OctEncodeSnorm(worldNormal), viewDistance, 1.0));

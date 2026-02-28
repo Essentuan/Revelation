@@ -29,8 +29,6 @@ in vec3 vectorData; // Minecraft position in water, vertColor in other materials
 
 flat in uint isWater;
 
-// flat in mat3 tbnMatrix;
-
 //======// Uniform //=============================================================================//
 
 uniform sampler2D tex;
@@ -53,7 +51,7 @@ void main() {
 		vec4 albedo = texture(tex, texCoord);
 		if (albedo.a < 0.1) discard;
 
-        if (albedo.a > oms(r255)) {
+        if (albedo.a > oms(rcp255)) {
 			shadowcolor0Out = albedo.rgb * vectorData;
 		} else {
 			albedo.a = approxSqrt(approxSqrt(albedo.a));

@@ -1,7 +1,13 @@
+/*
+--------------------------------------------------------------------------------
 
-//======// Fix for https://github.com/HaringPro/Revelation/issues/18 //===========================//
+	Revelation Shaders
 
-in ivec2 vaUV2;
+	Copyright (C) 2024 HaringPro
+	Apache License 2.0
+
+--------------------------------------------------------------------------------
+*/
 
 //======// Utility //=============================================================================//
 
@@ -21,21 +27,10 @@ out vec3 worldPos;
 
 //======// Attribute //===========================================================================//
 
-in vec3 vaPosition;
-in vec4 vaColor;
-in vec2 vaUV0;
-in vec3 vaNormal;
-
 in vec4 mc_Entity;
 in vec4 at_tangent;
 
 //======// Uniform //=============================================================================//
-
-uniform vec3 chunkOffset;
-
-uniform mat3 normalMatrix;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
 
 uniform mat4 gbufferModelViewInverse;
 
@@ -54,23 +49,19 @@ uniform vec2 taaOffset;
 
 //======// Main //================================================================================//
 void main() {
-	texCoord = vaUV0;
+	texCoord = mat2(gl_TextureMatrix[0]) * gl_MultiTexCoord0.xy + gl_TextureMatrix[0][3].xy;
 
-	#ifdef IS_IRIS
-	    lightmap = saturate((vec2(vaUV2) - 8.0) * rcp(232.0));
-	#else
-		lightmap = saturate(vec2(vaUV2) * r240);
-	#endif
+	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
 	// Nether portal
 	lightmap.x = float(mc_Entity.x == 11500.0);
 
-	vertColor = vaColor;
+	vertColor = gl_Color;
 
 	// Encode normal and tangent
-	vec3 normal = mat3(gbufferModelViewInverse) * normalize(normalMatrix * vaNormal);
+	vec3 normal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
 	normalPack = packSnorm2x16(OctEncodeSnorm(normal));
-	vec3 tangent = mat3(gbufferModelViewInverse) * normalize(normalMatrix * at_tangent.xyz);
+	vec3 tangent = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * at_tangent.xyz);
 	tangentPack.x = packSnorm2x16(OctEncodeSnorm(tangent));
 	tangentPack.y = (floatBitsToUint(at_tangent.w) & 0x80000000u) | 0x3F800000u;
 
@@ -83,13 +74,13 @@ void main() {
 		vec4 finalPosition = vec4(gl_Vertex.x, gl_Vertex.y + physics_waveHeight(gl_Vertex.xz, PHYSICS_ITERATIONS_OFFSET, physics_localWaviness, physics_gameTime), gl_Vertex.z, gl_Vertex.w);
 		// pass this to the fragment shader to fetch the texture there for per fragment normals
 		physics_localPosition = finalPosition.xyz;
-		vec3 viewPos = transMAD(modelViewMatrix, finalPosition.xyz);
+		vec3 viewPos = transMAD(gl_ModelViewMatrix, finalPosition.xyz);
 	#else
-		vec3 viewPos = transMAD(modelViewMatrix, vaPosition + chunkOffset);
+		vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
 	#endif
 	worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
-	gl_Position = diagonal4(projectionMatrix) * viewPos.xyzz + projectionMatrix[3];
+	gl_Position = diagonal4(gl_ProjectionMatrix) * viewPos.xyzz + gl_ProjectionMatrix[3];
 	#ifdef TAA_ENABLED
 		gl_Position.xy += taaOffset * gl_Position.w;
 	#endif

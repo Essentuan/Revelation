@@ -1,3 +1,13 @@
+/*
+--------------------------------------------------------------------------------
+
+	Revelation Shaders
+
+	Copyright (C) 2024 HaringPro
+	Apache License 2.0
+
+--------------------------------------------------------------------------------
+*/
 
 #define PASS_DH_WATER
 
@@ -88,7 +98,7 @@ void main() {
 		vec2 encodedNormal = OctEncodeUnorm(worldNormal);
 		normalOut.zw = encodedNormal;
 
-		waterOut = vec4(distance(worldPos, worldPos1) * r255, Packup2x8(encodedNormal), 0.0, 1.0);
+		waterOut = vec4(distance(worldPos, worldPos1) * rcp255, Packup2x8(encodedNormal), 0.0, 1.0);
 	} else {
 		normalOut.zw = normalOut.xy;
 

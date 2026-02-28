@@ -1,4 +1,4 @@
-#version 460 core
+#version 460 compatibility
 
 #define DOWNSAMPLE_LEVEL 3
 

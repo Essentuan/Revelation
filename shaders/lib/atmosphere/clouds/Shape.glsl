@@ -60,14 +60,14 @@ float CloudHighDensity(in vec2 rayPos) {
 	#ifdef CLOUD_CIRRUS
 	/* Cirrus clouds */
 	{
-		float coverage = CLOUD_CI_COVERAGE - 0.3 + texture(noisetex, position * 0.01).z;
+		float coverage = CLOUD_CI_COVERAGE - 0.5 + texture(noisetex, position * 0.01).z;
 		coverage = saturate(coverage - texture(cloudMapTex, (position * 0.01)).y);
 
-		if (coverage > 0.3) {
+		if (coverage > 0.25) {
 			vec2 p = position + coverage * 0.5 - windOffset * 1e-4;
 			float cirrus = texture(cirroLutTex, p * 0.25).y;
 
-			cirrus *= smoothstep(0.3, 1.0, coverage);
+			cirrus *= smoothstep(0.25, 1.0, coverage);
 			density += cirrus * cirrus;
 		}
 	}
@@ -75,14 +75,14 @@ float CloudHighDensity(in vec2 rayPos) {
 	#ifdef CLOUD_CIRROCUMULUS
 	/* Cirrocumulus clouds */
 	{
-		float coverage = CLOUD_CC_COVERAGE - saturate(texture(noisetex, position * 0.01).z * 2.0);
-		coverage = saturate(texture(cloudMapTex, (position * 0.01)).x + coverage);
+		float coverage = CLOUD_CC_COVERAGE - saturate(texture(noisetex, position * 0.01).z * 1.5);
+		coverage = saturate(texture(cloudMapTex, (position * 0.01)).x * 0.75 + coverage);
 
-		if (coverage > 0.3) {
+		if (coverage > 0.25) {
 			vec2 p = position + coverage * 0.5 - windOffset * 1e-4;
 			float cirrocumulus = sqr(texture(cirroLutTex, p * 0.25).x);
 
-			cirrocumulus *= smoothstep(0.3, 1.0, coverage);
+			cirrocumulus *= smoothstep(0.25, 1.0, coverage);
 			density += cirrocumulus;
 		}
 	}
@@ -122,16 +122,16 @@ float CloudVolumeDensity(in vec3 rayPos, out float heightFraction, out float dim
 	rayPos.xz += cameraPosition.xz;
 
 	// Sample cloud map
-	vec2 cloudMap = texture(cloudMapTex, (rayPos.xz * rcp(cloudMapExtend))).xy;
+	vec2 cloudMap = texture(cloudMapTex, (rayPos.xz * rcp(cloudMapExtend) + 0.5)).xy;
 
 	// Coveage profile
-	vec2 stepEdge = mix(vec2(0.6, 1.0) - CLOUD_CU_COVERAGE * 0.35, vec2(0.2, 0.5), sqr(wetness));
+	vec2 stepEdge = mix(vec2(0.5, 1.05) - CLOUD_CU_COVERAGE * 0.35, vec2(0.2, 0.5), sqr(wetness));
 	float coverage = linearstep(stepEdge.x, stepEdge.y, cloudMap.x);
 	coverage *= linearstep(stepEdge.x * 1.25, stepEdge.y * 0.85, texture(noisetex, rayPos.xz * rcp(512e3)).z);
 
 	// Vertical profile
-	float type = min(curve(cloudMap.y), coverage);
-	heightFraction = ValueErosion(heightFraction, oms(cloudMap.y) * 0.3);
+	float type = cloudMap.y * approxSqrt(coverage);
+	// heightFraction = ValueErosion(heightFraction, oms(cloudMap.y) * 0.3);
 	float gradient = GetVerticalProfile(heightFraction, type);
 
 	#if 0

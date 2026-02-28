@@ -83,7 +83,6 @@ void main() {
 			vec3 worldNormal = FetchSurfaceNormal(texelPos);
 
 			vec2 lightmap = Unpack2x8U(loadMaterialPack(texelPos).x);
-			lightmap.y = linearstep(0.3, 0.7, lightmap.y);
 
 			float dither = BlueNoise(texelPos, frameCounter);
 			specularOut = CalculateSpecularReflections(material, worldNormal, screenPos, worldDir, viewPos, lightmap.y, dither);

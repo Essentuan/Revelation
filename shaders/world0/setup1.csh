@@ -1,4 +1,4 @@
-#version 460 core
+#version 460 compatibility
 
 #define CLEAR_IMAGE cloudShadowImg
 #define CLEAR_COLOR vec4(1.0)

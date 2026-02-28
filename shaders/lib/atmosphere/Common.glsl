@@ -74,7 +74,7 @@ float viewerHeight = planetRadius + VIEWER_BASE_ALTITUDE + eyeAltitude;
 const AtmosphereParameters atmosphereModel = AtmosphereParameters(
 	// vec3(1.0),
     vec3(1.474000, 1.850400, 1.911980),
-	0.004675,
+	0.004675 * SUN_RADIUS_MULT,
     planetRadius,
     planetRadius + ATMOSPHERE_THICKNESS,
 //    DensityProfile(DensityProfileLayer[2](DensityProfileLayer(0.000000,0.000000,0.000000,0.000000,0.000000),DensityProfileLayer(0.000000,1.000000,-0.125000,0.000000,0.000000))),

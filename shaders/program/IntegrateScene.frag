@@ -181,7 +181,7 @@ void main() {
 		if (isEyeInWater == 0) {
 			mat2x3 volFogData = UpscaleVolumetricFog(texelPos, -viewPos.z);
 			sceneOut = ApplyFog(sceneOut, volFogData);
-			bloomyFogMask = mean(volFogData[1]);
+			bloomyFogMask = mix(1.0, mean(volFogData[1]), eyeSkylightSmooth);
 		}
 	#endif
 
@@ -201,6 +201,8 @@ void main() {
 
 	// Vanilla fog
 	RenderVanillaFog(sceneOut, bloomyFogMask, viewDistance);
+
+	bloomyFogMask = saturate(1.0 - bloomyFogMask);
 
 	#if DEBUG_NORMALS == 1
 		sceneOut = FetchSurfaceNormal(texelPos) * 0.5 + 0.5;

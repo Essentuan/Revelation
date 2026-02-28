@@ -1,3 +1,3 @@
-#version 450 compatibility
+#version 460 compatibility
 
 #include "/program/DH/Terrain.frag"

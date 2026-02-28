@@ -10,13 +10,11 @@ screen.PostProcessing=Post-Processing
 screen.Debug=Debug
 screen.Compatibility=Compatibility
 
-screen.Atmospherics=Atmospherics
 screen.Weather=Weather
 screen.Foliage=Foliage
 
 screen.Clouds=Clouds
 screen.CloudUpsampling=Cloud Upsampling
-screen.CloudLighting=Cloud Lighting
 
 screen.LowLevelClouds=Low-level Clouds
 screen.MidLevelClouds=Mid-level Clouds
@@ -57,8 +55,11 @@ option.AUTHOR=Author
 option.AUTHOR.comment=Copyright (C) 2024 HaringPro. Apache License 2.0
 
 option.RP_SUPPORT=Resource Pack Support
+option.RENDER_MODE=Render Mode
+value.RENDER_MODE.0=Screenshot
+value.RENDER_MODE.1=Gameplay
 
-# Atmospherics
+# Environment
 option.PLANET_GROUND=Planet Ground
 option.VIEWER_BASE_ALTITUDE=Viewer Base Altitude
 suffix.VIEWER_BASE_ALTITUDE=m
@@ -222,8 +223,10 @@ option.SHADOW_DISTORTION_STRENGTH=Shadow Distortion Strength
 option.SCREEN_SPACE_SHADOWS=Screen-Space Shadows
 option.SCREEN_SPACE_SHADOWS_SAMPLES=Screen-Space Shadows Samples
 
-option.BLOCKLIGHT_TEMPERATURE=Blocklight Temperature
-suffix.BLOCKLIGHT_TEMPERATURE=K
+option.BLOCKLIGHT_BRIGHTNESS=Blocklight Brightness
+option.BLOCKLIGHT_COLOR_R=Blocklight Color §4Red
+option.BLOCKLIGHT_COLOR_G=Blocklight Color §2Green
+option.BLOCKLIGHT_COLOR_B=Blocklight Color §1Blue
 option.HANDHELD_LIGHTING=Handheld Lighting
 option.HELD_LIGHT_BRIGHTNESS=Held Light Brightness
 
@@ -325,7 +328,6 @@ option.GLASS_IOR=Glass IOR
 
 # Misc
 option.DEFAULT_DIELECTRIC_F0=Default Dielectric F0
-option.SELECTION_BOX_WIDTH=Selection Box Width
 option.SELECTION_BOX_COLOR_R=Selection Box Color §4Red
 option.SELECTION_BOX_COLOR_G=Selection Box Color §2Green
 option.SELECTION_BOX_COLOR_B=Selection Box Color §1Blue
@@ -345,6 +347,10 @@ option.MOTION_BLUR_SAMPLES=Motion Blur Samples
 option.MOTION_BLUR_STRENGTH=Motion Blur Strength
 
 option.BLOOM=Bloom
+option.BLOOM_BLENDING_MODE=Bloom Blending Mode
+value.BLOOM_BLENDING_MODE.0=Add
+value.BLOOM_BLENDING_MODE.1=Lerp
+value.BLOOM_BLENDING_MODE.2=Remap
 option.BLOOM_KARIS_AVERAGE=Karis Average
 option.BLOOM_INTENSITY=Bloom Intensity
 option.BLOOMY_FOG=Bloomy Fog

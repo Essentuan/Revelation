@@ -304,9 +304,7 @@ float GetNoHSquared(float radius, float NoL, float NoV, float VoL) {
     return max0(NoH * NoH / HoH);
 }
 
-vec3 SphericalAreaGGX(in float LdotH, in float NdotV, in float NdotL, in float LdotV, in float alpha, in vec3 f0) {
-    const float radius = atmosphereModel.sun_angular_radius * SUN_RADIUS_MULT;
-
+vec3 SphericalAreaGGX(in float LdotH, in float NdotV, in float NdotL, in float LdotV, in float alpha, in vec3 f0, in float radius) {
     // alpha = max(alpha, 1e-2);
     float alpha2 = alpha * alpha;
 
