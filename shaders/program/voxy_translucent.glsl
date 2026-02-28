@@ -33,7 +33,7 @@ vec3 ScreenToViewSpaceVX(in vec3 screenPos) {
 vec4 VoxyApplyColorState(in vec4 color) {
 	// Mirror Voxy's default color path so translucent alpha is preserved.
 	vec4 outColor = color * uint2vec4RGBA(interData.y);
-	outColor.a += float(interData.w & 0xFFu) * r255;
+	outColor.a += float(interData.w & 0xFFu) * rcp255;
 	return clamp(outColor, vec4(0.0), vec4(1.0));
 }
 
@@ -108,7 +108,7 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 		vec3 worldPos1 = transMAD(gbufferModelViewInverse, viewPos1);
 		float waterDepth = distance(worldPos, worldPos1);
 
-		waterOut = vec4(waterDepth * r255, Packup2x8(encodedWaterNormal), 0.0, 1.0);
+		waterOut = vec4(waterDepth * rcp255, Packup2x8(encodedWaterNormal), 0.0, 1.0);
 	} else {
 		materialOut.z = Packup2x8U(baseColor.xy);
 		materialOut.w = Packup2x8U(baseColor.zw);
