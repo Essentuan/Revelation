@@ -194,8 +194,7 @@ vec4 RenderClouds(in vec3 rayDir, in vec2 noise) {
 				float stepSize = rayLength * rcp(raySteps);
 				float rayT = intersection.x + stepSize * noise.x;
 
-				float rayLengthWeighted = 0.0;
-				float raySumWeight = 0.0;
+				float sumDist = 0.0;
 
 				vec2 stepScattering = vec2(0.0);
 				float transmittance = 1.0;
@@ -253,9 +252,8 @@ vec4 RenderClouds(in vec3 rayDir, in vec2 noise) {
 						transmittance *= stepTransmittance;
 
 						// Method from [Hillaire, 2016]
-						// Accumulate the weighted ray length
-						rayLengthWeighted += rayT * transmittance;
-						raySumWeight += transmittance;
+						// Weighted by stepIntegral instead of transmittance
+						sumDist += rayT * stepIntegral;
 
 						// Break if the transmittance is too small (optimization)
 						if (transmittance < cloudMinTransmittance) {
@@ -269,7 +267,7 @@ vec4 RenderClouds(in vec3 rayDir, in vec2 noise) {
 				if (transmittance < 1.0) {
 					cloudData.xy = stepScattering * cumulusAlbedo;
 					cloudData.w = transmittance;
-					cloudData.z = min(rayLengthWeighted / raySumWeight, intersection.y);
+					cloudData.z = sumDist / oms(transmittance);
 				}
 			}
 		}
