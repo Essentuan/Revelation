@@ -286,27 +286,22 @@ uvec2 blockCipherTEA(uint v0, uint v1) {
     return uvec2(v0, v1);
 }
 
-struct NoiseGenerator {
-    uint currentNum;
-};
-
-float nextFloat(inout NoiseGenerator noiseGenerator) {
+float nextFloat(inout uint currentNum) {
     const uint A = 1664525u;
     const uint C = 1013904223u;
-    noiseGenerator.currentNum = (A * noiseGenerator.currentNum + C);
-    return float(noiseGenerator.currentNum >> 8) * rcp(16777216.0);
+    currentNum = (A * currentNum + C);
+    return float(currentNum >> 8) * rcp(16777216.0);
 }
 
-vec2 nextVec2(inout NoiseGenerator noiseGenerator) {
+vec2 nextVec2(inout uint currentNum) {
     vec2 noise;
-    noise.x = nextFloat(noiseGenerator);
-    noise.y = nextFloat(noiseGenerator);
+    noise.x = nextFloat(currentNum);
+    noise.y = nextFloat(currentNum);
     return noise;
 }
 
-NoiseGenerator initNoiseGenerator(uvec2 texelIndex, uint frameIndex) {
-    uint seed = blockCipherTEA(interleave_32bit(texelIndex), frameIndex).x;
-    return NoiseGenerator(seed);
+uint initNoiseGenerator(uvec2 texelIndex, uint frameIndex) {
+    return blockCipherTEA(interleave_32bit(texelIndex), frameIndex).x;
 }
 
 //================================================================================================//
