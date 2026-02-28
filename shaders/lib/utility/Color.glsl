@@ -45,6 +45,21 @@ vec3 sRGBToLinear(in vec3 color) {
 	return mix(color * 0.07739938, pow((color + 0.055) * 0.94786729, vec3(2.4)), step(vec3(0.04045), color));
 }
 
+// https://en.wikipedia.org/wiki/SRGB
+// https://en.wikipedia.org/wiki/ScRGB
+// -f(-x) for negative values.
+vec3 sRGBToLinearSafe(in vec3 color) {
+    vec3 color_sign = sign(color);
+    vec3 color_abs = abs(color);
+	return mix(color_abs * 0.07739938, pow((color_abs + 0.055) * 0.94786729, vec3(2.4)), step(vec3(0.04045), color_abs)) * color_sign;
+}
+
+vec3 linearToSRGBSafe(in vec3 color) {
+    vec3 color_sign = sign(color);
+    vec3 color_abs = abs(color);
+	return mix(color_abs * 12.92, 1.055 * pow(color_abs, vec3(0.41666666)) - 0.055, step(vec3(0.0031308), color_abs)) * color_sign;
+}
+
 // https://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
 vec3 linearToSRGBApprox(in vec3 color) {
     vec3 S1 = color * inversesqrt(color);

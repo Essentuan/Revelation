@@ -165,3 +165,9 @@ uniform vec3 viewLightVector;
     uniform mat4 dhProjectionInverse;
     uniform mat4 dhPreviousProjection;
 #endif
+
+#ifdef HDR_ENABLED
+    uniform float HdrGamePeakBrightness;
+    uniform float HdrGamePaperWhiteBrightness;
+    uniform float HdrUIBrightness;
+#endif

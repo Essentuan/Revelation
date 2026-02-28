@@ -39,7 +39,7 @@ const vec2 workGroupsRender = vec2(1.0, 1.0);
 
 //======// Uniform //=============================================================================//
 
-writeonly uniform image2D colorimg8; // LDR output
+writeonly uniform image2D colorimg8; // LDR / Tonemapped HDR output
 
 #include "/lib/universal/Uniform.glsl"
 
@@ -206,7 +206,14 @@ void main() {
 		// color *= Rec2020_2_sRGB;
 
 		// Working to display space
-		color = saturate(linearToSRGB(color));
+		#ifdef HDR_ENABLED
+			// UI brightness scaling
+			color *= HdrGamePaperWhiteBrightness / HdrUIBrightness;
+			// Normalize for FFX CAS
+			color = saturate(linearToSRGBSafe(color) / linearToSRGBSafe(vec3(HdrGamePeakBrightness * HdrGamePaperWhiteBrightness / HdrUIBrightness)));
+		#else
+			color = saturate(linearToSRGB(color));
+		#endif
 	}
 
 	// Debug tone mapping plot

@@ -103,7 +103,12 @@ void main() {
 	#ifdef DEBUG_BLOOM_TILES
 		finalOut = texelFetch(colortex4, texelPos, 0).rgb;
 	#else
-		finalOut = FFXCasFilter(texelPos, CAS_STRENGTH);
+		#ifdef HDR_ENABLED
+			// Scale back up to game brightness after CAS 
+			finalOut = FFXCasFilter(texelPos, CAS_STRENGTH) * linearToSRGBSafe(vec3(HdrGamePeakBrightness * HdrGamePaperWhiteBrightness / HdrUIBrightness));
+		#else
+			finalOut = FFXCasFilter(texelPos, CAS_STRENGTH);
+		#endif
 	#endif
 
 	// Text display
@@ -143,6 +148,8 @@ void main() {
 		HistogramDisplay(finalOut, texelPos);
 	#endif
 
-	// Apply bayer dithering to reduce banding artifacts
-	finalOut += (bayer16(gl_FragCoord.xy) - 0.5) * rcp255;
+	#ifndef HDR_ENABLED
+		// Apply bayer dithering to reduce banding artifacts
+		finalOut += (bayer16(gl_FragCoord.xy) - 0.5) * rcp255;
+	#endif
 }
