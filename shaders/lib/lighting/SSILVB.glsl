@@ -22,34 +22,35 @@ vec2 cmul(vec2 c0, vec2 c1) {
 
 float SamplePartialSlice(float x, float sin_thVN) {
     float abs_x = abs(x);
-    if (abs_x < EPS || abs_x >= 1.0) return x;
+    if ((abs_x - 0.5) < 0.5) {
+        float s = sin_thVN;
 
-    float s = sin_thVN;
+        float o = s - s * s;
+        float slp0 = 1.0 / (1.0 + (PI  - 1.0) * (s - o * 0.30546));
+        float slp1 = 1.0 / (1.0 - (1.0 - exp2(-20.0)) * (s + o * mix(0.5, 0.785, s)));
+        float k = mix(0.1, 0.25, s);
 
-    float o = s - s * s;
-    float slp0 = 1.0 / (1.0 + (PI  - 1.0) * (s - o * 0.30546));
-    float slp1 = 1.0 / (1.0 - (1.0 - exp2(-20.0)) * (s + o * mix(0.5, 0.785, s)));
-    float k = mix(0.1, 0.25, s);
+        const float a = 1.0 - (PI - 2.0) / (PI - 1.0);
+        const float b = 1.0 / (PI - 1.0);
 
-    const float a = 1.0 - (PI - 2.0) / (PI - 1.0);
-    const float b = 1.0 / (PI - 1.0);
+        float d0 =   a - slp0 * b;
+        float d1 = 1.0 - slp1;
 
-    float d0 =   a - slp0 * b;
-    float d1 = 1.0 - slp1;
+        float f0 = d0 * (PI * abs_x - asinFast4(abs_x));
+        float f1 = d1 * (abs_x - 1.0);
 
-    float f0 = d0 * (PI * abs_x - asinFast4(abs_x));
-    float f1 = d1 * (abs_x - 1.0);
+        float kk = k * k;
 
-    float kk = k * k;
+        float h0 = sqrt(f0 * f0 + kk) - k;
+        float h1 = sqrt(f1 * f1 + kk) - k;
 
-    float h0 = sqrt(f0 * f0 + kk) - k;
-    float h1 = sqrt(f1 * f1 + kk) - k;
+        float hh = (h0 * h1) / (h0 + h1);
 
-    float hh = (h0 * h1) / (h0 + h1);
+        float y = abs_x - sqrt(hh * (hh + 2.0 * k));
 
-    float y = abs_x - sqrt(hh * (hh + 2.0 * k));
-
-    return signMul(y, x);
+        return signMul(y, x);
+    }
+    return x;
 }
 
 // https://www.shadertoy.com/view/lXBfWm
@@ -82,22 +83,23 @@ float ArcTan11(vec2 dir) { // == ArcTan(dir) / Pi
 
 vec2 SamplePartialSliceDir(vec3 vvsN, vec2 dir0) {
     float l = sdot(vvsN.xy);
-    if (l < EPS) return dir0;
+    if (l > 0.0) {
+        float rl = inversesqrt(l);
+        vec2 n = vvsN.xy * rl;
+        // align n with x-axis
+        dir0 = cmul(dir0, n * vec2(1.0, -1.0));
 
-    float rl = inversesqrt(l);
-    vec2 n = vvsN.xy * rl;
-    // align n with x-axis
-    dir0 = cmul(dir0, n * vec2(1.0, -1.0));
+        // sample slice angle
+        float x = ArcTan11(dir0);
+        float ang = SamplePartialSlice(x, l * rl) * PI;
 
-    // sample slice angle
-    float x = ArcTan11(dir0);
-    float ang = SamplePartialSlice(x, l * rl) * PI;
+        // ray space slice direction
+        vec2 dir = vec2(cos(ang), sin(ang));
 
-    // ray space slice direction
-    vec2 dir = vec2(cos(ang), sin(ang));
-
-    // align x-axis with n
-    return cmul(dir, n);
+        // align x-axis with n
+        return cmul(dir, n);
+    }
+    return dir0;
 }
 
 vec4 GetQuaternion(vec3 from, vec3 to) {
@@ -196,7 +198,11 @@ vec4 CalculateSSILVB(in vec2 fragCoord, in vec3 viewPos, in vec3 worldNormal, in
 
         vec3 sliceN = cross(viewDir, smplDirVS);
         vec3 projN = viewNormal - sliceN * dot(viewNormal, sliceN);
-        float cosN = dot(projN, viewDir) * inversesqrt(sdot(projN));
+
+        float projNSqrLen = dot(projN, projN);
+        if (projNSqrLen < EPS) continue;
+
+        float cosN = dot(projN, viewDir) * inversesqrt(projNSqrLen);
 
         float angN = signMul(acosFast4(satSnorm(cosN)), dot(viewDir, cross(sliceN, projN)));
         float angOff = angN * rPI + 0.5;
@@ -235,13 +241,14 @@ vec4 CalculateSSILVB(in vec2 fragCoord, in vec3 viewPos, in vec3 worldNormal, in
                 if (sampleDepth > 1.0 - EPS) continue;
 
                 vec3 samplePos = ScreenToViewSpace(vec3(sampleUV, sampleDepth));
-				vec3 sampleDiff = samplePos - viewPos;
 
-                vec3 sampleDirFront = sampleDiff * fastRcpSqrtNR0(sdot(sampleDiff));
-                vec3 sampleDirBack = sampleDiff - viewDir * max(abs(samplePos.z) * hitThickness, 0.25);
+                vec3 sampleDirFront = samplePos - viewPos;
+                vec3 sampleDirBack = sampleDirFront + viewDir * samplePos.z * hitThickness;
 
-                vec2 frontBackHorizon = vec2(dot(sampleDirFront, viewDir),
-                     fastRcpSqrtNR0(sdot(sampleDirBack)) * dot(sampleDirBack, viewDir));
+                vec2 frontBackHorizon = vec2(
+                    fastRcpSqrtNR0(sdot(sampleDirFront)) * dot(sampleDirFront, viewDir),
+                    fastRcpSqrtNR0(sdot(sampleDirBack)) * dot(sampleDirBack, viewDir)
+                );
 
                 frontBackHorizon = acosFast4(satSnorm(frontBackHorizon));
                 frontBackHorizon = saturate(frontBackHorizon * rPI + angOff);
