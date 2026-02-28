@@ -41,7 +41,27 @@ writeonly restrict uniform image2D colorimg2;
 #include "/lib/universal/Fetch.glsl"
 #include "/lib/universal/Random.glsl"
 
-vec4 TemporalFilter(in ivec2 texel, in vec3 screenPos, in vec3 worldNormal, out float viewDistance) {
+vec4 TemporalFilter(in ivec2 texelPos, in vec3 screenPos, in vec3 worldNormal, out float viewDistance) {
+    ivec2 texelEnd = ivec2(halfViewEnd) - 1;
+    {
+        float luma = texelFetch(colortex3, texelPos, 0).r; // We use YCoCg color space
+
+        // Estimate spatial variance
+        vec2 currMoments = vec2(luma, luma * luma);
+        #if 1
+            for (uint i = 0u; i < 8u; ++i) {
+                ivec2 sampleTexel = clamp(texelPos + offset3x3N[i], ivec2(1), texelEnd);
+                float sampleLuma = texelFetch(colortex3, sampleTexel, 0).r; // We use YCoCg color space
+
+                currMoments += vec2(sampleLuma, sampleLuma * sampleLuma);
+            }
+
+            currMoments *= 1.0 / 9.0;
+        #endif
+        varianceMoments.xy = currMoments;
+    }
+    vec2 currCoord = texelToUv(texelPos);
+
 	vec3 viewPos = ScreenToViewSpace(screenPos);
     vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
     viewDistance = sdot(worldPos);
@@ -60,23 +80,6 @@ vec4 TemporalFilter(in ivec2 texel, in vec3 screenPos, in vec3 worldNormal, out 
     vec2 prevCoord = worldPos.xy * 0.5 + 0.5;
     prevCoord += (prevTaaOffset - taaOffset) * 0.25;
 
-    float luma = texelFetch(colortex3, texel, 0).r; // We use YCoCg color space
-    ivec2 texelEnd = ivec2(halfViewEnd) - 1;
-
-    // Estimate spatial variance
-    vec2 currMoments = vec2(luma, luma * luma);
-    #if 1
-	    for (uint i = 0u; i < 8u; ++i) {
-            ivec2 sampleTexel = clamp(texel + offset3x3N[i], ivec2(1), texelEnd);
-            float sampleLuma = texelFetch(colortex3, sampleTexel, 0).r; // We use YCoCg color space
-
-            currMoments += vec2(sampleLuma, sampleLuma * sampleLuma);
-        }
-
-        currMoments *= 1.0 / 9.0;
-    #endif
-    varianceMoments.xy = currMoments;
-
     if (saturate(prevCoord) == prevCoord && !worldTimeChanged) {
         vec4 prevDiffuse = vec4(0.0);
         vec2 prevMoments = vec2(0.0);
@@ -84,7 +87,10 @@ vec4 TemporalFilter(in ivec2 texel, in vec3 screenPos, in vec3 worldNormal, out 
         float confidence = 0.0;
 
         // Custom bilinear filter
-        vec2 prevTexel = prevCoord * viewSize * 0.5 - vec2(0.5);
+        vec2 prevTexel = (prevCoord * viewSize
+         - checkerboardOffset2x2[(frameCounter - 1) & 3u]
+         - 0.5) * 0.5;
+
         ivec2 floorTexel = ivec2(floor(prevTexel));
         vec2 fractTexel = prevTexel - vec2(floorTexel);
 
@@ -126,22 +132,18 @@ vec4 TemporalFilter(in ivec2 texel, in vec3 screenPos, in vec3 worldNormal, out 
             float sampleIndex = min(prevDiffuse.a * confidence + 1.0, SSILVB_MAX_ACCUM_FRAMES);
             float alpha = rcp(sampleIndex);
 
-            // See section 4.2 of the paper
-            // if (sampleIndex > 4.5) {
-                varianceMoments.xy = mix(prevMoments, varianceMoments.xy, alpha);
-            // }
-
             float mipLevel = 3.0 * saturate(1.0 - sampleIndex * rcp(8.0));
-            indirectCurrent.rgb = textureLod(colortex3, screenPos.xy * 0.5, mipLevel).rgb;
+            indirectCurrent.rgb = textureLod(colortex3, currCoord, mipLevel).rgb;
             indirectCurrent.rgb = mix(prevDiffuse.rgb, indirectCurrent.rgb, alpha);
 
+            varianceMoments.xy = mix(prevMoments, varianceMoments.xy, alpha);
             indirectCurrent.a = max0(varianceMoments.y - varianceMoments.x * varianceMoments.x);
 
             return vec4(indirectCurrent.rgb, sampleIndex);
         }
     }
 
-    indirectCurrent.rgb = textureLod(colortex3, screenPos.xy * 0.5, 3.0).rgb;
+    indirectCurrent.rgb = textureLod(colortex3, currCoord, 3.0).rgb;
     indirectCurrent.a = sqr(varianceMoments.x);
 
     return vec4(indirectCurrent.rgb, 1.0);
@@ -161,16 +163,15 @@ float GetClosestDepthN(in ivec2 texel) {
 
 //======// Main //================================================================================//
 void main() {
-    vec2 renderCoord = gl_FragCoord.xy * viewPixelSize * 2.0;
+    ivec2 texelPos = ivec2(gl_FragCoord.xy);
+
+    ivec2 renderTexel = texelPos * 2 + checkerboardOffset2x2[frameCounter & 3u];
+    vec2 renderCoord = texelToUv(renderTexel);
 
     indirectCurrent = vec4(0.0);
     varianceMoments = vec2(0.0);
 
     if (saturate(renderCoord) == renderCoord) {
-        ivec2 texelPos = ivec2(gl_FragCoord.xy);
-
-        ivec2 renderTexel = texelPos << 1;
-
         float depth = loadDepth0(renderTexel);
         bool terrainCheck = min(GetClosestDepthN(renderTexel), depth) < 1.0;
         #if defined DISTANT_HORIZONS
