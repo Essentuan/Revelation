@@ -129,7 +129,7 @@ const float stratusScattering 		= stratusExtinction * stratusAlbedo;
 const float cirrusScattering 		= cirrusExtinction * cirrusAlbedo;
 
 const float cloudEpsilon            = 0.001;
-const float cloudMinTransmittance   = 0.05;
+const float cloudMinTransmittance   = 0.02;
 
 //================================================================================================//
 
