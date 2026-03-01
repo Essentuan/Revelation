@@ -42,19 +42,18 @@ out vec4 specularOut;
 
 #include "/lib/atmosphere/Common.glsl"
 
-#if defined MC_SPECULAR_MAP
-	#include "/lib/surface/BRDF.glsl"
-	#include "/lib/surface/Reflection.glsl"
-#endif
+#include "/lib/surface/BRDF.glsl"
+#include "/lib/surface/Reflection.glsl"
 
 //======// Main //================================================================================//
 void main() {
 	specularOut = vec4(0.0);
 
-	#if defined MC_SPECULAR_MAP
-		ivec2 texelPos = ivec2(gl_FragCoord.xy);
-		vec3 screenPos = vec3(gl_FragCoord.xy * viewPixelSize, loadDepth0(texelPos));
+	ivec2 texelPos = ivec2(gl_FragCoord.xy);
 
+	Material material = GetMaterialData(Unpack2x8U(loadMaterialPack(texelPos).z));
+	if (material.specularMask) {
+		vec3 screenPos = vec3(gl_FragCoord.xy * viewPixelSize, loadDepth0(texelPos));
 		if (screenPos.z > 1.0 - EPS) discard;
 
 		// Hand-depth correction
@@ -62,30 +61,25 @@ void main() {
 			screenPos.z = screenPos.z * rcp(MC_HAND_DEPTH) + (0.5 - 0.5 / MC_HAND_DEPTH);
 		}
 
-    	Material material = GetMaterialData(Unpack2x8U(loadMaterialPack(texelPos).z));
+		vec3 viewPos = ScreenToViewSpace(screenPos);
 
-		// Specular reflections
-		if (material.specularMask) {
-			vec3 viewPos = ScreenToViewSpace(screenPos);
+		#if defined DISTANT_HORIZONS
+			bool dhTerrainMask = screenPos.z > 1.0 - EPS;
+			if (dhTerrainMask) {
+				screenPos.z = loadDepth0DH(texelPos);
+				viewPos = ScreenToViewSpaceDH(screenPos);
+			}
+		#endif
 
-			#if defined DISTANT_HORIZONS
-				bool dhTerrainMask = screenPos.z > 1.0 - EPS;
-				if (dhTerrainMask) {
-					screenPos.z = loadDepth0DH(texelPos);
-					viewPos = ScreenToViewSpaceDH(screenPos);
-				}
-			#endif
+		vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
+		vec3 worldDir = normalize(worldPos);
+		worldPos += gbufferModelViewInverse[3].xyz;
 
-			vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
-			vec3 worldDir = normalize(worldPos);
-			worldPos += gbufferModelViewInverse[3].xyz;
+		vec3 worldNormal = FetchSurfaceNormal(texelPos);
 
-			vec3 worldNormal = FetchSurfaceNormal(texelPos);
+		vec2 lightmap = Unpack2x8U(loadMaterialPack(texelPos).x);
 
-			vec2 lightmap = Unpack2x8U(loadMaterialPack(texelPos).x);
-
-			float dither = BlueNoise(texelPos, frameCounter);
-			specularOut = CalculateSpecularReflections(material, worldNormal, screenPos, worldDir, viewPos, lightmap.y, dither);
-		}
-	#endif
+		float dither = BlueNoise(texelPos, frameCounter);
+		specularOut = CalculateSpecularReflections(material, worldNormal, screenPos, worldDir, viewPos, lightmap.y, dither);
+	}
 }
