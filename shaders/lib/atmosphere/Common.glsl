@@ -174,6 +174,11 @@ vec2 RaySphericalShellIntersection(in float r, in float mu, in float bottomRad, 
 	}
 }
 
+// https://doi.org/10.1364/JOSA.47.000176
+float AirPhase(in float mu) {
+	return uniformPhase * 0.7629 * (1.0 + 0.932 * mu * mu);
+}
+
 // HG-Draine for aerosols
 float AerosolPhase(in float mu) {
     const float ld = log(aerosol_d);

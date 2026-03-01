@@ -346,8 +346,8 @@ vec3 GetSkyRadianceToPoint(
         sun_single_mie_scattering *= smoothstep(0.0, 0.01, mu_s);
         moon_single_mie_scattering *= smoothstep(0.0, 0.01, -mu_s);
 
-        vec3 rayleigh = sun_scattering * RayleighPhase(nu)
-                     + moon_scattering * RayleighPhase(-nu) * moonlightMult;
+        vec3 rayleigh = sun_scattering * AirPhase(nu)
+                     + moon_scattering * AirPhase(-nu) * moonlightMult;
 
         vec3 mie = sun_single_mie_scattering * AerosolPhase(nu)
                 + moon_single_mie_scattering * AerosolPhase(-nu) * moonlightMult;
@@ -422,8 +422,8 @@ vec3 GetSkyRadiance(
         sun_scattering = GetCombinedScattering(r, mu, mu_s, nu, ray_r_mu_intersects_ground, sun_single_mie_scattering);
         moon_scattering = GetCombinedScattering(r, mu, -mu_s, -nu, ray_r_mu_intersects_ground, moon_single_mie_scattering);
 
-        vec3 rayleigh = sun_scattering * RayleighPhase(nu)
-                     + moon_scattering * RayleighPhase(-nu) * moonlightMult;
+        vec3 rayleigh = sun_scattering * AirPhase(nu)
+                     + moon_scattering * AirPhase(-nu) * moonlightMult;
 
         vec3 mie = sun_single_mie_scattering * AerosolPhase(nu)
                 + moon_single_mie_scattering * AerosolPhase(-nu) * moonlightMult;
@@ -494,8 +494,8 @@ vec3 GetSkyRadiance(
         sun_scattering = GetCombinedScattering(r, mu, mu_s, nu, ray_r_mu_intersects_ground, sun_single_mie_scattering);
         moon_scattering = GetCombinedScattering(r, mu, -mu_s, -nu, ray_r_mu_intersects_ground, moon_single_mie_scattering);
 
-        vec3 rayleigh = sun_scattering * RayleighPhase(nu)
-                     + moon_scattering * RayleighPhase(-nu) * moonlightMult;
+        vec3 rayleigh = sun_scattering * AirPhase(nu)
+                     + moon_scattering * AirPhase(-nu) * moonlightMult;
 
         vec3 mie = sun_single_mie_scattering * AerosolPhase(nu)
                 + moon_single_mie_scattering * AerosolPhase(-nu) * moonlightMult;
