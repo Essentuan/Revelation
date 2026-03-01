@@ -1,20 +1,9 @@
 const float uniformPhase = 0.25 * rPI;
 
-#if 0
-// Standard version
 float RayleighPhase(in float mu) {
     const float k = uniformPhase * 0.75;
 	return k * (1.0 + mu * mu);
 }
-#else
-// Depolarized version
-float RayleighPhase(in float mu) {
-    const float pn = 0.03;
-    const float gamma = pn / (2.0 - pn);
-    const float k = uniformPhase * 3.0 / (4.0 * (2.0 * gamma + 1.0));
-    return k * ((3.0 * gamma + 1.0) + (1.0 - gamma) * mu * mu);
-}
-#endif
 
 // Ad hoc Rayleigh phase function
 // From https://old.cescg.org/CESCG-2009/papers/PragueCUNI-Elek-Oskar.pdf
