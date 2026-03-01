@@ -3,8 +3,11 @@
 mat2x3 AnalyticWaterFog(in float skylight, in float waterDepth, in float LdotV) {
 	vec3 sunTransmittance = exp2(-rLOG2 * waterExtinction * mix(4.0, 1.0, worldLightVector.y));
 
-	// float phase = clamp(FournierForandPhase(LdotV, 1.2, 3.3225), 0.0, 1e3);
-	float phase = DualLobePhase(LdotV, 0.95, -0.6, 0.1);
+	#if 0
+		float phase = FournierForandPhase(LdotV, 1.175, 4.065);
+	#else
+		float phase = DualLobePhase(LdotV, 0.95, -0.6, 0.1);
+	#endif
 
 	const vec3 msV = waterAlbedo * 0.99;
 	vec3 scattering = phase + uniformPhase * msV / oms(msV);
@@ -71,8 +74,11 @@ mat2x3 AnalyticWaterFog(in float skylight, in float waterDepth, in float LdotV) 
 		shadow *= rSteps;
 
 		float LdotV = dot(worldLightVector, worldDir);
-		// float phase = clamp(FournierForandPhase(LdotV, 1.2, 3.3225), 0.0, 1e3);
-		float phase = DualLobePhase(LdotV, 0.95, -0.6, 0.1);
+		#if 0
+			float phase = FournierForandPhase(LdotV, 1.175, 4.065);
+		#else
+			float phase = DualLobePhase(LdotV, 0.95, -0.6, 0.1);
+		#endif
 
 		const vec3 msV = waterAlbedo * 0.99;
 		vec3 scattering = phase * shadow + uniformPhase * msV / oms(msV) * approxSqrt(shadow);

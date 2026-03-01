@@ -127,12 +127,12 @@ vec3 invReinhard(in vec3 sdr) {
     return sdr * rcp(1.0 - luminance(sdr));
 }
 
-// From GPU Zen 4
+// Inspired by GPU Zen 4
 vec3 TonemapRadiance(in vec3 v, in float e) {
-    return v * pow(maxEps(maxOf(v)), e - 1.0);
+    return v * pow(luminance(v) + EPS, e - 1.0);
 }
 vec3 InverseTonemapRadiance(in vec3 v, in float e) {
-    return v * pow(maxEps(maxOf(v)), rcp(e) - 1.0);
+    return v * pow(luminance(v) + EPS, rcp(e) - 1.0);
 }
 
 //================================================================================================//

@@ -9,37 +9,6 @@
 
 //================================================================================================//
 
-// PDF = NoL / PI
-vec3 SampleCosineHemisphere(in vec2 xy) {
-    float r = sqrt(xy.x);
-    float phi = TAU * xy.y;
-
-    float x = r * cos(phi);
-    float y = r * sin(phi);
-    float z = sqrt(1.0 - xy.x);
-
-    return vec3(x, y, z);
-}
-
-vec3 SampleCosineHemisphere(in vec3 vector, in vec2 xy) {
-    float phi = TAU * xy.x;
-    float cosTheta = 1.0 - xy.y * 2.0;
-    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-
-    vec3 hemisphere = vec3(cossin(phi) * sinTheta, cosTheta);
-	hemisphere = normalize(vector + hemisphere);
-	return signMul(hemisphere, dot(hemisphere, vector));
-}
-
-vec3 SampleConeVector(in vec3 vector, in vec2 xy, in float angle) {
-    float phi = TAU * xy.x;
-    float cosTheta = mix(angle, 1.0, xy.y);
-    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-
-    vec3 sphereCap = vec3(cossin(phi) * sinTheta, cosTheta);
-    return BuildOrthonormalBasis(vector) * sphereCap;
-}
-
 // PDF = D * NoH / (4 * VoH)
 vec3 SampleGGX(in vec2 xy, in float alpha, in vec3 normal) {
     float phi = TAU * xy.x;

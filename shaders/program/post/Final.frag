@@ -3,7 +3,7 @@
 
 	Revelation Shaders
 
-	Copyright (C) 2024 HaringPro
+	Copyright (C) 2026 HaringPro
 	Apache License 2.0
 
 	Pass: Contrast adaptive sharpening and final output

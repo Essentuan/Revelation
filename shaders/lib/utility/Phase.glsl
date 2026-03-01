@@ -1,20 +1,9 @@
 const float uniformPhase = 0.25 * rPI;
 
-#if 0
-// Standard version
 float RayleighPhase(in float mu) {
     const float k = uniformPhase * 0.75;
 	return k * (1.0 + mu * mu);
 }
-#else
-// Depolarized version
-float RayleighPhase(in float mu) {
-    const float pn = 0.03;
-    const float gamma = pn / (2.0 - pn);
-    const float k = uniformPhase * 3.0 / (4.0 * (2.0 * gamma + 1.0));
-    return k * ((3.0 * gamma + 1.0) + (1.0 - gamma) * mu * mu);
-}
-#endif
 
 // Ad hoc Rayleigh phase function
 // From https://old.cescg.org/CESCG-2009/papers/PragueCUNI-Elek-Oskar.pdf
@@ -89,10 +78,8 @@ float KleinNishinaPhase(in float mu, in float e) {
 
 // https://www.oceanopticsbook.info/view/scattering/the-fournier-forand-phase-function
 float FournierForandPhase(in float cosTheta, in float n, in float mu) {
-	float theta = fastAcos(cosTheta);
-
 	float v = (3.0 - mu) * 0.5;
-    float u2 = sqr(sin(theta * 0.5));
+    float u2 = oms(cosTheta) * 0.5; // = sqr(sin(acos(cosTheta) * 0.5))
 	float delta180 = 4.0 / (3.0 * sqr(n - 1.0));
 	float delta = delta180 * u2;
 

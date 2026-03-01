@@ -3,7 +3,7 @@
 
 	Revelation Shaders
 
-	Copyright (C) 2024 HaringPro
+	Copyright (C) 2026 HaringPro
 	Apache License 2.0
 
 	Pass: Deferred lighting and sky combination
@@ -142,23 +142,24 @@ void main() {
 
 		#if defined MC_SPECULAR_MAP
 			vec4 specularTex = ExtractSpecularTex(materialPack);
-
-			// Compute rain puddles
-			#ifdef RAIN_PUDDLES
-				if (wetnessCustom > 1e-2) {
-					if (clamp(materialID, 1000u, 1002u) != materialID && materialID != 20u && materialID != 40u) {
-						CalculateRainPuddles(albedo, worldNormal, specularTex.rgb, worldPos, flatNormal, lightmap.y);
-					}
-				}
-			#endif
-
-			Material material = GetMaterialData(specularTex);
-
-			materialPack.z = Packup2x8U(specularTex.xy);
-			imageStore(colorimg7, texelPos, materialPack);
 		#else
-			Material material = Material(1.0, 0.0, 0.0, false, false);
+			vec4 specularTex = vec4(0.0);
 		#endif
+
+		// Compute rain puddles
+		#ifdef RAIN_PUDDLES
+			if (wetnessCustom > EPS) {
+				// Skip foliage
+				if (clamp(materialID, 1000u, 1002u) != materialID) {
+					CalculateRainPuddles(albedo, worldNormal, specularTex.rgb, worldPos, flatNormal, lightmap.y);
+
+					materialPack.z = Packup2x8U(specularTex.xy);
+					imageStore(colorimg7, texelPos, materialPack);
+				}
+			}
+		#endif
+
+		Material material = GetMaterialData(specularTex);
 
 		float sssAmount = 0.0;
 		#if SUBSURFACE_SCATTERING_MODE < 2

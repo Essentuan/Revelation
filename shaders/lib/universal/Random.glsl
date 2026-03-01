@@ -286,27 +286,22 @@ uvec2 blockCipherTEA(uint v0, uint v1) {
     return uvec2(v0, v1);
 }
 
-struct NoiseGenerator {
-    uint currentNum;
-};
-
-float nextFloat(inout NoiseGenerator noiseGenerator) {
+float nextFloat(inout uint currentNum) {
     const uint A = 1664525u;
     const uint C = 1013904223u;
-    noiseGenerator.currentNum = (A * noiseGenerator.currentNum + C);
-    return float(noiseGenerator.currentNum >> 8) * rcp(16777216.0);
+    currentNum = (A * currentNum + C);
+    return float(currentNum >> 8) * rcp(16777216.0);
 }
 
-vec2 nextVec2(inout NoiseGenerator noiseGenerator) {
+vec2 nextVec2(inout uint currentNum) {
     vec2 noise;
-    noise.x = nextFloat(noiseGenerator);
-    noise.y = nextFloat(noiseGenerator);
+    noise.x = nextFloat(currentNum);
+    noise.y = nextFloat(currentNum);
     return noise;
 }
 
-NoiseGenerator initNoiseGenerator(uvec2 texelIndex, uint frameIndex) {
-    uint seed = blockCipherTEA(interleave_32bit(texelIndex), frameIndex).x;
-    return NoiseGenerator(seed);
+uint initNoiseGenerator(uvec2 texelIndex, uint frameIndex) {
+    return blockCipherTEA(interleave_32bit(texelIndex), frameIndex).x;
 }
 
 //================================================================================================//
@@ -387,4 +382,64 @@ uint OwenScramble(uint p, uint seed) {
     p = bitfieldReverse(p);
     p = OwenHash(p, seed);
     return bitfieldReverse(p);
+}
+
+//================================================================================================//
+
+// PDF = 1 / (4 * PI)
+vec3 SampleUniformSphere(in vec2 xy) {
+    float phi = TAU * xy.x;
+    float cosTheta = 1.0 - xy.y * 2.0;
+    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+    float x = sinTheta * cos(phi);
+    float y = sinTheta * sin(phi);
+    float z = cosTheta;
+
+    return vec3(x, y, z);
+}
+
+// PDF = 1 / (2 * PI)
+vec3 SampleUniformHemisphere(in vec2 xy) {
+    float phi = TAU * xy.x;
+    float cosTheta = xy.y;
+    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+    float x = sinTheta * cos(phi);
+    float y = sinTheta * sin(phi);
+    float z = cosTheta;
+
+    return vec3(x, y, z);
+}
+
+// PDF = NoL / PI
+vec3 SampleCosineHemisphere(in vec2 xy) {
+    float phi = TAU * xy.x;
+    float cosTheta = sqrt(xy.y);
+    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+    float x = sinTheta * cos(phi);
+    float y = sinTheta * sin(phi);
+    float z = cosTheta;
+
+    return vec3(x, y, z);
+}
+
+// PDF = NoL / PI
+vec3 SampleCosineHemisphere(in vec3 vector, in vec2 xy) {
+    vec3 hemisphere = SampleUniformSphere(xy);
+	hemisphere = normalize(vector + hemisphere);
+	return signMul(hemisphere, dot(hemisphere, vector));
+}
+
+// PDF = 1 / (2 * PI * (1 - cosThetaMax));
+vec3 SampleConeVector(in vec3 vector, in vec2 xy, in float cosThetaMax) {
+    float phi = TAU * xy.x;
+    float cosTheta = mix(cosThetaMax, 1.0, xy.y);
+    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+    float x = sinTheta * cos(phi);
+    float y = sinTheta * sin(phi);
+    float z = cosTheta;
+    return BuildOrthonormalBasis(vector) * vec3(x, y, z);
 }
