@@ -9,13 +9,12 @@ vec3 VoxyFaceNormal(in uint face) {
 		uint((face >> 1u) == 2u),
 		uint((face >> 1u) == 0u),
 		uint((face >> 1u) == 1u)
-	) * (float(int(face & 1u)) * 2.0 - 1.0);
+	) * uintBitsToFloat((face << 31u) ^ 0xBF800000u);
 }
 
 uint VoxyMaterialId(in uint customId) {
-	if (customId >= 10000u) {
-		uint materialId = customId - 10000u;
-		return materialId == 0u ? 1u : materialId;
+	if (customId > 10000u) {
+		return customId - 10000u;
 	}
 	return 1u;
 }

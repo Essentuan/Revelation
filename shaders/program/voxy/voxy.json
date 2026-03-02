@@ -21,7 +21,5 @@
         "vxDepthTexOpaque",
         "noisetex",
         "depthtex0"
-    ],
-    "opaquePatchData": "void voxy_emitFragment(VoxyFragmentParameters parameters) {}",
-    "translucentPatchData": "void voxy_emitFragment(VoxyFragmentParameters parameters) {}"
+    ]
 }
