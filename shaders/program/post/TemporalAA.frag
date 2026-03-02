@@ -148,18 +148,13 @@ void main() {
     float depth = loadDepth0(screenTexel);
 	vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
 
-    bool lodMask = false;
-    #if defined LOD_MOD
-        // Voxy LoD often does not write vanilla depth (depth ~= 1.0 but non-sky material).
-        // Detect it and use DH/VOXY reprojection path instead of fully disabling temporal effects.
-        uint materialID = loadMaterialPack(screenTexel).y;
-        lodMask = depth > 1.0 - EPS && materialID != 0u;
-    #endif
-
     #if RENDER_MODE == 1
         vec2 motionVector;
         #if defined LOD_MOD
-            if (lodMask) {
+            // Voxy LoD often does not write vanilla depth (depth ~= 1.0 but non-sky material).
+            // Detect it and use DH/VOXY reprojection path instead of fully disabling temporal effects.
+            uint materialID = loadMaterialPack(screenTexel).y;
+            if (depth > 1.0 - EPS && materialID != 0u) {
                 float lodDepth = loadDepth0Lod(screenTexel);
                 motionVector = screenCoord - ReprojectLod(vec3(screenCoord, lodDepth)).xy;
             } else
