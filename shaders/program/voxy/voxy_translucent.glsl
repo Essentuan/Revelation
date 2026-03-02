@@ -13,23 +13,9 @@ vec3 VoxyFaceNormal(in uint face) {
 	) * uintBitsToFloat((face << 31u) ^ 0xBF800000u);
 }
 
-uint VoxyMaterialId(in uint customId) {
-	if (customId > 10000u) {
-		return customId - 10000u;
-	}
-	return 2u;
-}
-
 vec3 ScreenToViewSpace(in vec3 screenPos) {
 	vec3 ndcPos = screenPos * 2.0 - 1.0;
 	return ProjectDivide(ndcPos, vxProjInv);
-}
-
-vec4 ApplyColorState(in vec4 color) {
-	// Mirror Voxy's default color path so translucent alpha is preserved.
-	vec4 outColor = color * uint2vec4RGBA(interData.y);
-	outColor.a += float(interData.w & 0xFFu) * rcp255;
-	return saturate(outColor);
 }
 
 float BlueNoise(in ivec2 texel, in int frame) {
@@ -45,10 +31,10 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
 	vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
 
-	vec4 baseColor = ApplyColorState(parameters.sampledColour * parameters.tinting);
+	vec4 baseColor = parameters.sampledColour * parameters.tinting;
 	vec2 lightmap = vec2(0.0, saturate((parameters.lightMap.y - 0.03125) * 1.06667));
 
-	uint materialId = VoxyMaterialId(parameters.customId);
+	uint materialId = max(parameters.customId - 10000u, 2u);
 	bool waterMask = materialId == 3u;
 
 	// Treat unknown translucent materials as generic glass.

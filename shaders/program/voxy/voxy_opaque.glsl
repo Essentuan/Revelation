@@ -12,13 +12,6 @@ vec3 VoxyFaceNormal(in uint face) {
 	) * uintBitsToFloat((face << 31u) ^ 0xBF800000u);
 }
 
-uint VoxyMaterialId(in uint customId) {
-	if (customId > 10000u) {
-		return customId - 10000u;
-	}
-	return 1u;
-}
-
 void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 	vec4 baseColor = parameters.sampledColour * parameters.tinting;
 	vec3 flatNormal = VoxyFaceNormal(parameters.face);
@@ -31,7 +24,7 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 	#endif
 
 	materialOut.x = Packup2x8U(lightmap);
-	materialOut.y = VoxyMaterialId(parameters.customId);
+	materialOut.y = max(parameters.customId - 10000u, 1u);
 	materialOut.zw = uvec2(0u);
 
 	normalOut.xy = OctEncodeUnorm(flatNormal);
