@@ -1,3 +1,6 @@
+// Keep Voxy patch path stable: do not emit #extension from shared includes.
+#define INCLUDE_UTILITY_COMPAT
+
 #include "/lib/Utility.glsl"
 
 layout(location = 0) out vec4 albedoOut;
