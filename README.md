@@ -5,10 +5,9 @@
 
 ## Compatibility
 * GPUs that support OpenGL 4.0+
-* [Iris](https://irisshaders.dev/download): 1.7.0 or newer
-* [Physics Mod](https://www.patreon.com/Haubna?utm_source=campaign-search-results): Supported
-* [Distant Horizons](https://www.curseforge.com/minecraft/mc-mods/distant-horizons): 2.1.0+
-* [OptiFine](https://optifine.net/home): **Incompatible**
+* Iris 1.7.0 or newer
+* OptiFine is **Incompatible**
+* Supported Mods: [Voxy](https://modrinth.com/mod/voxy) and [Distant Horizons](https://www.curseforge.com/minecraft/mc-mods/distant-horizons), [Physics Mod](https://www.patreon.com/Haubna?utm_source=campaign-search-results)
 
 ## Credits
 * [Yong-Xin Mo](https://github.com/moyongxin) - Some code and guidance
