@@ -15,11 +15,13 @@
         "cameraPosition",
         "far",
         "frameCounter",
-        "frameTimeCounter"
+        "frameTimeCounter",
+        "taaOffset"
     ],
     "samplers": [
         "vxDepthTexOpaque",
         "noisetex",
         "depthtex0"
-    ]
+    ],
+    "taaOffset": "{ return taaOffset; }"
 }
