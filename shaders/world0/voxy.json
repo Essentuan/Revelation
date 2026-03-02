@@ -1,1 +1,25 @@
-#include "/program/voxy/voxy.json"
+{
+    "version": 1,
+    "excludeLodsFromVanillaDepth": true,
+    "opaqueDrawBuffers": [6, 7, 8],
+    "translucentDrawBuffers": [7, 8, 12],
+    "blending": {
+        "-1": "off"
+    },
+    "useViewportDims": true,
+    "uniforms": [
+        "vxProj",
+        "vxProjInv",
+        "viewPixelSize",
+        "gbufferModelViewInverse",
+        "cameraPosition",
+        "far",
+        "frameCounter",
+        "frameTimeCounter"
+    ],
+    "samplers": [
+        "vxDepthTexOpaque",
+        "noisetex",
+        "depthtex0"
+    ]
+}
