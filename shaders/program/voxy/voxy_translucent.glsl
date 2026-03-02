@@ -81,11 +81,7 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 
 		vec3 worldDir = normalize(worldPos - gbufferModelViewInverse[3].xyz);
 
-		const mat3 tbnMatrix = mat3(
-			vec3(1.0, 0.0, 0.0),
-			vec3(0.0, 0.0, 1.0),
-			vec3(0.0, 1.0, 0.0)
-		);
+		mat3 tbnMatrix = BuildOrthonormalBasis(flatNormal);
 
 		vec3 minecraftPos = worldPos + cameraPosition;
 		#ifdef WATER_PARALLAX
