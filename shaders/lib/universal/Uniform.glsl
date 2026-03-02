@@ -152,7 +152,28 @@ uniform vec3 worldLightVector;
 uniform vec3 viewLightVector;
 
 
-#if defined DISTANT_HORIZONS
+#if defined VOXY
+    uniform sampler2D vxDepthTexOpaque;
+    uniform sampler2D vxDepthTexTrans;
+
+    uniform int vxRenderDistance;
+
+    uniform mat4 vxProj;
+    uniform mat4 vxProjInv;
+    uniform mat4 vxProjPrev;
+
+    #define dhDepthTex0 vxDepthTexTrans
+    #define dhDepthTex1 vxDepthTexOpaque
+
+    #define dhRenderDistance (vxRenderDistance * 16)
+
+    #define dhNearPlane near
+    #define dhFarPlane float(vxRenderDistance * 16)
+
+    #define dhProjection vxProj
+    #define dhProjectionInverse vxProjInv
+    #define dhPreviousProjection vxProjPrev
+#elif defined DISTANT_HORIZONS
     uniform sampler2D dhDepthTex0;
     uniform sampler2D dhDepthTex1;
 

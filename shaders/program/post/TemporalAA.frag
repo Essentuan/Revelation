@@ -82,7 +82,7 @@ vec3 historyClipAABB(in vec3 history, in vec3 center, in vec3 extent) {
     return history;
 }
 
-vec4 TemporalReprojection(in vec2 screenCoord, in vec2 motionVector) {
+vec4 TemporalReprojection(in vec2 screenCoord, in vec2 motionVector, in bool lodMask) {
     ivec2 texel = uvToTexel(screenCoord + taaOffset * 0.5);
 
     vec3 currData = loadSceneMain(texel);
@@ -133,6 +133,12 @@ vec4 TemporalReprojection(in vec2 screenCoord, in vec2 motionVector) {
 	prevData = mix(prevData, currData, sdot(fract(prevCoord * viewSize) - 0.5) * 0.5);
 
     float blendWeight = min(++temporalData.a, TAA_MAX_ACCUM_FRAMES);
+    #if defined VOXY
+        // Keep LoD TAA active, but reduce history persistence to avoid sticky trails.
+        if (lodMask) {
+            blendWeight = min(blendWeight, 3.0);
+        }
+    #endif
     blendWeight *= 1.0 + sqr(temporalContrast) * TAA_ANTIFLICKER;
 
     currData = mix(perceptualWeight(prevData), perceptualWeight(currData), rcp(blendWeight));
@@ -148,12 +154,38 @@ void main() {
     float depth = loadDepth0(screenTexel);
 	vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
 
+    bool lodMask = false;
+    #if defined VOXY
+        // Voxy LoD often does not write vanilla depth (depth ~= 1.0 but non-sky material).
+        // Detect it and use DH/VOXY reprojection path instead of fully disabling temporal effects.
+        uint materialID = loadMaterialPack(screenTexel).y;
+        lodMask = depth > 1.0 - EPS && materialID != 0u;
+    #endif
+
     #if RENDER_MODE == 1
         #ifdef TAA_CLOSEST_FRAGMENT
-            vec3 closestFragment = CrossClosestFragment(screenTexel, depth);
-            vec2 motionVector = closestFragment.xy - Reproject(closestFragment).xy;
+            vec2 motionVector;
+            #if defined VOXY
+                if (lodMask) {
+                    float lodDepth = loadDepth0DH(screenTexel);
+                    motionVector = screenCoord - ReprojectDH(vec3(screenCoord, lodDepth)).xy;
+                } else
+            #endif
+            {
+                vec3 closestFragment = CrossClosestFragment(screenTexel, depth);
+                motionVector = closestFragment.xy - Reproject(closestFragment).xy;
+            }
         #else
-            vec2 motionVector = screenCoord - Reproject(vec3(screenCoord, depth)).xy;
+            vec2 motionVector;
+            #if defined VOXY
+                if (lodMask) {
+                    float lodDepth = loadDepth0DH(screenTexel);
+                    motionVector = screenCoord - ReprojectDH(vec3(screenCoord, lodDepth)).xy;
+                } else
+            #endif
+            {
+                motionVector = screenCoord - Reproject(vec3(screenCoord, depth)).xy;
+            }
         #endif
 
         #ifdef MOTION_BLUR
@@ -161,7 +193,7 @@ void main() {
         #endif
 
         #ifdef TAA_ENABLED
-            temporalOut = TemporalReprojection(screenCoord, motionVector);
+            temporalOut = TemporalReprojection(screenCoord, motionVector, lodMask);
         #else
             temporalOut = vec4(loadSceneMain(screenTexel), 1.0);
         #endif
