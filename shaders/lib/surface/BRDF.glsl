@@ -221,7 +221,7 @@ vec3 DiffuseHammon(in float LdotV, in float NdotV, in float NdotL, in float Ndot
     float facing = saturate(LdotV) * 0.5 + 0.5;
 
     float singleSmooth = 1.05 * oms(pow5(1.0 - NdotL)) * oms(pow5(1.0 - NdotV));
-    float singleRough = facing * (0.9 - 0.4 * facing) * (0.5 + NdotH) / NdotH;
+    float singleRough = facing * (0.9 - 0.4 * facing) * (0.5 + NdotH) / max(NdotH, 1e-2);
 
     float single = mix(singleSmooth, singleRough, roughness) * rPI;
     float multi = 0.1159 * roughness;

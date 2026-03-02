@@ -259,7 +259,7 @@ void main() {
 				float NdotH = dot(worldNormal, halfway);
 				float LdotH = dot(worldLightVector, halfway);
 
-				sceneOut += shadow * DiffuseHammon(LdotV, NdotV, NdotL, NdotH, material.roughness, albedo);
+				sceneOut += shadow * DiffuseBurley(LdotH, NdotV, NdotL, material.roughness);
 
 				#if defined MC_SPECULAR_MAP
 					vec3 f0 = GetMaterialF0(material.metalness, albedo);
