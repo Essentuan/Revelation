@@ -35,6 +35,7 @@
 
 vec3 SetupCloudShadowPos(in vec2 coord) {
 	vec3 shadowPos = vec3(coord * 2.0 - 1.0, 0.0);
+    shadowPos.xy *= rcp(2.0 - length(shadowPos.xy));
 	return transMAD(cloud.shadowViewProjInv, shadowPos);
 }
 
@@ -42,6 +43,7 @@ vec3 PlanetToCloudShadowScreenPos(in vec3 planetPos) {
 	planetPos.y -= planetRadius;
 
 	vec3 shadowPos = transMAD(cloud.shadowViewProj, planetPos);
+    shadowPos.xy *= rcp(length(shadowPos.xy) * 0.5 + 0.5);
 	return shadowPos * 0.5 + 0.5;
 }
 
@@ -49,6 +51,7 @@ vec3 WorldToCloudShadowScreenPos(in vec3 worldPos) {
 	worldPos.y += eyeAltitude;
 
 	vec3 shadowPos = transMAD(cloud.shadowViewProj, worldPos);
+    shadowPos.xy *= rcp(length(shadowPos.xy) * 0.5 + 0.5);
 	return shadowPos * 0.5 + 0.5;
 }
 
@@ -67,7 +70,7 @@ float CalculateCloudShadows(in vec3 rayPos, in float dither) {
 	rayPos += rayStep * dither;
 
 	float extinction = 0.0;
-	const float threshold = -log2(0.01) / cumulusExtinction;
+	const float threshold = -log2(cloudMinTransmittance) / cumulusExtinction;
 
 	// Raymarch along the light vector
 	for (uint i = 0u; i < uint(steps) && extinction < threshold; ++i, rayPos += rayStep) {
@@ -76,7 +79,7 @@ float CalculateCloudShadows(in vec3 rayPos, in float dither) {
 	}
 
 	float transmittance = exp2(-rLOG2 * cumulusExtinction * extinction);
-	// transmittance = linearstep(cloudMinTransmittance, 1.0, transmittance);
+	transmittance = linearstep(cloudMinTransmittance, 1.0, transmittance);
 
 	float strength = linearstep(0.02, 0.05, worldLightVector.y) * sqrt(CLOUD_SHADOW_STRENGTH);
 	return oms(strength) + transmittance * strength;

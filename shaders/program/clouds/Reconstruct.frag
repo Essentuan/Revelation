@@ -3,7 +3,7 @@
 
 	Revelation Shaders
 
-	Copyright (C) 2024 HaringPro
+	Copyright (C) 2026 HaringPro
 	Apache License 2.0
 
 	Reference: https://publications.lib.chalmers.se/records/fulltext/241770/241770.pdf
@@ -112,15 +112,14 @@ void main() {
 		vec4 currData = texelFetch(cloudOriginTex, currTexel, 0);
 
 		vec4 prevData = max0(textureCatmullRom(cloudReconstructTex, prevCoord));
-		prevData.z = mix(prevData.z, min(prevData.z, currData.z), prevData.w);
 
 		#ifdef CLOUD_TAAU_CLIPPING
-			vec3 moment1 = currData.xyw;
-			vec3 moment2 = currData.xyw * currData.xyw;
+			vec4 moment1 = currData;
+			vec4 moment2 = currData * currData;
 
 			// Fetch 3x3 neighbour pixels
 			for (uint i = 0u; i < 8u; ++i) {
-				vec3 sampleData = texelFetch(cloudOriginTex, currTexel + offset3x3N[i], 0).xyw;
+				vec4 sampleData = texelFetch(cloudOriginTex, currTexel + offset3x3N[i], 0);
 
 				moment1 += sampleData;
 				moment2 += sampleData * sampleData;
@@ -129,14 +128,21 @@ void main() {
 			moment2 *= rcp(9.0);
 
 			// Ellipsoid intersection clipping
-			vec3 clipStdDevInv = inversesqrt(abs(moment2 - moment1 * moment1) + EPS);
-			prevData.xyw -= moment1;
-			prevData.xyw *= saturate(inversesqrt(sdot(prevData.xyw * clipStdDevInv * 0.25)));
-			prevData.xyw += moment1;
+			vec4 clipStdDevInv = inversesqrt(abs(moment2 - moment1 * moment1) + EPS);
+			prevData -= moment1;
+			prevData *= saturate(inversesqrt(sdot(prevData * clipStdDevInv * 0.25)));
+			prevData += moment1;
 		#endif
+
+		// Fix depth edge artifects
+		currData.z *= 1.0 - currData.w;
+		prevData.z *= 1.0 - prevData.w;
 
 		// Accumulate
 		frameOut = min(frameIndex + 1u, CLOUD_MAX_ACCUM_FRAMES);
 		cloudOut = mix(prevData, currData, rcp(float(frameOut)));
+
+		// Fix depth edge artifects
+		cloudOut.z /= maxEps(1.0 - cloudOut.w);
 	}
 }

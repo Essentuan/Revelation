@@ -95,7 +95,7 @@ const float atmosphere_top_radius_sq    = atmosphereModel.top_radius * atmospher
 // Values from https://github.com/ebruneton/precomputed_atmospheric_scattering
 const vec3 white_point = vec3(1.08241, 0.96756, 0.95003);
 
-#if 1
+#if 0
 const vec3 SKY_SPECTRAL_RADIANCE_TO_LUMINANCE = vec3(683.0, 683.0, 683.0) * 1e-3 / white_point;
 const vec3 SUN_SPECTRAL_RADIANCE_TO_LUMINANCE = vec3(98242.786222, 69954.398112, 66475.012354) * 1e-3 / white_point;
 #else
@@ -172,6 +172,11 @@ vec2 RaySphericalShellIntersection(in float r, in float mu, in float bottomRad, 
 	} else {
 		return vec2(-1.0);
 	}
+}
+
+// https://doi.org/10.1364/JOSA.47.000176
+float AirPhase(in float mu) {
+	return uniformPhase * 0.7629 * (1.0 + 0.932 * mu * mu);
 }
 
 // HG-Draine for aerosols
