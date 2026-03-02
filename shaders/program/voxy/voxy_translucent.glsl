@@ -57,13 +57,6 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 		vec3 viewPos = ScreenToViewSpace(vec3(screenCoord, gl_FragCoord.z));
 		vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
-		float alpha = smoothstep(sqr(far - 32.0), sqr(far - 16.0), sdot(worldPos));
-		float dither = BlueNoise(texelPos, frameCounter);
-    	if (alpha < dither || loadDepth0(texelPos) < 1.0) {
-			discard;
-			return;
-		}
-
 		vec3 worldDir = normalize(worldPos - gbufferModelViewInverse[3].xyz);
 
 		mat3 tbnMatrix = BuildOrthonormalBasis(flatNormal);
