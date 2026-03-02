@@ -35,7 +35,7 @@ mat2x3 AnalyticWaterFog(in float skylight, in float waterDepth, in float LdotV) 
 	mat2x3 RaymarchWaterFog(in vec3 worldPos, in float dither) {
 		float rayLength = sdot(worldPos);
 		float norm = inversesqrt(rayLength);
-		rayLength = min(rayLength * norm, lodFarPlane);
+		rayLength = min(rayLength * norm, lodRenderDist);
 
 		vec3 worldDir = worldPos * norm;
 

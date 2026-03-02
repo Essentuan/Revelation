@@ -166,10 +166,7 @@ uniform vec3 viewLightVector;
     #define lodDepthTex0 vxDepthTexTrans
     #define lodDepthTex1 vxDepthTexOpaque
 
-    #define lodRenderDistance (vxRenderDistance * 16)
-
-    #define lodNearPlane near
-    #define lodFarPlane float(vxRenderDistance * 16)
+    #define lodRenderDist float(vxRenderDistance * 16)
 
     #define lodProjection vxProj
     #define lodProjectionInv vxProjInv
@@ -192,10 +189,7 @@ uniform vec3 viewLightVector;
     #define lodDepthTex0 dhDepthTex0
     #define lodDepthTex1 dhDepthTex1
 
-    #define lodRenderDistance dhRenderDistance
-
-    #define lodNearPlane dhNearPlane
-    #define lodFarPlane float(dhRenderDistance)
+    #define lodRenderDist float(dhRenderDistance)
 
     #define lodProjection dhProjection
     #define lodProjectionInv dhProjectionInverse
@@ -206,10 +200,7 @@ uniform vec3 viewLightVector;
     #define lodDepthTex0 depthtex0
     #define lodDepthTex1 depthtex1
 
-    #define lodRenderDistance int(far)
-
-    #define lodNearPlane near
-    #define lodFarPlane far
+    #define lodRenderDist far
 
     #define lodProjection gbufferProjection
     #define lodProjectionInv gbufferProjectionInverse
