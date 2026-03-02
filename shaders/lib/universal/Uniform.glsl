@@ -172,7 +172,7 @@ uniform vec3 viewLightVector;
     #define lodProjectionInv vxProjInv
     #define lodPrevProjection vxProjPrev
 
-#elif defined LOD_MOD
+#elif defined DISTANT_HORIZONS
 
     uniform sampler2D dhDepthTex0;
     uniform sampler2D dhDepthTex1;
