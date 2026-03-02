@@ -24,8 +24,8 @@ bool ScreenSpaceRaytrace(in vec3 viewPos, in vec3 viewDir, in float dither, in u
     float invDirZ = rcp(rayDir.z);
     vec3 rayStep = rayDir * rSteps;
 
-    #if defined DISTANT_HORIZONS
-        float screenDepthSky = ViewToScreenDepth(ScreenToViewDepthDH(1.0));
+    #if defined LOD_MOD
+        float screenDepthSky = ViewToScreenDepth(ScreenToViewDepthLod(1.0));
     #else
         #define screenDepthSky 1.0
     #endif
@@ -46,8 +46,8 @@ bool ScreenSpaceRaytrace(in vec3 viewPos, in vec3 viewDir, in float dither, in u
         }
 
         float sampleDepth = loadDepth2(ivec2(rayPos.xy));
-        #if defined DISTANT_HORIZONS
-            if (sampleDepth > 1.0 - EPS) sampleDepth = ViewToScreenDepth(ScreenToViewDepthDH(loadDepth1DH(ivec2(rayPos.xy))));
+        #if defined LOD_MOD
+            if (sampleDepth > 1.0 - EPS) sampleDepth = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth1Lod(ivec2(rayPos.xy))));
         #endif
 
 		if (rayPos.z > sampleDepth) {
@@ -71,8 +71,8 @@ bool ScreenSpaceRaytrace(in vec3 viewPos, in vec3 viewDir, in float dither, in u
             rayStep *= 0.5;
 
             float sampleDepth = loadDepth2(ivec2(screenPos.xy));
-            #if defined DISTANT_HORIZONS
-                if (sampleDepth > 1.0 - EPS) sampleDepth = ViewToScreenDepth(ScreenToViewDepthDH(loadDepth1DH(ivec2(screenPos.xy))));
+            #if defined LOD_MOD
+                if (sampleDepth > 1.0 - EPS) sampleDepth = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth1Lod(ivec2(screenPos.xy))));
             #endif
 
             screenPos += signMul(rayStep, sampleDepth - screenPos.z);

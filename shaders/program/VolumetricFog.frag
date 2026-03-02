@@ -63,10 +63,10 @@ void main() {
 	vec3 screenPos = vec3(screenCoord, loadDepth0(texelPos));
 
 	vec3 viewPos = ScreenToViewSpace(screenPos);
-	#if defined DISTANT_HORIZONS
+	#if defined LOD_MOD
 		if (screenPos.z > 1.0 - EPS) {
-			screenPos.z = loadDepth0DH(texelPos);
-			viewPos = ScreenToViewSpaceDH(screenPos);
+			screenPos.z = loadDepth0Lod(texelPos);
+			viewPos = ScreenToViewSpaceLod(screenPos);
 		}
 	#endif
 

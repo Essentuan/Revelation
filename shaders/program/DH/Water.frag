@@ -91,14 +91,14 @@ void main() {
 			worldNormal = tbnMatrix * worldNormal;
 		#endif
 
-		float depth1 = loadDepth1DH(texel);
-		vec3 viewPos1 = ScreenToViewSpace(vec3(gl_FragCoord.xy * viewPixelSize, depth1));
-		vec3 worldPos1 = transMAD(gbufferModelViewInverse, viewPos1);
+		float depthBack = loadDepth1Lod(texel);
+		vec3 viewPosBack = ScreenToViewSpace(vec3(gl_FragCoord.xy * viewPixelSize, depthBack));
+		vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
 
 		vec2 encodedNormal = OctEncodeUnorm(worldNormal);
 		normalOut.zw = encodedNormal;
 
-		waterOut = vec4(distance(worldPos, worldPos1) * rcp255, Packup2x8(encodedNormal), 0.0, 1.0);
+		waterOut = vec4(distance(worldPos, worldPosBack) * rcp255, Packup2x8(encodedNormal), 0.0, 1.0);
 	} else {
 		normalOut.zw = normalOut.xy;
 

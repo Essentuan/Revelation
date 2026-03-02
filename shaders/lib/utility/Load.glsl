@@ -9,13 +9,13 @@
 #define loadMaterialPack(texel) 	texelFetch(colortex7, texel, 0)
 #define loadNormalPack(texel) 		texelFetch(colortex8, texel, 0)
 
-#if defined DISTANT_HORIZONS
-	#define loadDepth0DH(texel) 	texelFetch(dhDepthTex0, texel, 0).x
-	#define loadDepth1DH(texel)		texelFetch(dhDepthTex1, texel, 0).x
-#endif
-
 #define skyMapTex					colortex5
 #define skyMapImg					colorimg5
 
 #define cloudReconstructTex			colortex9
 #define cloudReconstructImg			colorimg9
+
+#if defined LOD_MOD
+	#define loadDepth0Lod(texel) 	texelFetch(lodDepthTex0, texel, 0).x
+	#define loadDepth1Lod(texel)	texelFetch(lodDepthTex1, texel, 0).x
+#endif

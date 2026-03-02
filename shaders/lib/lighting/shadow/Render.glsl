@@ -158,10 +158,10 @@ float ScreenSpaceShadow(in vec3 rayPos, in vec3 viewPos, in float dither, in flo
 		float sampleDepth = loadDepth0(sampleTexel);
 		bool hit = abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance;
 
-		#if defined DISTANT_HORIZONS
+		#if defined LOD_MOD
 			if (sampleDepth > 1.0 - EPS) {
-				sampleDepth = loadDepth0DH(sampleTexel);
-				sampleDepth = ViewToScreenDepth(ScreenToViewDepthDH(sampleDepth));
+				sampleDepth = loadDepth0Lod(sampleTexel);
+				sampleDepth = ViewToScreenDepth(ScreenToViewDepthLod(sampleDepth));
 				hit = abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance;
 			} else
 		#endif

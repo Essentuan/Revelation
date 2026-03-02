@@ -201,6 +201,10 @@ float quarticLength(in vec2 v) {
 
 //================================================================================================//
 
+vec3 ProjectDivide(in vec3 v, in mat4 m) {
+	return projMAD(m, v) * rcp(m[2].w * v.z + m[3].w);
+}
+
 // https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
 vec3 rotate(in vec3 v, in vec3 a, in vec3 b) {
 	float cosTheta = dot(a, b);

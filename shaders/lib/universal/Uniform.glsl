@@ -151,6 +151,7 @@ uniform vec3 worldSunVector;
 uniform vec3 worldLightVector;
 uniform vec3 viewLightVector;
 
+//================================================================================================//
 
 #if defined VOXY
     uniform sampler2D vxDepthTexOpaque;
@@ -162,18 +163,20 @@ uniform vec3 viewLightVector;
     uniform mat4 vxProjInv;
     uniform mat4 vxProjPrev;
 
-    #define dhDepthTex0 vxDepthTexTrans
-    #define dhDepthTex1 vxDepthTexOpaque
+    #define lodDepthTex0 vxDepthTexTrans
+    #define lodDepthTex1 vxDepthTexOpaque
 
-    #define dhRenderDistance (vxRenderDistance * 16)
+    #define lodRenderDistance (vxRenderDistance * 16)
 
-    #define dhNearPlane near
-    #define dhFarPlane float(vxRenderDistance * 16)
+    #define lodNearPlane near
+    #define lodFarPlane float(vxRenderDistance * 16)
 
-    #define dhProjection vxProj
-    #define dhProjectionInverse vxProjInv
-    #define dhPreviousProjection vxProjPrev
-#elif defined DISTANT_HORIZONS
+    #define lodProjection vxProj
+    #define lodProjectionInv vxProjInv
+    #define lodPrevProjection vxProjPrev
+
+#elif defined LOD_MOD
+
     uniform sampler2D dhDepthTex0;
     uniform sampler2D dhDepthTex1;
 
@@ -185,4 +188,30 @@ uniform vec3 viewLightVector;
     uniform mat4 dhProjection;
     uniform mat4 dhProjectionInverse;
     uniform mat4 dhPreviousProjection;
+
+    #define lodDepthTex0 dhDepthTex0
+    #define lodDepthTex1 dhDepthTex1
+
+    #define lodRenderDistance dhRenderDistance
+
+    #define lodNearPlane dhNearPlane
+    #define lodFarPlane float(dhRenderDistance)
+
+    #define lodProjection dhProjection
+    #define lodProjectionInv dhProjectionInverse
+    #define lodPrevProjection dhPreviousProjection
+
+#else // Fallback
+
+    #define lodDepthTex0 depthtex0
+    #define lodDepthTex1 depthtex1
+
+    #define lodRenderDistance int(far)
+
+    #define lodNearPlane near
+    #define lodFarPlane far
+
+    #define lodProjection gbufferProjection
+    #define lodProjectionInv gbufferProjectionInverse
+    #define lodPrevProjection gbufferPreviousProjection
 #endif

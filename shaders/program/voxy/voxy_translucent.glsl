@@ -5,7 +5,7 @@ layout(location = 0) out uvec4 materialOut;
 layout(location = 1) out vec4 normalOut;
 layout(location = 2) out vec4 waterOut;
 
-vec3 VoxyFaceNormal(uint face) {
+vec3 VoxyFaceNormal(in uint face) {
 	return vec3(
 		uint((face >> 1u) == 2u),
 		uint((face >> 1u) == 0u),
@@ -13,7 +13,7 @@ vec3 VoxyFaceNormal(uint face) {
 	) * (float(int(face & 1u)) * 2.0 - 1.0);
 }
 
-uint VoxyMaterialId(uint customId) {
+uint VoxyMaterialId(in uint customId) {
 	if (customId >= 10000u) {
 		uint materialId = customId - 10000u;
 		return materialId == 0u ? 2u : materialId;
@@ -21,35 +21,32 @@ uint VoxyMaterialId(uint customId) {
 	return 2u;
 }
 
-vec3 ProjectDivideVX(in vec3 v, in mat4 m) {
-	return projMAD(m, v) * rcp(m[2].w * v.z + m[3].w);
-}
-
-vec3 ScreenToViewSpaceVX(in vec3 screenPos) {
+vec3 ScreenToViewSpace(in vec3 screenPos) {
 	vec3 ndcPos = screenPos * 2.0 - 1.0;
-	return ProjectDivideVX(ndcPos, vxProjInv);
+	return ProjectDivide(ndcPos, vxProjInv);
 }
 
-vec4 VoxyApplyColorState(in vec4 color) {
+vec4 ApplyColorState(in vec4 color) {
 	// Mirror Voxy's default color path so translucent alpha is preserved.
 	vec4 outColor = color * uint2vec4RGBA(interData.y);
 	outColor.a += float(interData.w & 0xFFu) * rcp255;
-	return clamp(outColor, vec4(0.0), vec4(1.0));
+	return saturate(outColor);
 }
 
-float VoxyBlueNoise(in ivec2 texel, in int frame) {
+float BlueNoise(in ivec2 texel, in int frame) {
 	float base = texelFetch(noisetex, texel & 255, 0).a;
 	#ifdef TAA_ENABLED
-		return fract(base + float(frame) * 0.61803398875);
+		return fract(base + float(frame) * PHI);
 	#else
 		return base;
 	#endif
 }
 
-void voxy_emitFragment(VoxyFragmentParameters parameters) {
+void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
 	vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
-	vec4 baseColor = VoxyApplyColorState(parameters.sampledColour * parameters.tinting);
+
+	vec4 baseColor = ApplyColorState(parameters.sampledColour * parameters.tinting);
 	vec2 lightmap = vec2(0.0, saturate((parameters.lightMap.y - 0.03125) * 1.06667));
 
 	uint materialId = VoxyMaterialId(parameters.customId);
@@ -67,18 +64,17 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 	materialOut.y = materialId;
 	materialOut.zw = uvec2(0u);
 
-	normalOut.xy = encodedNormal;
-	normalOut.zw = encodedNormal;
+	normalOut.xy = normalOut.zw = encodedNormal;
 
 	waterOut = vec4(0.0);
 
 	if (waterMask) {
-		vec3 viewPos = ScreenToViewSpaceVX(vec3(screenCoord, gl_FragCoord.z));
+		vec3 viewPos = ScreenToViewSpace(vec3(screenCoord, gl_FragCoord.z));
 		vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
-		float alpha = smoothstep(sqr(far - 32.0), sqr(far - 16.0), dot(worldPos, worldPos));
-		float dither = VoxyBlueNoise(texelPos, frameCounter);
-		if (alpha < dither || texelFetch(depthtex0, texelPos, 0).x < 1.0) {
+		float alpha = smoothstep(sqr(far - 32.0), sqr(far - 16.0), sdot(worldPos));
+		float dither = BlueNoise(texelPos, frameCounter);
+    	if (alpha < dither || loadDepth0(texelPos) < 1.0) {
 			discard;
 			return;
 		}
@@ -103,10 +99,10 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 		vec2 encodedWaterNormal = OctEncodeUnorm(worldNormal);
 		normalOut.zw = encodedWaterNormal;
 
-		float depthBehind = texelFetch(vxDepthTexOpaque, texelPos, 0).x;
-		vec3 viewPos1 = ScreenToViewSpaceVX(vec3(screenCoord, depthBehind));
-		vec3 worldPos1 = transMAD(gbufferModelViewInverse, viewPos1);
-		float waterDepth = distance(worldPos, worldPos1);
+		float depthBack = texelFetch(vxDepthTexOpaque, texelPos, 0).x;
+		vec3 viewPosBack = ScreenToViewSpace(vec3(screenCoord, depthBack));
+		vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
+		float waterDepth = distance(worldPos, worldPosBack);
 
 		waterOut = vec4(waterDepth * rcp255, Packup2x8(encodedWaterNormal), 0.0, 1.0);
 	} else {

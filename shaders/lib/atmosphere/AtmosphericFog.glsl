@@ -43,10 +43,6 @@ vec2 CalculateFogDensity(in vec3 rayPos, in float uniformFog) {
 #endif
 
 mat2x3 RaymarchAtmosphericFog(in vec3 startPos, in vec3 endPos, in float dither, in bool skyMask, in uint steps) {
-	#if defined DISTANT_HORIZONS
-		#define far float(dhRenderDistance)
-	#endif
-
 	float rayLength = sdot(endPos - startPos);
 	float norm = inversesqrt(rayLength);
 	rayLength *= norm;
@@ -56,7 +52,7 @@ mat2x3 RaymarchAtmosphericFog(in vec3 startPos, in vec3 endPos, in float dither,
 	// Adaptive step count
 	steps = min(steps, uint(float(steps) * 0.4 + rayLength * rcp(16.0)));
 
-	float maxDist = far;
+	float maxDist = lodFarPlane;
 	if (skyMask) {
 		// vec2 intersection = RaySphericalShellIntersection(viewerHeight, worldDir.y, planetRadius, cumulusTopRadius);
 

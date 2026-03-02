@@ -136,7 +136,7 @@ vec4 TemporalReprojection(in vec2 screenCoord, in vec2 motionVector, in bool lod
     #if defined VOXY
         // Keep LoD TAA active, but reduce history persistence to avoid sticky trails.
         if (lodMask) {
-            blendWeight = min(blendWeight, 3.0);
+            blendWeight = min(blendWeight, 4.0);
         }
     #endif
     blendWeight *= 1.0 + sqr(temporalContrast) * TAA_ANTIFLICKER;
@@ -167,8 +167,8 @@ void main() {
             vec2 motionVector;
             #if defined VOXY
                 if (lodMask) {
-                    float lodDepth = loadDepth0DH(screenTexel);
-                    motionVector = screenCoord - ReprojectDH(vec3(screenCoord, lodDepth)).xy;
+                    float lodDepth = loadDepth0Lod(screenTexel);
+                    motionVector = screenCoord - ReprojectLod(vec3(screenCoord, lodDepth)).xy;
                 } else
             #endif
             {
@@ -179,8 +179,8 @@ void main() {
             vec2 motionVector;
             #if defined VOXY
                 if (lodMask) {
-                    float lodDepth = loadDepth0DH(screenTexel);
-                    motionVector = screenCoord - ReprojectDH(vec3(screenCoord, lodDepth)).xy;
+                    float lodDepth = loadDepth0Lod(screenTexel);
+                    motionVector = screenCoord - ReprojectLod(vec3(screenCoord, lodDepth)).xy;
                 } else
             #endif
             {
