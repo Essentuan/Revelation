@@ -52,7 +52,7 @@ mat2x3 RaymarchAtmosphericFog(in vec3 startPos, in vec3 endPos, in float dither,
 	// Adaptive step count
 	steps = min(steps, uint(float(steps) * 0.4 + rayLength * rcp(16.0)));
 
-	float maxDist = lodRenderDist;
+	float maxDist = min(lodRenderDist, 4096.0); // Limit to avoid visible noise
 	if (skyMask) {
 		// vec2 intersection = RaySphericalShellIntersection(viewerHeight, worldDir.y, planetRadius, cumulusTopRadius);
 
@@ -176,7 +176,8 @@ mat2x3 RaymarchAtmosphericFog(in vec3 startPos, in vec3 endPos, in float dither,
 
 		transmittance *= stepTransmittance;
 
-		if (dot(transmittance, vec3(1.0)) < 1e-2) break; // Faster than maxOf()
+		// Break if the transmittance is too small (optimization)
+		if (dot(transmittance, vec3(1.0)) < 1e-3) break;
 	}
 
 	#ifndef VF_CLOUD_SHADOWS
