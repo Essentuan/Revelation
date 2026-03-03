@@ -1,7 +1,7 @@
 <h1 align = "center"> Revelation </h1>
 <p  align = "center"> Physically Based, High Performance and Heuristic </p>
 
-![Screenshot](https://github.com/user-attachments/assets/261a14fb-6740-409f-ba89-882e3b93833f)
+![Screenshot](https://github.com/user-attachments/assets/0d5d55c4-64b4-4a2c-a868-0d977eaa101e)
 
 ## Compatibility
 * GPUs that support OpenGL 4.0+
