@@ -78,10 +78,10 @@ vec2 CalculateRefractedCoord(in ivec2 texelPos, in vec3 viewPos, in vec3 screenP
 		// Estimate refraction depth
 		float depth1 = loadDepth1(texelPos);
 		vec3 viewPos1 = ScreenToViewSpace(vec3(screenPos.xy, depth1));
-		#if defined DISTANT_HORIZONS
+		#if defined LOD_MOD
 			if (depth1 > 1.0 - EPS) {
-				depth1 = loadDepth1DH(texelPos);
-				viewPos1 = ScreenToViewSpaceDH(vec3(screenPos.xy, depth1));
+				depth1 = loadDepth1Lod(texelPos);
+				viewPos1 = ScreenToViewSpaceLod(vec3(screenPos.xy, depth1));
 			}
 		#endif
 
@@ -107,10 +107,10 @@ void main() {
 
 	vec3 screenPos = vec3(screenCoord, depth);
 	vec3 viewPos = ScreenToViewSpace(screenPos);
-	#if defined DISTANT_HORIZONS
+	#if defined LOD_MOD
 		if (depth > 1.0 - EPS) {
-			depth = screenPos.z = loadDepth0DH(texelPos);
-			viewPos = ScreenToViewSpaceDH(screenPos);
+			depth = screenPos.z = loadDepth0Lod(texelPos);
+			viewPos = ScreenToViewSpaceLod(screenPos);
 		}
 	#endif
 
@@ -158,12 +158,8 @@ void main() {
 
 		// Border fog
 		#ifdef BORDER_FOG
-			#if defined DISTANT_HORIZONS
-				#define far float(dhRenderDistance)
-			#endif
-
 			if (isEyeInWater == 0) {
-				float density = exp2(-0.1 * max0(worldPos.y - 63.0)) * pow8(sdot(worldPos.xz) * rcp(far * far));
+				float density = exp2(-0.1 * max0(worldPos.y - 63.0)) * pow8(sdot(worldPos.xz) * rcp(lodRenderDist * lodRenderDist));
 				float transmittance = exp2(-BORDER_FOG_FALLOFF * density);
 
 				vec3 skyRadiance = GetSkyRadiance(worldDir, worldSunVector) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;

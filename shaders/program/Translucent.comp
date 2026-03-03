@@ -91,9 +91,9 @@ void main() {
 	if (clamp(materialID, 2u, 3u) != materialID && notParticle) return;
 
 	vec3 screenPos = vec3(texelToUv(texelPos), loadDepth0(texelPos));
-	#if defined DISTANT_HORIZONS
+	#if defined LOD_MOD
 		if (screenPos.z > 1.0 - EPS) {
-			screenPos.z = ViewToScreenDepth(ScreenToViewDepthDH(loadDepth0DH(texelPos)));
+			screenPos.z = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth0Lod(texelPos)));
 		}
 	#endif
 
@@ -160,11 +160,13 @@ void main() {
 	vec3 flatNormal, worldNormal;
 	FetchNormalData(texelPos, flatNormal, worldNormal);
 
-	float NdotL = dot(worldNormal, worldLightVector);
+	float NdotL = 1.0;
 
 	if (notParticle) {
 		// Specular indirect
 		lightingOut = CalculateSpecularReflections(screenPos, viewPos, worldNormal, worldDir, dither, lightmap.y, waterMask);
+
+		NdotL = dot(worldNormal, worldLightVector);
 	} else {
 		// Skylight
 		lightingOut.rgb = global.skyIlluminance * cube(lightmap.y);
@@ -183,7 +185,7 @@ void main() {
 
 	// Sunlight
 	vec3 sunlightMult = cloudShadow * saturate(lightmap.y * 1e6) * global.directIlluminance;
-	if (NdotL > 1e-3) {
+	if (NdotL > EPS) {
 		vec3 normalOffset = flatNormal * (approxSqrt(worldDistSquared) * 2e-3 + 2e-2) * (2.0 - saturate(NdotL));
 		float surfaceDepth;
 		vec3 shadow = CalculatePCSS(worldPos, normalOffset, dither, surfaceDepth);

@@ -234,8 +234,8 @@ vec4 CalculateSSILVB(in vec2 fragCoord, in vec3 viewPos, in vec3 worldNormal, in
                 ivec2 sampleTexel = uvToTexel(sampleUV);
                 float sampleDepth = loadDepth0(sampleTexel);
 
-            #if defined DISTANT_HORIZONS
-                if (sampleDepth > 1.0 - EPS) sampleDepth = ViewToScreenDepth(ScreenToViewDepthDH(loadDepth0DH(sampleTexel)));
+            #if defined LOD_MOD
+                if (sampleDepth > 1.0 - EPS) sampleDepth = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth0Lod(sampleTexel)));
             #endif
 
                 if (sampleDepth > 1.0 - EPS) continue;

@@ -1,3 +1,6 @@
+#if !defined INCLUDE_UTILITY_COMPAT
+#define INCLUDE_UTILITY_COMPAT
+
 #if defined MC_GL_NV_gpu_shader5
     #extension GL_NV_gpu_shader5 : enable
 #elif defined MC_GL_AMD_gpu_shader_half_float
@@ -37,3 +40,5 @@
         #define SCALARIZED_LOAD(a, b) if (subgroupElect()) { (a) = (b); }
     #endif
 #endif
+
+#endif // INCLUDE_UTILITY_COMPAT

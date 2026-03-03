@@ -12,6 +12,10 @@
 
 #include "/settings.glsl"
 
+#if defined VOXY || defined DISTANT_HORIZONS
+	#define LOD_MOD
+#endif
+
 #include "/lib/utility/Compat.glsl"
 #include "/lib/utility/Math.glsl"
 #include "/lib/utility/Matrix.glsl"

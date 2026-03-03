@@ -174,17 +174,17 @@ void main() {
     if (saturate(renderCoord) == renderCoord) {
         float depth = loadDepth0(renderTexel);
         bool terrainCheck = min(GetClosestDepthN(renderTexel), depth) < 1.0;
-        #if defined DISTANT_HORIZONS
-            bool dhTerrainMask = !terrainCheck;
-            if (dhTerrainMask) {
-                depth = loadDepth0DH(renderTexel);
+        #if defined LOD_MOD
+            bool lodMask = !terrainCheck;
+            if (lodMask) {
+                depth = loadDepth0Lod(renderTexel);
                 terrainCheck = depth < 1.0;
             }
         #endif
 
         if (terrainCheck) {
-            #if defined DISTANT_HORIZONS
-			    if (dhTerrainMask) depth = ViewToScreenDepth(ScreenToViewDepthDH(depth));
+            #if defined LOD_MOD
+			    if (lodMask) depth = ViewToScreenDepth(ScreenToViewDepthLod(depth));
             #endif
 
             vec3 screenPos = vec3(renderCoord, depth);

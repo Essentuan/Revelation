@@ -63,11 +63,11 @@ void main() {
 
 		vec3 viewPos = ScreenToViewSpace(screenPos);
 
-		#if defined DISTANT_HORIZONS
-			bool dhTerrainMask = screenPos.z > 1.0 - EPS;
-			if (dhTerrainMask) {
-				screenPos.z = loadDepth0DH(texelPos);
-				viewPos = ScreenToViewSpaceDH(screenPos);
+		#if defined LOD_MOD
+			bool lodMask = screenPos.z > 1.0 - EPS;
+			if (lodMask) {
+				screenPos.z = loadDepth0Lod(texelPos);
+				viewPos = ScreenToViewSpaceLod(screenPos);
 			}
 		#endif
 
