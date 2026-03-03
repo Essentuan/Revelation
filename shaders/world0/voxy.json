@@ -1,8 +1,16 @@
 {
     "version": 1,
     "excludeLodsFromVanillaDepth": true,
-    "opaqueDrawBuffers": [6, 7, 8],
-    "translucentDrawBuffers": [7, 8, 12],
+    "opaqueDrawBuffers": [
+        6,
+        7,
+        8
+    ],
+    "translucentDrawBuffers": [
+        7,
+        8,
+        12
+    ],
     "blending": {
         "-1": "off"
     },
@@ -16,12 +24,12 @@
         "far",
         "frameCounter",
         "frameTimeCounter",
-        "taaOffset"
+        "taaOffset_"
     ],
     "samplers": [
         "vxDepthTexOpaque",
         "noisetex",
         "depthtex0"
     ],
-    "taaOffset": "{ return taaOffset; }"
+    "taaOffset": "{ return taaOffset_; }"
 }
