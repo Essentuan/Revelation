@@ -62,11 +62,11 @@ void main() {
     vec2 screenCoord = gl_FragCoord.xy * viewPixelSize * 2.0;
 	vec3 screenPos = vec3(screenCoord, loadDepth0(texelPos));
 
-	vec3 viewPos = ScreenToViewSpace(screenPos);
+	vec3 viewPos = ScreenToViewPos(screenPos);
 	#if defined LOD_MOD
 		if (screenPos.z > 1.0 - EPS) {
 			screenPos.z = loadDepth0Lod(texelPos);
-			viewPos = ScreenToViewSpaceLod(screenPos);
+			viewPos = ScreenToViewPosLod(screenPos);
 		}
 	#endif
 
@@ -88,7 +88,7 @@ void main() {
 	#endif
 
 	// Temporal reprojection
-    vec2 prevCoord = Reproject(screenPos).xy;
+    vec2 prevCoord = ReprojectScreenPos(screenPos).xy;
 
     if (saturate(prevCoord) == prevCoord && !worldTimeChanged) {
         uvec4 reprojectedData = texelFetch(colortex11, uvToTexel(prevCoord) >> 1, 0);

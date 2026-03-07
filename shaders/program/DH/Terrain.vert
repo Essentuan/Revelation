@@ -15,7 +15,7 @@
 
 //======// Output //==============================================================================//
 
-flat out vec3 flatNormal;
+flat out vec3 geoNormal;
 out vec3 worldPos;
 
 out vec3 vertColor;
@@ -34,7 +34,7 @@ uniform mat4 dhProjection;
 
 uniform mat4 gbufferModelViewInverse;
 
-uniform vec2 taaOffset;
+uniform vec2 taaJitter;
 
 //======// Main //================================================================================//
 void main() {
@@ -44,7 +44,7 @@ void main() {
 
 	materialID = dhMaterialId == DH_BLOCK_LEAVES ? 13u : 1u;
 
-	flatNormal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
+	geoNormal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
 
 	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
 	worldPos = transMAD(gbufferModelViewInverse, viewPos);
@@ -52,6 +52,6 @@ void main() {
 	gl_Position = diagonal4(dhProjection) * viewPos.xyzz + dhProjection[3];
 
 	#ifdef TAA_ENABLED
-		gl_Position.xy += taaOffset * gl_Position.w;
+		gl_Position.xy += taaJitter * gl_Position.w;
 	#endif
 }

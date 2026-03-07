@@ -11,7 +11,7 @@
 vec3 SampleRaytrace(in vec3 viewPos, in vec3 viewDir, in float dither, in vec3 rayPos) {
 	if (viewDir.z > max0(-viewPos.z)) return vec3(1e6);
 
-	vec3 endPos = ViewToScreenSpace(viewDir + viewPos);
+	vec3 endPos = ViewToScreenPos(viewDir + viewPos);
 	vec3 rayDir = normalize(endPos - rayPos);
 
 	float stepLength = minOf((step(0.0, rayDir) - rayPos) / rayDir) * rcp(float(SSPT_RT_STEPS));

@@ -75,7 +75,7 @@ void main() {
 		#endif
 
     	vec2 screenCoord = texelToUv(renderTexel);
-		vec3 viewPos = ScreenToViewSpace(vec3(screenCoord, depth));
+		vec3 viewPos = ScreenToViewPos(vec3(screenCoord, depth));
 
 		vec3 worldNormal = FetchSurfaceNormal(renderTexel);
 		float lightmapSky = Unpack2x8UY(loadMaterialPack(renderTexel).x);

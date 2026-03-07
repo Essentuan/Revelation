@@ -85,7 +85,7 @@ void main() {
 		screenPos.z = screenPos.z * rcp(MC_HAND_DEPTH) + (0.5 - 0.5 / MC_HAND_DEPTH);
 	}
 
-	vec3 viewPos = ScreenToViewSpace(screenPos);
+	vec3 viewPos = ScreenToViewPos(screenPos);
 
 	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
 	vec3 worldDir = normalize(worldPos);
@@ -101,7 +101,7 @@ void main() {
 
 	if (materialID == 0u) { // Sky
 		vec3 transmittance;
-		vec3 skyRadiance = GetSkyRadiance(worldDir, worldSunVector, transmittance) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
+		vec3 skyRadiance = GetSkyRadiance(worldDir, worldSunDir, transmittance) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
 		sceneOut = desaturate(skyRadiance, wetness * 0.5); // Post-process
 
 		#ifdef CLOUDS
@@ -118,7 +118,7 @@ void main() {
 		#endif
 
 		if (dot(transmittance, vec3(1.0)) > EPS) {
-			vec3 celestial = RenderSun(worldDir, worldSunVector);
+			vec3 celestial = RenderSun(worldDir, worldSunDir);
 			vec3 vanillaMoon = albedo;
 
 			#ifdef GALAXY
@@ -134,8 +134,8 @@ void main() {
 	} else {
 		worldPos += gbufferModelViewInverse[3].xyz;
 
-		vec3 flatNormal, worldNormal;
-		FetchNormalData(texelPos, flatNormal, worldNormal);
+		vec3 geoNormal, worldNormal;
+		FetchNormalData(texelPos, geoNormal, worldNormal);
 		vec3 viewNormal = mat3(gbufferModelView) * worldNormal;
 
 		vec2 lightmap = Unpack2x8U(materialPack.x);
@@ -151,7 +151,7 @@ void main() {
 			if (wetnessCustom > EPS) {
 				// Skip foliage
 				if (clamp(materialID, 1000u, 1002u) != materialID) {
-					CalculateRainPuddles(albedo, worldNormal, specularTex.rgb, worldPos, flatNormal, lightmap.y);
+					CalculateRainPuddles(albedo, worldNormal, specularTex.rgb, worldPos, geoNormal, lightmap.y);
 
 					materialPack.z = Packup2x8U(specularTex.xy);
 					imageStore(colorimg7, texelPos, materialPack);
@@ -208,7 +208,7 @@ void main() {
 			distanceFade = saturate(distanceFade + float(lodMask));
 		#endif
 
-		float NdotL = saturate(dot(worldNormal, worldLightVector));
+		float NdotL = saturate(dot(worldNormal, worldLightDir));
 
 		// Shadows and SSS
         if (NdotL + sssAmount > EPS) {
@@ -219,7 +219,7 @@ void main() {
 
 			// PCSS
         	if (distanceFade < EPS) {
-				shadow *= CalculatePCSS(worldPos, flatNormal * normalOffsetBase, dither, surfaceDepth);
+				shadow *= CalculatePCSS(worldPos, geoNormal * normalOffsetBase, dither, surfaceDepth);
 			}
 
 			#ifdef SCREEN_SPACE_SHADOWS
@@ -228,7 +228,7 @@ void main() {
 				const float contactShadow = 1.0;
 			#endif
 
-			float LdotV = dot(worldLightVector, -worldDir);
+			float LdotV = dot(worldLightDir, -worldDir);
 
 			// Subsurface scattering
 			if (sssAmount > EPS) {
@@ -254,10 +254,10 @@ void main() {
 					#endif
 				#endif
 
-				vec3 halfway = normalize(worldLightVector - worldDir);
+				vec3 halfway = normalize(worldLightDir - worldDir);
 				float NdotV = abs(dot(worldNormal, worldDir));
 				float NdotH = dot(worldNormal, halfway);
-				float LdotH = dot(worldLightVector, halfway);
+				float LdotH = dot(worldLightDir, halfway);
 
 				sceneOut += shadow * DiffuseBurley(LdotH, NdotV, NdotL, material.roughness);
 

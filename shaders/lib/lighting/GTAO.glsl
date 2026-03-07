@@ -17,12 +17,12 @@ void SampleHorizonCos(in vec2 coord, in vec2 offset, in vec3 viewPos, in vec3 vi
 		vec3 sHorizonV;
 		if (sDepth > 1.0 - EPS) {
 			sDepth = loadDepth0Lod(uvToTexel(sTexCoord));
-			sHorizonV = ScreenToViewSpaceLod(vec3(sTexCoord, sDepth)) - viewPos;
+			sHorizonV = ScreenToViewPosLod(vec3(sTexCoord, sDepth)) - viewPos;
 		} else {
-			sHorizonV = ScreenToViewSpace(vec3(sTexCoord, sDepth)) - viewPos;
+			sHorizonV = ScreenToViewPos(vec3(sTexCoord, sDepth)) - viewPos;
 		}
 	#else
-		vec3 sHorizonV = ScreenToViewSpace(vec3(sTexCoord, sDepth)) - viewPos;
+		vec3 sHorizonV = ScreenToViewPos(vec3(sTexCoord, sDepth)) - viewPos;
 	#endif
 
 	float sLenV = sdot(sHorizonV);

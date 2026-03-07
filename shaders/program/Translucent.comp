@@ -102,7 +102,7 @@ void main() {
 		screenPos.z = screenPos.z * rcp(MC_HAND_DEPTH) + (0.5 - 0.5 / MC_HAND_DEPTH);
 	}
 
-	vec3 viewPos = ScreenToViewSpace(screenPos);
+	vec3 viewPos = ScreenToViewPos(screenPos);
 	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
 
 	float worldDistSquared = sdot(worldPos);
@@ -121,7 +121,7 @@ void main() {
 		// Front to back fog
 		#ifdef VOLUMETRIC_FOG
 			vec3 screenPosBack = vec3(screenPos.xy, loadDepth1(texelPos));
-			vec3 viewPosBack = ScreenToViewSpace(screenPosBack);
+			vec3 viewPosBack = ScreenToViewPos(screenPosBack);
 			vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
 			mat2x3 airFog = RaymarchAtmosphericFog(worldPos, worldPosBack, dither, screenPosBack.z > 1.0 - EPS, VF_MAX_SAMPLES >> 1);
 			sceneOut = ApplyFog(sceneOut, airFog);
@@ -129,7 +129,7 @@ void main() {
 
 		// Process water
 		if (waterMask) {
-			mat2x3 waterFog = AnalyticWaterFog(lightmap.y, waterData.x * 255.0, dot(worldLightVector, worldDir));
+			mat2x3 waterFog = AnalyticWaterFog(lightmap.y, waterData.x * 255.0, dot(worldLightDir, worldDir));
 			sceneOut = ApplyFog(sceneOut, waterFog);
 
 			// Skybox reflection for occluded water
@@ -157,8 +157,8 @@ void main() {
 	// Translucent lighting
 	vec4 lightingOut = vec4(0.0, 0.0, 0.0, 1.0);
 
-	vec3 flatNormal, worldNormal;
-	FetchNormalData(texelPos, flatNormal, worldNormal);
+	vec3 geoNormal, worldNormal;
+	FetchNormalData(texelPos, geoNormal, worldNormal);
 
 	float NdotL = 1.0;
 
@@ -166,7 +166,7 @@ void main() {
 		// Specular indirect
 		lightingOut = CalculateSpecularReflections(screenPos, viewPos, worldNormal, worldDir, dither, lightmap.y, waterMask);
 
-		NdotL = dot(worldNormal, worldLightVector);
+		NdotL = dot(worldNormal, worldLightDir);
 	} else {
 		// Skylight
 		lightingOut.rgb = global.skyIlluminance * cube(lightmap.y);
@@ -186,7 +186,7 @@ void main() {
 	// Sunlight
 	vec3 sunlightMult = cloudShadow * saturate(lightmap.y * 1e6) * global.directIlluminance;
 	if (NdotL > EPS) {
-		vec3 normalOffset = flatNormal * (approxSqrt(worldDistSquared) * 2e-3 + 2e-2) * (2.0 - saturate(NdotL));
+		vec3 normalOffset = geoNormal * (approxSqrt(worldDistSquared) * 2e-3 + 2e-2) * (2.0 - saturate(NdotL));
 		float surfaceDepth;
 		vec3 shadow = CalculatePCSS(worldPos, normalOffset, dither, surfaceDepth);
 
@@ -195,8 +195,8 @@ void main() {
 
 			if (notParticle) {
 				float NdotV = abs(dot(worldNormal, worldDir));
-				vec3 halfway = normalize(worldLightVector - worldDir);
-				float LdotH = dot(worldLightVector, halfway);
+				vec3 halfway = normalize(worldLightDir - worldDir);
+				float LdotH = dot(worldLightDir, halfway);
 				float NdotH = dot(worldNormal, halfway);
 
 				float f0 = F0FromIOR(waterMask ? WATER_IOR : GLASS_IOR);

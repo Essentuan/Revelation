@@ -28,12 +28,12 @@ float CalculateSSAO(in vec2 coord, in vec3 viewPos, in vec3 normal, in vec2 dir)
 			vec3 difference;
 			if (sampleDepth > 1.0 - EPS) {
 				sampleDepth = loadDepth0Lod(uvToTexel(sampleCoord));
-				difference = ScreenToViewSpaceLod(vec3(sampleCoord, sampleDepth)) - viewPos;
+				difference = ScreenToViewPosLod(vec3(sampleCoord, sampleDepth)) - viewPos;
 			} else {
-				difference = ScreenToViewSpace(vec3(sampleCoord, sampleDepth)) - viewPos;
+				difference = ScreenToViewPos(vec3(sampleCoord, sampleDepth)) - viewPos;
 			}
 		#else
-			vec3 difference = ScreenToViewSpace(vec3(sampleCoord, sampleDepth)) - viewPos;
+			vec3 difference = ScreenToViewPos(vec3(sampleCoord, sampleDepth)) - viewPos;
 		#endif
 
 		float diffSqLen = sdot(difference);

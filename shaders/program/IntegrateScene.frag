@@ -76,18 +76,18 @@ vec2 CalculateRefractedCoord(in ivec2 texelPos, in vec3 viewPos, in vec3 screenP
 	#else
 		// Estimate refraction depth
 		float depth1 = loadDepth1(texelPos);
-		vec3 viewPos1 = ScreenToViewSpace(vec3(screenPos.xy, depth1));
+		vec3 viewPos1 = ScreenToViewPos(vec3(screenPos.xy, depth1));
 		#if defined LOD_MOD
 			if (depth1 > 1.0 - EPS) {
 				depth1 = loadDepth1Lod(texelPos);
-				viewPos1 = ScreenToViewSpaceLod(vec3(screenPos.xy, depth1));
+				viewPos1 = ScreenToViewPosLod(vec3(screenPos.xy, depth1));
 			}
 		#endif
 
 		refractedDir *= min(distance(viewPos, viewPos1) * viewLengthInv, 4.0);
 		refractedDir *= mix(0.125, 4.0, waterMask) * REFRACTION_STRENGTH;
 
-		vec2 refractedCoord = ViewToScreenSpace(viewPos + refractedDir).xy;
+		vec2 refractedCoord = ViewToScreenPos(viewPos + refractedDir).xy;
 	#endif
 
 	float refractedDepth = loadDepth1(uvToTexel(refractedCoord));
@@ -105,11 +105,11 @@ void main() {
 	float depth = loadDepth0(texelPos);
 
 	vec3 screenPos = vec3(screenCoord, depth);
-	vec3 viewPos = ScreenToViewSpace(screenPos);
+	vec3 viewPos = ScreenToViewPos(screenPos);
 	#if defined LOD_MOD
 		if (depth > 1.0 - EPS) {
 			depth = screenPos.z = loadDepth0Lod(texelPos);
-			viewPos = ScreenToViewSpaceLod(screenPos);
+			viewPos = ScreenToViewPosLod(screenPos);
 		}
 	#endif
 
@@ -161,7 +161,7 @@ void main() {
 				float density = exp2(-0.1 * max0(worldPos.y - 63.0)) * pow8(sdot(worldPos.xz) * rcp(lodRenderDist * lodRenderDist));
 				float transmittance = exp2(-BORDER_FOG_FALLOFF * density);
 
-				vec3 skyRadiance = GetSkyRadiance(worldDir, worldSunVector) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
+				vec3 skyRadiance = GetSkyRadiance(worldDir, worldSunDir) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
 				skyRadiance = desaturate(skyRadiance, wetness * 0.5); // Post-process
 				sceneColor = mix(skyRadiance, sceneColor, transmittance);
 			}
@@ -181,7 +181,7 @@ void main() {
 	#endif
 
 	float viewDistance = length(viewPos);
-	float LdotV = dot(worldLightVector, worldDir);
+	float LdotV = dot(worldLightDir, worldDir);
 
 	// Underwater fog
 	if (isEyeInWater == 1) {

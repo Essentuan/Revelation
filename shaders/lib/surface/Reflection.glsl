@@ -27,7 +27,7 @@ vec4 CalculateSpecularReflections(Material material, in vec3 worldNormal, in vec
 			reflection.rgb += (texture(colortex4, screenPos.xy * 0.5).rgb - reflection.rgb) * saturate(edgeFade);
 
 			ivec2 texel = uvToTexel(screenPos.xy);
-			vec3 reflectViewPos = ScreenToViewSpace(vec3(screenPos.xy, loadDepth0(texel)));
+			vec3 reflectViewPos = ScreenToViewPos(vec3(screenPos.xy, loadDepth0(texel)));
 			reflection.a = distance(reflectViewPos, viewPos);
 		}
 

@@ -17,7 +17,7 @@ vec3 VoxyFaceNormal(in uint face) {
 
 void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 	vec4 baseColor = parameters.sampledColour * parameters.tinting;
-	vec3 flatNormal = VoxyFaceNormal(parameters.face);
+	vec3 geoNormal = VoxyFaceNormal(parameters.face);
 	vec2 lightmap = saturate((parameters.lightMap - 0.03125) * 1.06667);
 
 	albedoOut = vec4(baseColor.rgb, 1.0);
@@ -30,6 +30,6 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 	materialOut.y = max(parameters.customId - 10000u, 1u);
 	materialOut.zw = uvec2(0u);
 
-	normalOut.xy = OctEncodeUnorm(flatNormal);
+	normalOut.xy = OctEncodeUnorm(geoNormal);
 	normalOut.zw = normalOut.xy;
 }

@@ -40,13 +40,13 @@ void main() {
 	// Compute illuminance
 	vec3 camera = vec3(0.0, viewerHeight, 0.0);
 	vec3 sunIrradiance, moonIrradiance;
-	global.skyIlluminance = GetSunAndSkyIrradiance(camera, vec3(0.0, 1.0, 0.0), worldSunVector, sunIrradiance, moonIrradiance) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
+	global.skyIlluminance = GetSunAndSkyIrradiance(camera, vec3(0.0, 1.0, 0.0), worldSunDir, sunIrradiance, moonIrradiance) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
 
 	// Irradiance to illuminance
 	global.directIlluminance = SUN_SPECTRAL_RADIANCE_TO_LUMINANCE * (sunIrradiance + moonIrradiance);
 
 	// Avoid the misalignment at sunrise and sunset
-	global.directIlluminance *= smoothstep(0.0, 0.01, worldLightVector.y);
+	global.directIlluminance *= smoothstep(0.0, 0.01, worldLightDir.y);
 
 	#ifdef CLOUD_SHADOWS
 		mat4 projMat = BuildOrthoMat(CLOUD_SHADOW_DISTANCE * 32.0, CLOUD_SHADOW_DISTANCE * 32.0, 0.0, cumulusTopRadius);

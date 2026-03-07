@@ -16,7 +16,7 @@ vec3 VoxyFaceNormal(in uint face) {
 	) * uintBitsToFloat((face << 31u) ^ 0xBF800000u);
 }
 
-vec3 ScreenToViewSpace(in vec3 screenPos) {
+vec3 ScreenToViewPos(in vec3 screenPos) {
 	vec3 ndcPos = screenPos * 2.0 - 1.0;
 	return ProjectDivide(ndcPos, vxProjInv);
 }
@@ -45,8 +45,8 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 		materialId = 2u;
 	}
 
-	vec3 flatNormal = VoxyFaceNormal(parameters.face);
-	vec2 encodedNormal = OctEncodeUnorm(flatNormal);
+	vec3 geoNormal = VoxyFaceNormal(parameters.face);
+	vec2 encodedNormal = OctEncodeUnorm(geoNormal);
 
 	materialOut.x = Packup2x8U(lightmap);
 	materialOut.y = materialId;
@@ -57,12 +57,12 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 	waterOut = vec4(0.0);
 
 	if (waterMask) {
-		vec3 viewPos = ScreenToViewSpace(vec3(screenCoord, gl_FragCoord.z));
+		vec3 viewPos = ScreenToViewPos(vec3(screenCoord, gl_FragCoord.z));
 		vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
 		vec3 worldDir = normalize(worldPos - gbufferModelViewInverse[3].xyz);
 
-		mat3 tbnMatrix = BuildOrthonormalBasis(flatNormal);
+		mat3 tbnMatrix = BuildOrthonormalBasis(geoNormal);
 
 		vec3 minecraftPos = worldPos + cameraPosition;
 		#ifdef WATER_PARALLAX
@@ -77,7 +77,7 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 		normalOut.zw = encodedWaterNormal;
 
 		float depthBack = texelFetch(vxDepthTexOpaque, texelPos, 0).x;
-		vec3 viewPosBack = ScreenToViewSpace(vec3(screenCoord, depthBack));
+		vec3 viewPosBack = ScreenToViewPos(vec3(screenCoord, depthBack));
 		vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
 		float waterDepth = distance(worldPos, worldPosBack);
 

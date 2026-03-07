@@ -143,13 +143,13 @@ uniform vec2 viewSize;
 uniform vec2 viewPixelSize;
 uniform vec2 halfViewSize;
 uniform vec2 halfViewEnd;
-uniform vec2 taaOffset;
-uniform vec2 prevTaaOffset;
+uniform vec2 taaJitter;
+uniform vec2 taaJitterPrev;
 
 uniform vec3 cameraMovement;
-uniform vec3 worldSunVector;
-uniform vec3 worldLightVector;
-uniform vec3 viewLightVector;
+uniform vec3 worldSunDir;
+uniform vec3 worldLightDir;
+uniform vec3 viewLightDir;
 
 //================================================================================================//
 

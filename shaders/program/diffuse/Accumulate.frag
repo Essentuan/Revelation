@@ -62,7 +62,7 @@ vec4 TemporalFilter(in ivec2 texelPos, in vec3 screenPos, in vec3 worldNormal, o
     }
     vec2 currCoord = texelToUv(texelPos);
 
-	vec3 viewPos = ScreenToViewSpace(screenPos);
+	vec3 viewPos = ScreenToViewPos(screenPos);
     vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
     viewDistance = sdot(worldPos);
 
@@ -75,10 +75,10 @@ vec4 TemporalFilter(in ivec2 texelPos, in vec3 screenPos, in vec3 worldNormal, o
 	worldPos = projMAD(gbufferPreviousProjection, worldPos) * rcp(-worldPos.z); // To previous frame's NDC space
 
     #ifdef TAA_ENABLED
-        worldPos.xy += taaOffset;
+        worldPos.xy += taaJitter;
     #endif
     vec2 prevCoord = worldPos.xy * 0.5 + 0.5;
-    prevCoord += (prevTaaOffset - taaOffset) * 0.25;
+    prevCoord += (taaJitterPrev - taaJitter) * 0.25;
 
     if (saturate(prevCoord) == prevCoord && !worldTimeChanged) {
         vec4 prevDiffuse = vec4(0.0);

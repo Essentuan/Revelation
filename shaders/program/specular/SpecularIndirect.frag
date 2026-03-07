@@ -61,13 +61,13 @@ void main() {
 			screenPos.z = screenPos.z * rcp(MC_HAND_DEPTH) + (0.5 - 0.5 / MC_HAND_DEPTH);
 		}
 
-		vec3 viewPos = ScreenToViewSpace(screenPos);
+		vec3 viewPos = ScreenToViewPos(screenPos);
 
 		#if defined LOD_MOD
 			bool lodMask = screenPos.z > 1.0 - EPS;
 			if (lodMask) {
 				screenPos.z = loadDepth0Lod(texelPos);
-				viewPos = ScreenToViewSpaceLod(screenPos);
+				viewPos = ScreenToViewPosLod(screenPos);
 			}
 		#endif
 

@@ -125,7 +125,7 @@ void main() {
 		#endif
 
 		if (normalTex.w < (1.0 - rcp255)) {
-			vec3 viewPos = ScreenToViewSpace(vec3(gl_FragCoord.xy * viewPixelSize, gl_FragCoord.z));
+			vec3 viewPos = ScreenToViewPos(vec3(gl_FragCoord.xy * viewPixelSize, gl_FragCoord.z));
 			vec3 tangentPos = mat3(gbufferModelViewInverse) * viewPos * tbnMatrix;
 
 			float tangentLength = length(tangentPos);
@@ -142,8 +142,8 @@ void main() {
 				#ifdef PARALLAX_DEPTH_WRITE
 					gl_FragDepth = ViewToScreenDepth(ScreenToViewDepth(gl_FragDepth) - oms(offsetCoord.z) * PARALLAX_DEPTH);
 				#elif defined PARALLAX_SHADOW
-					if (dot(tbnMatrix[2], worldLightVector) > 1e-3) {
-						parallaxShadowOut = CalculateParallaxShadow(worldLightVector * tbnMatrix, offsetCoord, dither, parallaxFade);
+					if (dot(tbnMatrix[2], worldLightDir) > 1e-3) {
+						parallaxShadowOut = CalculateParallaxShadow(worldLightDir * tbnMatrix, offsetCoord, dither, parallaxFade);
 					}
 				#endif
 				#ifdef PARALLAX_BASED_NORMAL

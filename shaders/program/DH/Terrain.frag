@@ -22,7 +22,7 @@ layout (location = 2) out vec4 normalOut;
 
 //======// Input //===============================================================================//
 
-flat in vec3 flatNormal;
+flat in vec3 geoNormal;
 in vec3 worldPos;
 
 in vec3 vertColor;
@@ -52,7 +52,7 @@ void main() {
 		const float res = 8.0;
 		const float strength = 0.5;
 
-		mat3 tbnMatrix = BuildOrthonormalBasis(flatNormal);
+		mat3 tbnMatrix = BuildOrthonormalBasis(geoNormal);
 
 		vec2 noisePos = ((worldPos + cameraPosition) * tbnMatrix).xy;
 		float noise = texture(noisetex, noisePos * (res / 256.0)).x * 2.0;
@@ -68,6 +68,6 @@ void main() {
 	materialOut.y = materialID;
 	materialOut.zw = uvec2(0);
 
-	normalOut.xy = OctEncodeUnorm(flatNormal);
+	normalOut.xy = OctEncodeUnorm(geoNormal);
 	normalOut.zw = normalOut.xy;
 }

@@ -123,7 +123,7 @@ void main() {
     Material material = GetMaterialData(Unpack2x8U(loadMaterialPack(texelPos).z));
     if (material.specularMask) {
         vec2 screenCoord = texelToUv(texelPos);
-        vec3 viewDir = ScreenToViewVector(screenCoord);
+        vec3 viewDir = ScreenToViewDir(screenCoord);
 
         vec3 worldDir = mat3(gbufferModelViewInverse) * viewDir;
         vec3 worldNormal = FetchSurfaceNormal(texelPos);
