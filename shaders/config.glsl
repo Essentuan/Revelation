@@ -10,7 +10,7 @@
 
 	- Pipeline Configuration -
 
-	const int 	colortex0Format 			= R11F_G11F_B10F;
+	const int 	colortex0Format 			= RGBA16F;
 	const int 	colortex1Format 			= RGBA16F;
 	const int 	colortex2Format 			= RGBA16F;
 	const int 	colortex3Format 			= RGBA16F;
@@ -62,7 +62,7 @@
 
 	|   Buffer		|   Format          |   Resolution	|   Usage
 	|———————————————|———————————————————|———————————————|———————————————————————————
-	|	colortex0	|   r11f_g11f_b10f  |	Full res  	|	Scene data
+	|	colortex0	|   rgba16f  		|	Full res  	|	Scene data
 	|	colortex1	|   rgba16f		    |	Full res  	|	Scene history
 	|	colortex2	|   rgba16f         |	Full res	|	Indirect diffuse lighting history
 	|	colortex3	|   rgba16f         |	Full res  	|	Indirect diffuse lighting -> Indirect specular lighting -> Motion vector
@@ -74,7 +74,7 @@
 	|	colortex9	|   rgba16f     	|	Full res	|	Cloud history
 	|	colortex10	|                   |				|	Unused
 	|	colortex11	|   rgba32ui        |	Half res  	|	Volumetric fog, linear depth
-	|	colortex12	|   rg16          	|	Full res	|	Water data -> Bloomy fog mask
+	|	colortex12	|   rg16          	|	Full res	|	Water data
 	|	colortex13	|   r8i	        	|	Full res  	|	Cloud frame index
 	|	colortex14	|   rg16            |	Full res	|	Variance history
 	|	colortex15	|   	           	|				|	Unused

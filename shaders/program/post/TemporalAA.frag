@@ -88,7 +88,7 @@ vec4 TemporalReprojection(in vec2 screenCoord, in vec2 motionVector) {
     vec3 currData = loadSceneMain(texel);
     vec2 prevCoord = screenCoord - motionVector;
 
-    if (saturate(prevCoord) != prevCoord) return vec4(currData, 1.0);
+    if (saturate(prevCoord) != prevCoord) return vec4(YCoCgToRGB(currData), 1.0);
 
     #ifdef TAA_SHARPEN
         vec4 temporalData = textureCatmullRomFastAntiRing(colortex1, prevCoord);
@@ -97,7 +97,6 @@ vec4 TemporalReprojection(in vec2 screenCoord, in vec2 motionVector) {
     #endif
 
     vec3 prevData = RGBToYCoCg(temporalData.rgb);
-    currData = RGBToYCoCg(currData);
 
     float currLum = currData.x, prevLum = prevData.x;
     float temporalContrast = saturate(abs(currLum - prevLum) / max(currLum, prevLum));
@@ -108,7 +107,6 @@ vec4 TemporalReprojection(in vec2 screenCoord, in vec2 motionVector) {
 
 	    for (uint i = 0u; i < 8u; ++i) {
             vec3 sampleData = texelFetch(colortex0, texel + offset3x3N[i], 0).rgb;
-            sampleData = RGBToYCoCg(sampleData);
 
             moment1 += sampleData;
             moment2 += sampleData * sampleData;
