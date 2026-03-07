@@ -343,7 +343,7 @@ void CompositeClouds(inout vec3 skyRadiance, in vec4 cloudData, in vec3 rayDir) 
 		scattering += LightningContribution(cloudPos - camera) * sqr(cloudData.y);
 
 		// Aerial perspective
-		vec3 aerialT = GetTransmittance(cloudPos);
+		vec3 aerialT = sqr(GetTransmittance(cloudPos)); // Artificially boost
 		skyRadiance = skyRadiance * oms(oms(cloudData.w) * aerialT) + scattering * aerialT;
 	}
 }
