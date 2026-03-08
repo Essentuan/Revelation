@@ -68,20 +68,9 @@ vec3 OctDecodeUnorm(in vec2 oct) {
 	return OctDecodeSnorm(oct * 2.0 - 1.0);
 }
 
-// Spherical coordinate encoding
-vec2 SphereToCart(in vec3 dir) {
-	vec2 coord = vec2(atan(-dir.x, -dir.z), fastAcos(dir.y));
-    return vec2(coord.x * rTAU + 0.5, coord.y * rPI);
-}
-
-vec3 CartToSphere(in vec2 coord) {
-    coord *= vec2(TAU, PI);
-    return vec3(sincos(coord.x) * sin(coord.y), cos(coord.y)).xzy;
-}
-
 // Mercator projection
 vec2 ProjectMercator(in vec3 dir) {
-    float phi = atan(dir.z, dir.x); // Longitude
+    float phi = atan(dir.x, dir.z); // Longitude
     float theta = fastAsin(dir.y); // Latitude
 
     vec2 uv = vec2(phi, log(tan(PI * 0.25 + theta * 0.5)));
@@ -93,8 +82,39 @@ vec3 UnprojectMercator(in vec2 uv) {
     float phi = uv.x; // Longitude
     float theta = atan(exp(uv.y)) * 2.0 - hPI; // Latitude
 
-    vec3 dir = vec3(cos(theta) * cos(phi), sin(theta), cos(theta) * sin(phi));
-    return normalize(dir);
+    return vec3(sincos(phi) * cos(theta), sin(theta)).yzx;
+}
+
+// Equirectangular projection
+vec2 ProjectEquirectanglar(in vec3 dir) {
+    float phi = atan(dir.x, dir.z); // Longitude
+    float theta = fastAsin(dir.y) * 2.0; // Latitude
+
+    return vec2(phi, theta) * rTAU + 0.5;
+}
+
+vec3 UnprojectEquirectanglar(in vec2 uv) {
+    uv = uv * 2.0 - 1.0; // Scale to [-1, 1]
+    float phi = uv.x * PI; // Longitude
+    float theta = uv.y * hPI; // Latitude
+
+    return vec3(sincos(phi) * cos(theta), sin(theta)).yzx;
+}
+
+vec2 ProjectEquirectanglarNonlinear(in vec3 dir) {
+    float phi = atan(dir.x, dir.z); // Longitude
+    float theta = fastAsin(dir.y); // Latitude
+    theta = signI(theta) * sqrt(abs(theta)); // Non-linear mapping
+
+    return vec2(phi, theta) * rTAU + 0.5;
+}
+
+vec3 UnprojectEquirectanglarNonlinear(in vec2 uv) {
+    uv = uv * 2.0 - 1.0; // Scale to [-1, 1]
+    float phi = uv.x * PI; // Longitude
+    float theta = signI(uv.y) * sqr(uv.y * hPI); // Latitude
+
+    return vec3(sincos(phi) * cos(theta), sin(theta)).yzx;
 }
 
 // RGBE32 encoding

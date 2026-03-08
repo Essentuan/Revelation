@@ -58,15 +58,15 @@ vec3 WorldToCloudShadowScreenPos(in vec3 worldPos) {
 //================================================================================================//
 
 float CalculateCloudShadows(in vec3 rayPos, in float dither) {
-	float steps = float(CLOUD_SHADOW_SAMPLES) * (2.0 - worldLightVector.y);
+	float steps = float(CLOUD_SHADOW_SAMPLES) * (2.0 - worldLightDir.y);
 
 	rayPos.y += planetRadius; // To planet space
 
-	vec2 intersection = RaySphericalShellIntersection(rayPos, worldLightVector, cumulusBottomRadius, cumulusTopRadius);
+	vec2 intersection = RaySphericalShellIntersection(rayPos, worldLightDir, cumulusBottomRadius, cumulusTopRadius);
 	float stepLength = (intersection.y - intersection.x) * rcp(steps);
-	vec3 rayStep = worldLightVector * stepLength;
+	vec3 rayStep = worldLightDir * stepLength;
 
-	rayPos += worldLightVector * intersection.x;
+	rayPos += worldLightDir * intersection.x;
 	rayPos += rayStep * dither;
 
 	float extinction = 0.0;
@@ -81,7 +81,7 @@ float CalculateCloudShadows(in vec3 rayPos, in float dither) {
 	float transmittance = exp2(-rLOG2 * cumulusExtinction * extinction);
 	transmittance = linearstep(cloudMinTransmittance, 1.0, transmittance);
 
-	float strength = linearstep(0.02, 0.05, worldLightVector.y) * sqrt(CLOUD_SHADOW_STRENGTH);
+	float strength = linearstep(0.02, 0.05, worldLightDir.y) * sqrt(CLOUD_SHADOW_STRENGTH);
 	return oms(strength) + transmittance * strength;
 }
 

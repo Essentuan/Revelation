@@ -1,5 +1,5 @@
 #version 460 compatibility
 
-#define SPECULAR_FILTER_SIZE 16.0
+#define SPECULAR_FILTER_PASS 1
 
 #include "/program/specular/SpecularFilter.comp"

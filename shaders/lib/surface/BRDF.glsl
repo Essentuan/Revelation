@@ -233,7 +233,7 @@ vec3 DiffuseHammon(in float LdotV, in float NdotV, in float NdotL, in float Ndot
 float DiffuseBurley(in float LdotH, in float NdotV, in float NdotL, in float roughness) {
 	float f90 = 0.5 + 2.0 * roughness * LdotH * LdotH;
 
-	return NdotL * rPI * FresnelSchlick(NdotL, roughness, f90) * FresnelSchlick(NdotV, roughness, f90);
+	return NdotL * rPI * FresnelSchlick(NdotL, 1.0, f90) * FresnelSchlick(NdotV, 1.0, f90);
 }
 
 float GetNoHSquared(float radius, float NoL, float NoV, float VoL) {

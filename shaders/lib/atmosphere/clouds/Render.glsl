@@ -154,8 +154,8 @@ vec4 RenderClouds(in vec3 rayDir, in vec2 noise) {
 	// x: sunlight, y: skylight, z: depth, w: transmittance
 	vec4 cloudData = vec4(0.0, 0.0, 1e6, 1.0);
 
-	float moonlightFactor = smoothstep(-0.03, -0.05, worldSunVector.y);
-    vec3 lightDir = normalize(worldSunVector * oms(2.0 * moonlightFactor));
+	float moonlightFactor = smoothstep(-0.03, -0.05, worldSunDir.y);
+    vec3 lightDir = normalize(worldSunDir * oms(2.0 * moonlightFactor));
 
 	float LdotV = dot(lightDir, rayDir);
 
@@ -334,7 +334,7 @@ void CompositeClouds(inout vec3 skyRadiance, in vec4 cloudData, in vec3 rayDir) 
 
 		// Compute irradiance
 		vec3 sunIrradiance, moonIrradiance;
-		vec3 skyIlluminance = GetSunAndSkyIrradiance(cloudPos, normalize(cloudPos), worldSunVector, sunIrradiance, moonIrradiance) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
+		vec3 skyIlluminance = GetSunAndSkyIrradiance(cloudPos, normalize(cloudPos), worldSunDir, sunIrradiance, moonIrradiance) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
 		vec3 directIlluminance = SUN_SPECTRAL_RADIANCE_TO_LUMINANCE * (sunIrradiance + moonIrradiance);
 
 		vec3 scattering = cloudData.x * directIlluminance;
@@ -343,7 +343,7 @@ void CompositeClouds(inout vec3 skyRadiance, in vec4 cloudData, in vec3 rayDir) 
 		scattering += LightningContribution(cloudPos - camera) * sqr(cloudData.y);
 
 		// Aerial perspective
-		vec3 aerialT = GetTransmittance(cloudPos);
+		vec3 aerialT = sqr(GetTransmittance(cloudPos)); // Artificially boost
 		skyRadiance = skyRadiance * oms(oms(cloudData.w) * aerialT) + scattering * aerialT;
 	}
 }

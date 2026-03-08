@@ -1,7 +1,7 @@
 //================================================================================================//
 
 mat2x3 AnalyticWaterFog(in float skylight, in float waterDepth, in float LdotV) {
-	vec3 sunTransmittance = exp2(-rLOG2 * waterExtinction * mix(4.0, 1.0, worldLightVector.y));
+	vec3 sunTransmittance = exp2(-rLOG2 * waterExtinction * mix(4.0, 1.0, worldLightDir.y));
 
 	#if 0
 		float phase = FournierForandPhase(LdotV, 1.175, 4.065);
@@ -50,7 +50,7 @@ mat2x3 AnalyticWaterFog(in float skylight, in float waterDepth, in float LdotV) 
 			 shadowStart = projMAD(shadowProjection, shadowStart);
 		vec3 shadowPos = shadowStart + shadowStep * dither;
 
-		// vec3 lightVector = refract(worldLightVector, vec3(0.0, -1.0, 0.0), 1.0 / WATER_IOR);
+		// vec3 lightVector = refract(worldLightDir, vec3(0.0, -1.0, 0.0), 1.0 / WATER_IOR);
 
 		vec3 shadow = vec3(0.0);
 		for (uint i = 0u; i < UW_VF_MAX_SAMPLES; ++i, shadowPos += shadowStep) {
@@ -73,7 +73,7 @@ mat2x3 AnalyticWaterFog(in float skylight, in float waterDepth, in float LdotV) 
 		}
 		shadow *= rSteps;
 
-		float LdotV = dot(worldLightVector, worldDir);
+		float LdotV = dot(worldLightDir, worldDir);
 		#if 0
 			float phase = FournierForandPhase(LdotV, 1.175, 4.065);
 		#else

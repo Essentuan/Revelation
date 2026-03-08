@@ -214,7 +214,7 @@ vec4 CalculateSSILVB(in vec2 fragCoord, in vec3 viewPos, in vec3 worldNormal, in
         float w0_remap_mul = 1.0 / (1.0 - w0);
         float w0_remap_add = -w0 * w0_remap_mul;
 
-        vec2 rayDir = ViewToScreenSpace(smplDirVS + viewPos).xy - fragCoord;
+        vec2 rayDir = ViewToScreenPos(smplDirVS + viewPos).xy - fragCoord;
 	    rayDir *= minOf((step(0.0, rayDir) - fragCoord) / rayDir);
 
         float rayDirNorm = inversesqrt(sdot(rayDir * viewSize));
@@ -240,7 +240,7 @@ vec4 CalculateSSILVB(in vec2 fragCoord, in vec3 viewPos, in vec3 worldNormal, in
 
                 if (sampleDepth > 1.0 - EPS) continue;
 
-                vec3 samplePos = ScreenToViewSpace(vec3(sampleUV, sampleDepth));
+                vec3 samplePos = ScreenToViewPos(vec3(sampleUV, sampleDepth));
 
                 vec3 sampleDirFront = samplePos - viewPos;
                 vec3 sampleDirBack = sampleDirFront + viewDir * samplePos.z * hitThickness;

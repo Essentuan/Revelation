@@ -20,7 +20,7 @@ out vec2 texCoord;
 
 //======// Uniform //=============================================================================//
 
-uniform vec2 taaOffset;
+uniform vec2 taaJitter;
 
 //======// Main //================================================================================//
 void main() {
@@ -31,6 +31,6 @@ void main() {
 	gl_Position = diagonal4(gl_ProjectionMatrix) * viewPos.xyzz + gl_ProjectionMatrix[3];
 
 	#ifdef TAA_ENABLED
-		gl_Position.xy += taaOffset * gl_Position.w;
+		gl_Position.xy += taaJitter * gl_Position.w;
 	#endif
 }

@@ -27,7 +27,7 @@ uniform mat4 gbufferModelViewInverse;
 uniform float frameTimeCounter;
 uniform vec3 cameraPosition;
 
-uniform vec2 taaOffset;
+uniform vec2 taaJitter;
 
 //======// Main //================================================================================//
 void main() {

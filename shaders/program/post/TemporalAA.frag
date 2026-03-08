@@ -83,12 +83,12 @@ vec3 historyClipAABB(in vec3 history, in vec3 center, in vec3 extent) {
 }
 
 vec4 TemporalReprojection(in vec2 screenCoord, in vec2 motionVector) {
-    ivec2 texel = uvToTexel(screenCoord + taaOffset * 0.5);
+    ivec2 texel = uvToTexel(screenCoord + taaJitter * 0.5);
 
     vec3 currData = loadSceneMain(texel);
     vec2 prevCoord = screenCoord - motionVector;
 
-    if (saturate(prevCoord) != prevCoord) return vec4(currData, 1.0);
+    if (saturate(prevCoord) != prevCoord) return vec4(YCoCgToRGB(currData), 1.0);
 
     #ifdef TAA_SHARPEN
         vec4 temporalData = textureCatmullRomFastAntiRing(colortex1, prevCoord);
@@ -97,7 +97,6 @@ vec4 TemporalReprojection(in vec2 screenCoord, in vec2 motionVector) {
     #endif
 
     vec3 prevData = RGBToYCoCg(temporalData.rgb);
-    currData = RGBToYCoCg(currData);
 
     float currLum = currData.x, prevLum = prevData.x;
     float temporalContrast = saturate(abs(currLum - prevLum) / max(currLum, prevLum));
@@ -108,7 +107,6 @@ vec4 TemporalReprojection(in vec2 screenCoord, in vec2 motionVector) {
 
 	    for (uint i = 0u; i < 8u; ++i) {
             vec3 sampleData = texelFetch(colortex0, texel + offset3x3N[i], 0).rgb;
-            sampleData = RGBToYCoCg(sampleData);
 
             moment1 += sampleData;
             moment2 += sampleData * sampleData;
@@ -156,15 +154,15 @@ void main() {
             uint materialID = loadMaterialPack(screenTexel).y;
             if (depth > 1.0 - EPS && materialID != 0u) {
                 float lodDepth = loadDepth0Lod(screenTexel);
-                motionVector = screenCoord - ReprojectLod(vec3(screenCoord, lodDepth)).xy;
+                motionVector = screenCoord - ReprojectScreenPosLod(vec3(screenCoord, lodDepth)).xy;
             } else
         #endif
         {
         #ifdef TAA_CLOSEST_FRAGMENT
             vec3 closestFragment = CrossClosestFragment(screenTexel, depth);
-            motionVector = closestFragment.xy - Reproject(closestFragment).xy;
+            motionVector = closestFragment.xy - ReprojectScreenPos(closestFragment).xy;
         #else
-            motionVector = screenCoord - Reproject(vec3(screenCoord, depth)).xy;
+            motionVector = screenCoord - ReprojectScreenPos(vec3(screenCoord, depth)).xy;
         #endif
         }
 
@@ -178,10 +176,10 @@ void main() {
             temporalOut = vec4(loadSceneMain(screenTexel), 1.0);
         #endif
     #else
-        ivec2 srcTexel = uvToTexel(screenCoord + taaOffset * 0.5);
+        ivec2 srcTexel = uvToTexel(screenCoord + taaJitter * 0.5);
         temporalOut = vec4(loadSceneMain(srcTexel), 1.0);
 
-        vec2 prevCoord = Reproject(vec3(screenCoord, depth)).xy;
+        vec2 prevCoord = ReprojectScreenPos(vec3(screenCoord, depth)).xy;
         if (distance(prevCoord, screenCoord) < EPS) {
             vec4 prevData = texture(colortex1, prevCoord);
 

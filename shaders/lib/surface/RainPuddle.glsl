@@ -1,5 +1,5 @@
 
-void CalculateRainPuddles(inout vec3 albedo, inout vec3 normal, inout vec3 specTex, in vec3 worldPos, in vec3 flatNormal, in float skylight) {
+void CalculateRainPuddles(inout vec3 albedo, inout vec3 normal, inout vec3 specTex, in vec3 worldPos, in vec3 geoNormal, in float skylight) {
     vec3 minecraftPos = worldPos + cameraPosition;
     vec2 puddlePos = minecraftPos.xz - minecraftPos.y;
 	puddlePos -= worldTimeCounter * vec2(0.016, 0.01);
@@ -15,7 +15,7 @@ void CalculateRainPuddles(inout vec3 albedo, inout vec3 normal, inout vec3 specT
     if (puddles < EPS) return;
 
     // Normal falloff
-    puddles *= saturate(flatNormal.y * 0.5 + 0.5);
+    puddles *= saturate(geoNormal.y * 0.5 + 0.5);
     // Skylight falloff
     puddles *= saturate(skylight * 5.0 - 4.0);
 

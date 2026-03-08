@@ -42,7 +42,7 @@ uniform sampler2D cloudOriginTex;
 #include "/lib/atmosphere/clouds/Common.glsl"
 
 vec3 ReprojectClouds(in vec2 coord, in float depth) {
-	vec3 cloudPos = ScreenToViewVectorRaw(coord) * depth;
+	vec3 cloudPos = ScreenToViewDirRaw(coord) * depth;
 	cloudPos = transMAD(gbufferModelViewInverse, cloudPos); // To world space
 
 	vec3 motionVector = vec3(0.0);
@@ -83,7 +83,7 @@ void main() {
 	frameOut = 0u;
 
 	vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
-	vec2 currCoord = screenCoord - taaOffset * (0.5 * float(CLOUD_TAAU_SCALE));
+	vec2 currCoord = screenCoord - taaJitter * (0.5 * float(CLOUD_TAAU_SCALE));
 
 	// Fetch closest cloud depth
 	float cloudDepth = minOf(textureGather(cloudOriginTex, currCoord, 2));

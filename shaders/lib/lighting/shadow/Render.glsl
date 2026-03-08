@@ -138,7 +138,7 @@ vec3 CalculatePCSS(in vec3 worldPos, in vec3 normalOffset, in float dither, out 
 //================================================================================================//
 
 float ScreenSpaceShadow(in vec3 rayPos, in vec3 viewPos, in float dither, in float sssAmount) {
-	vec3 rayDir = ViewToScreenSpace(viewLightVector * abs(viewPos.z) + viewPos) - rayPos;
+	vec3 rayDir = ViewToScreenPos(viewLightDir * abs(viewPos.z) + viewPos) - rayPos;
 	rayDir *= minOf((step(0.0, rayDir) - rayPos) / rayDir);
 	rayDir *= inversesqrt(sdot(rayDir.xy));
 

@@ -24,12 +24,12 @@
         "far",
         "frameCounter",
         "frameTimeCounter",
-        "taaOffset_"
+        "taaJitter"
     ],
     "samplers": [
         "vxDepthTexOpaque",
         "noisetex",
         "depthtex0"
     ],
-    "taaOffset": "{ return taaOffset_; }"
+    "taaOffset": "{ return taaJitter; }"
 }

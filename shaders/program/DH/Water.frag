@@ -32,7 +32,7 @@ layout (location = 2) out vec4 waterOut;
 
 //======// Input //===============================================================================//
 
-flat in vec3 flatNormal;
+flat in vec3 geoNormal;
 
 in vec4 vertColor;
 in vec2 lightmap;
@@ -65,7 +65,7 @@ void main() {
         return;
     }
 
-	normalOut.xy = OctEncodeUnorm(flatNormal);
+	normalOut.xy = OctEncodeUnorm(geoNormal);
 
 	if (materialID == 3u) { // water
 		vec3 worldDir = normalize(worldPos - gbufferModelViewInverse[3].xyz);
@@ -75,7 +75,7 @@ void main() {
 
 			vec3 worldNormal = wave.normal;
 		#else
-			mat3 tbnMatrix = BuildOrthonormalBasis(flatNormal);
+			mat3 tbnMatrix = BuildOrthonormalBasis(geoNormal);
 
 			vec3 minecraftPos = worldPos + cameraPosition;
 			#ifdef WATER_PARALLAX
@@ -88,7 +88,7 @@ void main() {
 		#endif
 
 		float depthBack = loadDepth1Lod(texel);
-		vec3 viewPosBack = ScreenToViewSpace(vec3(gl_FragCoord.xy * viewPixelSize, depthBack));
+		vec3 viewPosBack = ScreenToViewPos(vec3(gl_FragCoord.xy * viewPixelSize, depthBack));
 		vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
 
 		vec2 encodedNormal = OctEncodeUnorm(worldNormal);

@@ -14,14 +14,14 @@ bool ScreenSpaceRaytrace(in vec3 viewPos, in vec3 viewDir, in float dither, in u
     vec3 origin = screenPos;
 
     float fixZ = step(viewDir.z, 0.0) * 1e23 - (viewPos.z + near) / viewDir.z;
-    vec3 rayDir = normalize(ViewToScreenSpace(viewDir * fixZ + viewPos) - origin);
+    vec3 rayDir = normalize(ViewToScreenPos(viewDir * fixZ + viewPos) - origin);
     rayDir *= minOf((step(0.0, rayDir) - screenPos) / rayDir);
 
     rayDir.xy *= viewSize;
     origin.xy *= viewSize;
 
     float rSteps = 1.0 / float(steps);
-    float invDirZ = rcp(rayDir.z);
+    float invDirZ = rcp(abs(rayDir.z));
     vec3 rayStep = rayDir * rSteps;
 
     #if defined LOD_MOD

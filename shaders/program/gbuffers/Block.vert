@@ -33,7 +33,7 @@ uniform int blockEntityId;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
 
-uniform vec2 taaOffset;
+uniform vec2 taaJitter;
 
 //======// Main //================================================================================//
 void main() {
@@ -49,6 +49,6 @@ void main() {
 	worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
 	#ifdef TAA_ENABLED
-		gl_Position.xy += taaOffset * gl_Position.w;
+		gl_Position.xy += taaJitter * gl_Position.w;
 	#endif
 }

@@ -19,9 +19,8 @@
 
 //======// Output //==============================================================================//
 
-/* RENDERTARGETS: 0,12 */
-layout (location = 0) out vec3 sceneOut;
-layout (location = 1) out float bloomyFogMask;
+/* RENDERTARGETS: 0 */
+layout (location = 0) out vec4 sceneOut;
 
 //======// Uniform //=============================================================================//
 
@@ -77,18 +76,18 @@ vec2 CalculateRefractedCoord(in ivec2 texelPos, in vec3 viewPos, in vec3 screenP
 	#else
 		// Estimate refraction depth
 		float depth1 = loadDepth1(texelPos);
-		vec3 viewPos1 = ScreenToViewSpace(vec3(screenPos.xy, depth1));
+		vec3 viewPos1 = ScreenToViewPos(vec3(screenPos.xy, depth1));
 		#if defined LOD_MOD
 			if (depth1 > 1.0 - EPS) {
 				depth1 = loadDepth1Lod(texelPos);
-				viewPos1 = ScreenToViewSpaceLod(vec3(screenPos.xy, depth1));
+				viewPos1 = ScreenToViewPosLod(vec3(screenPos.xy, depth1));
 			}
 		#endif
 
 		refractedDir *= min(distance(viewPos, viewPos1) * viewLengthInv, 4.0);
 		refractedDir *= mix(0.125, 4.0, waterMask) * REFRACTION_STRENGTH;
 
-		vec2 refractedCoord = ViewToScreenSpace(viewPos + refractedDir).xy;
+		vec2 refractedCoord = ViewToScreenPos(viewPos + refractedDir).xy;
 	#endif
 
 	float refractedDepth = loadDepth1(uvToTexel(refractedCoord));
@@ -106,11 +105,11 @@ void main() {
 	float depth = loadDepth0(texelPos);
 
 	vec3 screenPos = vec3(screenCoord, depth);
-	vec3 viewPos = ScreenToViewSpace(screenPos);
+	vec3 viewPos = ScreenToViewPos(screenPos);
 	#if defined LOD_MOD
 		if (depth > 1.0 - EPS) {
 			depth = screenPos.z = loadDepth0Lod(texelPos);
-			viewPos = ScreenToViewSpaceLod(screenPos);
+			viewPos = ScreenToViewPosLod(screenPos);
 		}
 	#endif
 
@@ -126,7 +125,7 @@ void main() {
 		refractedTexel = uvToTexel(CalculateRefractedCoord(texelPos, viewPos, screenPos, waterMask));
 	}
 
-    sceneOut = loadSceneMain(refractedTexel);
+    vec3 sceneColor = loadSceneMain(refractedTexel);
 
 	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
 	vec3 worldDir = normalize(worldPos);
@@ -138,22 +137,22 @@ void main() {
 		// Particle translucent
 		if (materialID == 500u) {
 			vec3 diffuseLight = texelFetch(colortex3, texelPos, 0).rgb;
-			sceneOut = mix(sceneOut, albedo * diffuseLight, translucent.a);
+			sceneColor = mix(sceneColor, albedo * diffuseLight, translucent.a);
 		}
 
 		// Translucent
 		if (glassMask || waterMask) {
 			if (glassMask) {
 				// Absorption
-				sceneOut *= exp2(log2(albedo) * approxSqrt(translucent.a));
+				sceneColor *= exp2(log2(albedo) * approxSqrt(translucent.a));
 
 				// Emissive
-				sceneOut += (2.0 * EMISSIVE_BRIGHTNESS) * Unpack2x8UX(materialPack.x) * mean(albedo) * albedo;
+				sceneColor += (2.0 * EMISSIVE_BRIGHTNESS) * Unpack2x8UX(materialPack.x) * mean(albedo) * albedo;
 			}
 
 			// Apply specular lighting
 			vec4 specularLight = texelFetch(colortex3, texelPos, 0);
-			sceneOut = sceneOut * specularLight.a + specularLight.rgb;
+			sceneColor = sceneColor * specularLight.a + specularLight.rgb;
 		}
 
 		// Border fog
@@ -162,27 +161,27 @@ void main() {
 				float density = exp2(-0.1 * max0(worldPos.y - 63.0)) * pow8(sdot(worldPos.xz) * rcp(lodRenderDist * lodRenderDist));
 				float transmittance = exp2(-BORDER_FOG_FALLOFF * density);
 
-				vec3 skyRadiance = GetSkyRadiance(worldDir, worldSunVector) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
+				vec3 skyRadiance = GetSkyRadiance(worldDir, worldSunDir) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
 				skyRadiance = desaturate(skyRadiance, wetness * 0.5); // Post-process
-				sceneOut = mix(skyRadiance, sceneOut, transmittance);
+				sceneColor = mix(skyRadiance, sceneColor, transmittance);
 			}
 		#endif
 	}
 
 	// Initialize
-	bloomyFogMask = 1.0;
+	float fogMask = 1.0;
 
 	// Volumetric fog
 	#ifdef VOLUMETRIC_FOG
 		if (isEyeInWater == 0) {
 			mat2x3 volFogData = UpscaleVolumetricFog(texelPos, -viewPos.z);
-			sceneOut = ApplyFog(sceneOut, volFogData);
-			bloomyFogMask = mix(1.0, mean(volFogData[1]), eyeSkylightSmooth);
+			sceneColor = ApplyFog(sceneColor, volFogData);
+			fogMask = mix(1.0, mean(volFogData[1]), eyeSkylightSmooth);
 		}
 	#endif
 
 	float viewDistance = length(viewPos);
-	float LdotV = dot(worldLightVector, worldDir);
+	float LdotV = dot(worldLightDir, worldDir);
 
 	// Underwater fog
 	if (isEyeInWater == 1) {
@@ -191,18 +190,23 @@ void main() {
 		#else
 			mat2x3 waterFog = AnalyticWaterFog(eyeSkylightSmooth, viewDistance, LdotV);
 		#endif
-		sceneOut = ApplyFog(sceneOut, waterFog);
-		bloomyFogMask = mean(waterFog[1]);
+		sceneColor = ApplyFog(sceneColor, waterFog);
+		fogMask = mean(waterFog[1]);
 	}
 
 	// Vanilla fog
-	RenderVanillaFog(sceneOut, bloomyFogMask, viewDistance);
+	RenderVanillaFog(sceneColor, fogMask, viewDistance);
 
-	bloomyFogMask = saturate(1.0 - bloomyFogMask);
+	// Convert to YCoCg for TAA clipping
+	#if defined TAA_ENABLED && RENDER_MODE == 1
+		sceneColor = RGBToYCoCg(sceneColor);
+	#endif
 
 	#if DEBUG_NORMALS == 1
-		sceneOut = FetchSurfaceNormal(texelPos) * 0.5 + 0.5;
+		sceneColor = FetchSurfaceNormal(texelPos) * 0.5 + 0.5;
 	#elif DEBUG_NORMALS == 2
-		sceneOut = FetchGeometryNormal(texelPos) * 0.5 + 0.5;
+		sceneColor = FetchGeometryNormal(texelPos) * 0.5 + 0.5;
 	#endif
+
+	sceneOut = vec4(sceneColor, saturate(1.0 - fogMask));
 }

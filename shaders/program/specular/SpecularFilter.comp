@@ -22,7 +22,7 @@ const vec2 workGroupsRender = vec2(1.0, 1.0);
 
 //======// Uniform //=============================================================================//
 
-#if defined SPECULAR_COMBINE_PASS
+#if SPECULAR_FILTER_PASS == 2
     writeonly uniform image2D colorimg0;
 #else
     writeonly uniform image2D colorimg3;
@@ -123,7 +123,7 @@ void main() {
     Material material = GetMaterialData(Unpack2x8U(loadMaterialPack(texelPos).z));
     if (material.specularMask) {
         vec2 screenCoord = texelToUv(texelPos);
-        vec3 viewDir = ScreenToViewVector(screenCoord);
+        vec3 viewDir = ScreenToViewDir(screenCoord);
 
         vec3 worldDir = mat3(gbufferModelViewInverse) * viewDir;
         vec3 worldNormal = FetchSurfaceNormal(texelPos);
@@ -131,12 +131,18 @@ void main() {
         vec4 specularData = texelFetch(colortex3, texelPos, 0);
     #ifdef REFLECTION_FILTER
         if (material.isRough) {
-            vec2 randOffset = SampleStbnVec2(texelPos, frameCounter) - 0.5;
-            SpecularFilter(specularData, texelPos, material.roughness, worldNormal, worldDir, SPECULAR_FILTER_SIZE, randOffset);
+            const float filterSize = float(32 >> SPECULAR_FILTER_PASS);
+            #if SPECULAR_FILTER_PASS > 0
+                vec2 randOffset = SampleStbnVec2(texelPos, frameCounter) - 0.5;
+            #else
+                vec2 randOffset = vec2(0.0);
+            #endif
+
+            SpecularFilter(specularData, texelPos, material.roughness, worldNormal, worldDir, filterSize, randOffset);
         }
     #endif
 
-    #if defined SPECULAR_COMBINE_PASS
+    #if SPECULAR_FILTER_PASS == 2
         vec3 sceneOut = loadSceneMain(texelPos);
         vec3 albedo = sRGBToLinear(loadAlbedo(texelPos));
 
