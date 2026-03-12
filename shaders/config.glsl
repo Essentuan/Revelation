@@ -70,7 +70,7 @@
 	|	colortex5	|   rgba16f  		|	256, 256   	|	Sky environment map
 	|	colortex6	|   rgba8           |	Full res  	|	Solid albedo, rain alpha
 	|	colortex7	|   rgba16ui        |	Full res  	|	Material data
-	|	colortex8	|   rgba16          |	Full res  	|	Normal data -> LDR output
+	|	colortex8	|   rgba16          |	Full res  	|	Normal data
 	|	colortex9	|   rgba16f     	|	Full res	|	Cloud history
 	|	colortex10	|                   |				|	Unused
 	|	colortex11	|   rgba32ui        |	Half res  	|	Volumetric fog, linear depth
