@@ -135,10 +135,6 @@ void main() {
 		}
 	#endif
 
-	#ifdef DEBUG_SKY_COLOR
-		if (all(lessThan(gl_FragCoord.xy * viewPixelSize, vec2(0.25)))) finalOut = skyColor;
-	#endif
-
 	#if 0
 		HistogramDisplay(finalOut, texelPos);
 	#endif
