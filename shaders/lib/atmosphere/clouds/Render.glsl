@@ -44,8 +44,12 @@ float CloudVolumeOpticalDepth(in vec3 rayPos, in vec3 rayDir, in float noise, in
 		float fi = float(i) + noise;
         vec3 samplePos = rayPos + rayStep * sqr(fi);
 
+		// Normalized height in clouds
+		float heightFraction = (length(samplePos) - cumulusBottomRadius) * rcp(cumulusThickness);
+		// if (abs(heightFraction - 0.5) > 0.5) break; // Skip if outside the clouds
+
 		float temp;
-		float density = CloudVolumeDensity(samplePos, temp, temp, i < 3u);
+		float density = CloudVolumeDensity(samplePos, heightFraction, temp, i < 3u);
         sumDensity += density * fi;
     }
 
@@ -203,8 +207,12 @@ vec4 RenderClouds(in vec3 rayDir, in vec2 noise) {
 				for (uint i = 0u; i < uint(raySteps); ++i, rayT += stepSize) {
 					vec3 rayPos = camera + rayDir * rayT;
 
+					// Normalized height in clouds
+					float heightFraction = (length(rayPos) - cumulusBottomRadius) * rcp(cumulusThickness);
+					// if (abs(heightFraction - 0.5) > 0.5) break; // Skip if outside the clouds
+
 					// Compute sample cloud density
-					float heightFraction, dimensionalProfile;
+					float dimensionalProfile;
 					float stepDensity = CloudVolumeDensity(rayPos, heightFraction, dimensionalProfile, rayT < 16e3);
 
 					// Skip if no density

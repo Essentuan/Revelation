@@ -74,8 +74,12 @@ float CalculateCloudShadows(in vec3 rayPos, in float dither) {
 
 	// Raymarch along the light vector
 	for (uint i = 0u; i < uint(steps) && extinction < threshold; ++i, rayPos += rayStep) {
+		// Normalized height in clouds
+		float heightFraction = (length(rayPos) - cumulusBottomRadius) * rcp(cumulusThickness);
+		// if (abs(heightFraction - 0.5) > 0.5) break; // Skip if outside the clouds
+
 		float temp;
-		extinction += CloudVolumeDensity(rayPos, temp, temp, false) * stepLength;
+		extinction += CloudVolumeDensity(rayPos, heightFraction, temp, false) * stepLength;
 	}
 
 	float transmittance = exp2(-rLOG2 * cumulusExtinction * extinction);

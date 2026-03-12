@@ -108,10 +108,7 @@ float CloudHighDensity(in vec2 rayPos) {
 	}
 #endif
 
-float CloudVolumeDensity(in vec3 rayPos, out float heightFraction, out float dimensionalProfile, in bool detail) {
-	// Remap the height of the clouds to the range of [0, 1]
-	heightFraction = (length(rayPos) - cumulusBottomRadius) * rcp(cumulusThickness);
-
+float CloudVolumeDensity(in vec3 rayPos, in float heightFraction, out float dimensionalProfile, in bool detail) {
 	// Wind field
 	const float windAngle = radians(CLOUD_LOW_WIND_ANGLE);
 	const vec3 windDir = vec3(cos(windAngle), 0.5, sin(windAngle));
