@@ -89,7 +89,7 @@ vec3 PercentageCloserFilter(in vec3 shadowScreenPos, in vec3 worldPos, in float 
 			if (waterMask > EPS) {
 				waterData += vec2(sampleDepth0 - shadowScreenPos.z, 1.0);
 			} else {
-				result += pow4(texelFetch(shadowcolor0, sampleTexel, 0).rgb) * sampleDepth1;
+				result += cube(texelFetch(shadowcolor0, sampleTexel, 0).rgb) * sampleDepth1;
 			}
 		} else
 	#endif
