@@ -79,8 +79,8 @@ float CloudMultiScatteringApproxOz(in float opticalDepth, in float phase) {
 
 float CloudMultiScatteringApproxHaringPro(in float opticalDepth, in float phase, in float extinction, in float albedo) {
 	// https://zhuanlan.zhihu.com/p/457997155
-	float msV = albedo * oms(exp2(-12.0 * extinction));
-	float msEnergy = msV / (1.0 - msV) * exp2(-0.25 * opticalDepth - 1.0);
+	float msV = albedo * oms(approxExp(-8.0 * extinction));
+	float msEnergy = msV / (1.0 - msV) * exp2(-0.25 * opticalDepth);
 
 	float single = exp2(-rLOG2 * opticalDepth) * phase;
 	return single + msEnergy * mix(phase, uniformPhase, msV);
@@ -221,8 +221,8 @@ vec4 RenderClouds(in vec3 rayDir, in vec2 noise) {
 						float opticalDepthSun = CloudVolumeOpticalDepth(rayPos, lightDir, noise.y, CLOUD_LOW_SUNLIGHT_SAMPLES);
 
 						// Approximate sunlight multi-scattering
-						float coarseDensity = dimensionalProfile * approxSqrt(stepDensity);
-						float scatteringSun = CloudMultiScatteringApproxHaringPro(opticalDepthSun, phase, coarseDensity * 1.5, cumulusAlbedo);
+						float coarseDensity = dimensionalProfile * approxSqrt(stepDensity * 2.0);
+						float scatteringSun = CloudMultiScatteringApproxHaringPro(opticalDepthSun, phase, coarseDensity, cumulusAlbedo);
 
 						#if CLOUD_CU_SKYLIGHT_SAMPLES > 0
 							// Compute the optical depth of skylight through clouds
@@ -233,8 +233,8 @@ vec4 RenderClouds(in vec3 rayDir, in vec2 noise) {
 							float scatteringSky = exp2(max(opticalDepthSky, opticalDepthSky * 0.25 - 0.5));
 						#else
 							// Nubis Ambient Scattering Approximation
-							// float scatteringSky = approxSqrt(1.0 - dimensionalProfile);
-							float scatteringSky = 1.0 - coarseDensity;
+							float scatteringSky = approxSqrt(1.0 - dimensionalProfile);
+							// float scatteringSky = 1.0 - coarseDensity;
 						#endif
 
 						// Estimate the light optical depth of the ground from the cloud volume
