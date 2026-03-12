@@ -122,11 +122,11 @@ float CloudVolumeDensity(in vec3 rayPos, in float heightFraction, out float dime
 	vec2 cloudMap = texture(cloudMapTex, (rayPos.xz * rcp(cloudMapExtend))).xy;
 
 	// Coveage profile
-	vec2 stepEdge = mix(vec2(0.5, 1.0) - CLOUD_CU_COVERAGE * 0.35, vec2(0.2, 0.6), sqr(wetness));
+	vec2 stepEdge = mix(vec2(0.5, 1.0) - CLOUD_CU_COVERAGE * 0.4, vec2(0.2, 0.6), sqr(wetness));
 	float coverage = linearstep(stepEdge.x, stepEdge.y, cloudMap.x);
 
 	float localCoverage = texture(noisetex, rayPos.xz * rcp(512e3) + 0.75).z;
-	coverage *= linearstep(stepEdge.x * 1.2, stepEdge.y * 0.9, localCoverage);
+	coverage *= linearstep(stepEdge.x * 1.1, stepEdge.y * 0.8, localCoverage);
 
 	// Vertical profile
 	float type = cloudMap.y * approxSqrt(coverage);
@@ -161,7 +161,7 @@ float CloudVolumeDensity(in vec3 rayPos, in float heightFraction, out float dime
 	#endif
 
 	// See [Schneider, 2022]
-	float cloudDensity = dimensionalProfile + (baseNoise - 1.0);
+	float cloudDensity = dimensionalProfile + (approxSqrt(baseNoise) - 1.0);
 	if (cloudDensity < cloudEpsilon) return 0.0;
 
 	float heightFade = smoothstep(0.1, 0.5, heightFraction);

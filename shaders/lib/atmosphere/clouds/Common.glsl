@@ -31,9 +31,6 @@
 //================================================================================================//
 
 
-/* Universal */
-    #define CLOUD_AERIAL_PERSPECTIVE            // Enables aerial perspective for clouds
-
 /* Low-level clouds */
     #define CLOUD_CUMULUS 	                    // Enables cumulus clouds
 
