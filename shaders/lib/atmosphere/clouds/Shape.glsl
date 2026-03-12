@@ -140,7 +140,7 @@ float CloudVolumeDensity(in vec3 rayPos, in float heightFraction, out float dime
 	#endif
 	if (dimensionalProfile < 0.1) return 0.0;
 
-	vec3 noisePos = (rayPos - windDir * heightFraction * cumulusTopOffset) * rcp(3e3);
+	vec3 noisePos = (rayPos - windDir * heightFraction * cumulusTopOffset) * rcp(2e3);
 	noisePos.y += dot(noisePos.xz, vec2(0.2, 0.3)); // Reduce repetition pattern
 
 	// Add curl noise
@@ -161,7 +161,7 @@ float CloudVolumeDensity(in vec3 rayPos, in float heightFraction, out float dime
 	#endif
 
 	// See [Schneider, 2022]
-	float cloudDensity = dimensionalProfile + (approxSqrt(baseNoise) - 1.0);
+	float cloudDensity = dimensionalProfile + (baseNoise - 1.0) * 0.75;
 	if (cloudDensity < cloudEpsilon) return 0.0;
 
 	float heightFade = smoothstep(0.1, 0.5, heightFraction);
