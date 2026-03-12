@@ -46,7 +46,7 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 	}
 
 	vec3 geoNormal = VoxyFaceNormal(parameters.face);
-	vec2 encodedNormal = OctEncodeUnorm(geoNormal);
+	vec2 encodedNormal = OctEncodeSnorm(geoNormal);
 
 	materialOut.x = Packup2x8U(lightmap);
 	materialOut.y = materialId;
@@ -73,7 +73,7 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 
 		worldNormal = tbnMatrix * worldNormal;
 
-		vec2 encodedWaterNormal = OctEncodeUnorm(worldNormal);
+		vec2 encodedWaterNormal = OctEncodeSnorm(worldNormal);
 		normalOut.zw = encodedWaterNormal;
 
 		float depthBack = texelFetch(vxDepthTexOpaque, texelPos, 0).x;

@@ -66,6 +66,6 @@ void main() {
 
 	vec3 geoNormal = normalize(cross(dFdx(worldPos), dFdy(worldPos)));
 
-	normalOut.xy = OctEncodeUnorm(geoNormal);
+	normalOut.xy = OctEncodeSnorm(geoNormal);
 	normalOut.zw = normalOut.xy;
 }

@@ -140,12 +140,12 @@ void main() {
 		materialOut.w = Packup2x8U(specularTex.zw);
 	#endif
 
-	normalOut.xy = OctEncodeUnorm(geoNormal);
+	normalOut.xy = OctEncodeSnorm(geoNormal);
 
 	#if defined MC_NORMAL_MAP
         vec3 normalTex = texture(normals, texCoord).rgb;
         DecodeNormalTex(normalTex);
-		normalOut.zw = OctEncodeUnorm(tbnMatrix * normalTex);
+		normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
 	#else
 		normalOut.zw = normalOut.xy;
 	#endif

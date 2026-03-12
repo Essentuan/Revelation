@@ -68,6 +68,6 @@ void main() {
 	materialOut.y = materialID;
 	materialOut.zw = uvec2(0);
 
-	normalOut.xy = OctEncodeUnorm(geoNormal);
+	normalOut.xy = OctEncodeSnorm(geoNormal);
 	normalOut.zw = normalOut.xy;
 }
