@@ -18,7 +18,7 @@
 /* RENDERTARGETS: 7,8,12 */
 layout (location = 0) out uvec4 materialOut;
 layout (location = 1) out vec4 normalOut;
-layout (location = 2) out vec4 waterOut;
+layout (location = 2) out vec2 waterOut;
 
 //======// Uniform //=============================================================================//
 
@@ -100,7 +100,7 @@ void main() {
 		vec2 encodedNormal = OctEncodeSnorm(worldNormal);
 		normalOut.zw = encodedNormal;
 
-		waterOut = vec4(distance(worldPos, worldPos1) * rcp255, Packup2x8(encodedNormal), 0.0, 1.0);
+		waterOut = vec2(distance(worldPos, worldPos1) * rcp255, Packup2x8(encodedNormal));
 	} else {
 		vec4 albedo = texture(tex, texCoord) * vertColor;
 
@@ -116,7 +116,7 @@ void main() {
 
 		materialOut.z = Packup2x8U(albedo.xy);
 		materialOut.w = Packup2x8U(albedo.zw);
-		waterOut = vec4(0.0);
+		waterOut = vec2(0.0);
 	}
 
 	materialOut.x = PackupDithered2x8U(lightmap, bayer4(gl_FragCoord.xy));
