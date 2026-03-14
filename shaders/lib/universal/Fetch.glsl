@@ -1,17 +1,17 @@
 vec3 FetchGeometryNormal(in ivec2 texel) {
-	return OctDecodeUnorm(loadNormalPack(texel).xy);
+	return OctDecodeSnorm(loadNormalPack(texel).xy);
 }
 
 vec3 FetchSurfaceNormal(in ivec2 texel) {
-	return OctDecodeUnorm(loadNormalPack(texel).zw);
+	return OctDecodeSnorm(loadNormalPack(texel).zw);
 }
 
 void FetchNormalData(in ivec2 texel, out vec3 geometryNormal, out vec3 surfaceNormal) {
 	vec4 pack = loadNormalPack(texel);
-	geometryNormal = OctDecodeUnorm(pack.xy);
+	geometryNormal = OctDecodeSnorm(pack.xy);
 
 	#if defined MC_NORMAL_MAP || defined PASS_TRANSLUCENT
-		surfaceNormal = OctDecodeUnorm(pack.zw);
+		surfaceNormal = OctDecodeSnorm(pack.zw);
 	#else
 		surfaceNormal = geometryNormal;
 	#endif

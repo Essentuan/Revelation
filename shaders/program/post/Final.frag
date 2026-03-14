@@ -53,7 +53,7 @@ vec3 FFXCasFilter(in ivec2 texel, in float sharpness) {
 	#ifdef HDR_ENABLED
 		#define CasLoad(offset) AFromPq(texelFetchOffset(colortex8, texel, 0, offset).rgb)
 	#else
-		#define CasLoad(offset) texelFetchOffset(colortex8, texel, 0, offset).rgb
+		#define CasLoad(offset) texelFetchOffset(colortex0, texel, 0, offset).rgb
 	#endif
 	#ifndef CAS_ENABLED
 		return CasLoad(ivec2(0, 0));
@@ -151,10 +151,6 @@ void main() {
 		if (all(lessThan(texelPos, textureSize(baseNoiseTex, 0).xy))) {
 			finalOut = vec3(texelFetch(baseNoiseTex, ivec3(texelPos, 0), 0).x);
 		}
-	#endif
-
-	#ifdef DEBUG_SKY_COLOR
-		if (all(lessThan(gl_FragCoord.xy * viewPixelSize, vec2(0.25)))) finalOut = skyColor;
 	#endif
 
 	#if 0

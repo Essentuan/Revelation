@@ -66,11 +66,11 @@ in vec3 worldPos;
 
 //======// Main //================================================================================//
 void main() {
-	normalOut.xy = unpackSnorm2x16(normalPack) * 0.5 + 0.5;
+	normalOut.xy = unpackSnorm2x16(normalPack);
 
 	// Construct TBN matrix
 	vec3 tangent = OctDecodeSnorm(unpackSnorm2x16(tangentPack.x));
-	vec3 normal = OctDecodeUnorm(normalOut.xy);
+	vec3 normal = OctDecodeSnorm(normalOut.xy);
 	vec3 bitangent = cross(tangent, normal) * uintBitsToFloat(tangentPack.y);
 	mat3 tbnMatrix = mat3(tangent, bitangent, normal);
 
@@ -97,7 +97,7 @@ void main() {
 		vec3 viewPos1 = ScreenToViewPos(vec3(gl_FragCoord.xy * viewPixelSize, depth1));
 		vec3 worldPos1 = transMAD(gbufferModelViewInverse, viewPos1);
 
-		vec2 encodedNormal = OctEncodeUnorm(worldNormal);
+		vec2 encodedNormal = OctEncodeSnorm(worldNormal);
 		normalOut.zw = encodedNormal;
 
 		waterOut = vec4(distance(worldPos, worldPos1) * rcp255, Packup2x8(encodedNormal), 0.0, 1.0);
@@ -109,7 +109,7 @@ void main() {
 		#if defined MC_NORMAL_MAP
 			vec3 normalTex = texture(normals, texCoord).rgb;
 			DecodeNormalTex(normalTex);
-			normalOut.zw = OctEncodeUnorm(tbnMatrix * normalTex);
+			normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
 		#else
 			normalOut.zw = normalOut.xy;
 		#endif

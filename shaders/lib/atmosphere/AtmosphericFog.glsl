@@ -124,7 +124,7 @@ mat2x3 RaymarchAtmosphericFog(in vec3 startPos, in vec3 endPos, in float dither,
 
 				float sampleDepth0 = step(shadowScreenPos.z, texelFetch(shadowtex0, shadowTexel, 0).x);
 				if (sampleShadow.x != sampleDepth0) {
-					vec3 shadowColorSample = pow4(texelFetch(shadowcolor0, shadowTexel, 0).rgb);
+					vec3 shadowColorSample = cube(texelFetch(shadowcolor0, shadowTexel, 0).rgb);
 					sampleShadow = shadowColorSample * (sampleShadow - sampleDepth0) + vec3(sampleDepth0);
 				}
 			}

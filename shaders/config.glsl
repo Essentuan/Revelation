@@ -18,14 +18,20 @@
 	const int 	colortex5Format 			= RGBA16F;
 	const int 	colortex6Format 			= RGBA8;
 	const int 	colortex7Format 			= RGBA16UI;
-	const int 	colortex8Format 			= RGBA16;
+	const int 	colortex8Format 			= RGBA16_SNORM;
 	const int 	colortex9Format 			= RGBA16F;
 //	const int 	colortex10Format 			= ;
-	const int 	colortex11Format 			= RGBA32UI;
+	const int 	colortex11Format 			= RGB32UI;
 	const int 	colortex12Format 			= RG16;
 	const int 	colortex13Format 			= R8I;
 	const int 	colortex14Format 			= RG16;
 //  const int 	colortex15Format 			= ;
+
+#ifdef VOXY
+	// Translucent data
+	const int 	colortex16Format 			= RGBA16UI;
+	const int 	colortex17Format 			= RGBA16_SNORM;
+#endif
 
 	const bool	colortex0Clear				= false;
 	const bool 	colortex1Clear				= false;
@@ -70,10 +76,10 @@
 	|	colortex5	|   rgba16f  		|	256, 256   	|	Sky environment map
 	|	colortex6	|   rgba8           |	Full res  	|	Solid albedo, rain alpha
 	|	colortex7	|   rgba16ui        |	Full res  	|	Material data
-	|	colortex8	|   rgba16          |	Full res  	|	Normal data -> LDR output / PQ Intermediate
+	|	colortex8	|   rgba16_snorm    |	Full res  	|	Normal data
 	|	colortex9	|   rgba16f     	|	Full res	|	Cloud history
 	|	colortex10	|                   |				|	Unused
-	|	colortex11	|   rgba32ui        |	Half res  	|	Volumetric fog, linear depth
+	|	colortex11	|   rgb32ui         |	Half res  	|	Volumetric fog, linear depth
 	|	colortex12	|   rg16          	|	Full res	|	Water data
 	|	colortex13	|   r8i	        	|	Full res  	|	Cloud frame index
 	|	colortex14	|   rg16            |	Full res	|	Variance history

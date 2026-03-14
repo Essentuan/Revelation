@@ -101,12 +101,12 @@ uniform sampler2D tex;
 void main() {
 	float dither = BlueNoise(ivec2(gl_FragCoord.xy), frameCounter);
 
-	normalOut.xy = unpackSnorm2x16(normalPack) * 0.5 + 0.5;
+	normalOut.xy = unpackSnorm2x16(normalPack);
 
 	// Construct TBN matrix
 	#if defined MC_NORMAL_MAP
 		vec3 tangent = OctDecodeSnorm(unpackSnorm2x16(tangentPack.x));
-		vec3 normal = OctDecodeUnorm(normalOut.xy);
+		vec3 normal = OctDecodeSnorm(normalOut.xy);
 		vec3 bitangent = cross(tangent, normal) * uintBitsToFloat(tangentPack.y);
 		mat3 tbnMatrix = mat3(tangent, bitangent, normal);
 	#endif
@@ -165,7 +165,7 @@ void main() {
 			DecodeNormalTex(normalTex.xyz);
 		}
 
-		normalOut.zw = OctEncodeUnorm(tbnMatrix * normalTex.xyz);
+		normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex.xyz);
 	#else
 		#define ReadTexture(tex) texture(tex, texCoord)
 
@@ -177,7 +177,7 @@ void main() {
 				DecodeNormalTex(normalTex);
 			#endif
 
-			normalOut.zw = OctEncodeUnorm(tbnMatrix * normalTex);
+			normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
 		#else
 			normalOut.zw = normalOut.xy;
 		#endif
@@ -200,5 +200,7 @@ void main() {
 		vec4 specularTex = ReadTexture(specular);
 		materialOut.z = Packup2x8U(specularTex.xy);
 		materialOut.w = Packup2x8U(specularTex.zw);
+	#else
+		materialOut.zw = uvec2(0);
 	#endif
 }

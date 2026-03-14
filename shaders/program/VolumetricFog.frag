@@ -48,11 +48,8 @@ uniform sampler2D shadowcolor1;
 
 #include "/lib/water/WaterFog.glsl"
 
-mat2x3 UnpackFogData(in uvec3 data) {
-	vec2 unpackedZ = unpackHalf2x16(data.z);
-	vec3 scattering = vec3(unpackHalf2x16(data.x), unpackedZ.x);
-	vec3 transmittance = vec3(unpackUnorm2x16(data.y), unpackedZ.y);
-	return mat2x3(scattering, transmittance);
+mat2x3 UnpackFogData(in uvec2 data) {
+	return mat2x3(DecodeRGBE8U(data.x), DecodeRGBE8U(data.y));
 }
 
 //======// Main //================================================================================//
@@ -91,18 +88,17 @@ void main() {
     vec2 prevCoord = ReprojectScreenPos(screenPos).xy;
 
     if (saturate(prevCoord) == prevCoord && !worldTimeChanged) {
-        uvec4 reprojectedData = texelFetch(colortex11, uvToTexel(prevCoord) >> 1, 0);
-		mat2x3 reprojectedFog = UnpackFogData(reprojectedData.rgb);
+        uvec3 reprojectedData = texelFetch(colortex11, uvToTexel(prevCoord) >> 1, 0).xyz;
+		mat2x3 reprojectedFog = UnpackFogData(reprojectedData.xy);
 
 		float blendWeight = 0.9;
-		blendWeight *= exp2(abs(uintBitsToFloat(reprojectedData.a) + viewPos.z) * 32.0 / viewPos.z);
+		blendWeight *= exp2(abs(uintBitsToFloat(reprojectedData.z) + viewPos.z) * 32.0 / viewPos.z);
 
         volFogData[0] = mix(volFogData[0], reprojectedFog[0], blendWeight);
         volFogData[1] = mix(volFogData[1], reprojectedFog[1], blendWeight);
 	}
 
-	packedFogData.x = packHalf2x16(volFogData[0].rg);
-	packedFogData.y = packUnorm2x16(volFogData[1].rg);
-	packedFogData.z = packHalf2x16(vec2(volFogData[0].b, volFogData[1].b));
-	packedFogData.w = floatBitsToUint(-viewPos.z);
+	packedFogData.x = EncodeRGBE8U(volFogData[0]);
+	packedFogData.y = EncodeRGBE8U(volFogData[1]);
+	packedFogData.z = floatBitsToUint(-viewPos.z);
 }

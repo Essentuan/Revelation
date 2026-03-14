@@ -108,10 +108,7 @@ float CloudHighDensity(in vec2 rayPos) {
 	}
 #endif
 
-float CloudVolumeDensity(in vec3 rayPos, out float heightFraction, out float dimensionalProfile, in bool detail) {
-	// Remap the height of the clouds to the range of [0, 1]
-	heightFraction = (length(rayPos) - cumulusBottomRadius) * rcp(cumulusThickness);
-
+float CloudVolumeDensity(in vec3 rayPos, in float heightFraction, out float dimensionalProfile, in bool detail) {
 	// Wind field
 	const float windAngle = radians(CLOUD_LOW_WIND_ANGLE);
 	const vec3 windDir = vec3(cos(windAngle), 0.5, sin(windAngle));
@@ -125,11 +122,11 @@ float CloudVolumeDensity(in vec3 rayPos, out float heightFraction, out float dim
 	vec2 cloudMap = texture(cloudMapTex, (rayPos.xz * rcp(cloudMapExtend))).xy;
 
 	// Coveage profile
-	vec2 stepEdge = mix(vec2(0.5, 1.0) - CLOUD_CU_COVERAGE * 0.35, vec2(0.2, 0.6), sqr(wetness));
+	vec2 stepEdge = mix(vec2(0.5, 1.0) - CLOUD_CU_COVERAGE * 0.4, vec2(0.2, 0.6), sqr(wetness));
 	float coverage = linearstep(stepEdge.x, stepEdge.y, cloudMap.x);
 
 	float localCoverage = texture(noisetex, rayPos.xz * rcp(512e3) + 0.75).z;
-	coverage *= linearstep(stepEdge.x * 1.2, stepEdge.y * 0.9, localCoverage);
+	coverage *= linearstep(stepEdge.x * 1.1, stepEdge.y * 0.8, localCoverage);
 
 	// Vertical profile
 	float type = cloudMap.y * approxSqrt(coverage);
@@ -143,7 +140,7 @@ float CloudVolumeDensity(in vec3 rayPos, out float heightFraction, out float dim
 	#endif
 	if (dimensionalProfile < 0.1) return 0.0;
 
-	vec3 noisePos = (rayPos - windDir * heightFraction * cumulusTopOffset) * rcp(3e3);
+	vec3 noisePos = (rayPos - windDir * heightFraction * cumulusTopOffset) * rcp(2e3);
 	noisePos.y += dot(noisePos.xz, vec2(0.2, 0.3)); // Reduce repetition pattern
 
 	// Add curl noise
@@ -164,7 +161,7 @@ float CloudVolumeDensity(in vec3 rayPos, out float heightFraction, out float dim
 	#endif
 
 	// See [Schneider, 2022]
-	float cloudDensity = dimensionalProfile + (baseNoise - 1.0);
+	float cloudDensity = dimensionalProfile + (baseNoise - 1.0) * 0.75;
 	if (cloudDensity < cloudEpsilon) return 0.0;
 
 	float heightFade = smoothstep(0.1, 0.5, heightFraction);

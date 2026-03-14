@@ -65,7 +65,7 @@ void main() {
         return;
     }
 
-	normalOut.xy = OctEncodeUnorm(geoNormal);
+	normalOut.xy = OctEncodeSnorm(geoNormal);
 
 	if (materialID == 3u) { // water
 		vec3 worldDir = normalize(worldPos - gbufferModelViewInverse[3].xyz);
@@ -91,7 +91,7 @@ void main() {
 		vec3 viewPosBack = ScreenToViewPos(vec3(gl_FragCoord.xy * viewPixelSize, depthBack));
 		vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
 
-		vec2 encodedNormal = OctEncodeUnorm(worldNormal);
+		vec2 encodedNormal = OctEncodeSnorm(worldNormal);
 		normalOut.zw = encodedNormal;
 
 		waterOut = vec4(distance(worldPos, worldPosBack) * rcp255, Packup2x8(encodedNormal), 0.0, 1.0);

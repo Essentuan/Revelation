@@ -30,6 +30,6 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 	materialOut.y = max(parameters.customId - 10000u, 1u);
 	materialOut.zw = uvec2(0u);
 
-	normalOut.xy = OctEncodeUnorm(geoNormal);
+	normalOut.xy = OctEncodeSnorm(geoNormal);
 	normalOut.zw = normalOut.xy;
 }

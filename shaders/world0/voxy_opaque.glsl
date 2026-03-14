@@ -1,1 +1,1 @@
-#include "/program/voxy/voxy_opaque.glsl"
+#include "/program/voxy/Opaque.glsl"

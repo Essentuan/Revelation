@@ -37,16 +37,11 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 	vec4 baseColor = parameters.sampledColour * parameters.tinting;
 	vec2 lightmap = vec2(0.0, saturate((parameters.lightMap.y - 0.03125) * 1.06667));
 
-	uint materialId = max(parameters.customId - 10000u, 2u);
-	bool waterMask = materialId == 3u;
-
-	// Treat unknown translucent materials as generic glass.
-	if (!waterMask && materialId != 2u) {
-		materialId = 2u;
-	}
+	bool waterMask = parameters.customId == 10003u;
+	uint materialId = waterMask ? 3u : 2u;
 
 	vec3 geoNormal = VoxyFaceNormal(parameters.face);
-	vec2 encodedNormal = OctEncodeUnorm(geoNormal);
+	vec2 encodedNormal = OctEncodeSnorm(geoNormal);
 
 	materialOut.x = Packup2x8U(lightmap);
 	materialOut.y = materialId;
@@ -73,7 +68,7 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 
 		worldNormal = tbnMatrix * worldNormal;
 
-		vec2 encodedWaterNormal = OctEncodeUnorm(worldNormal);
+		vec2 encodedWaterNormal = OctEncodeSnorm(worldNormal);
 		normalOut.zw = encodedWaterNormal;
 
 		float depthBack = texelFetch(vxDepthTexOpaque, texelPos, 0).x;

@@ -117,31 +117,23 @@ vec3 UnprojectEquirectanglarNonlinear(in vec2 uv) {
     return vec3(sincos(phi) * cos(theta), sin(theta)).yzx;
 }
 
-// RGBE32 encoding
+// RGBE8 encoding
 // Exponent range: [-128, 127]
-uint EncodeRGBE32U(in vec3 data) {
-	float e = floor(log2(maxOf(data)));
-
-	float scale = exp2(-e) * 255.0;
-	uvec3 rgb = uvec3(round(data * scale));
-
-    uint pack = uint(e + 128.0);
-    pack = bitfieldInsert(pack, rgb.x, 8, 8);
-    pack = bitfieldInsert(pack, rgb.y, 16, 8);
-    pack = bitfieldInsert(pack, rgb.z, 24, 8);
-    return pack;
+vec4 EncodeRGBE8(in vec3 data) {
+    float e = ceil(log2(maxOf(data)));
+    return vec4(data * exp2(-e), (e + 127.0) * rcp255);
 }
 
-vec3 DecodeRGBE32U(in uint data) {
-    float e = floor(bitfieldExtract(data, 0, 8)) - 128.0;
-    float scale = exp2(e) * rcp255;
+vec3 DecodeRGBE8(in vec4 data) {
+    return data.rgb * exp2(data.a * 255.0 - 127.0);
+}
 
-    uvec3 rgb;
-    rgb.x = bitfieldExtract(data, 8, 8);
-    rgb.y = bitfieldExtract(data, 16, 8);
-    rgb.z = bitfieldExtract(data, 24, 8);
+uint EncodeRGBE8U(in vec3 data) {
+    return packUnorm4x8(EncodeRGBE8(data));
+}
 
-    return vec3(rgb) * scale;
+vec3 DecodeRGBE8U(in uint data) {
+    return DecodeRGBE8(unpackUnorm4x8(data));
 }
 
 // Ericson, Christer. "Converting RGB to LogLuv in a fragment shader". 2007.
