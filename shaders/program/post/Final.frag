@@ -110,7 +110,7 @@ void main() {
 	#else
 		#ifdef HDR_ENABLED
 			// sRGB encode after CAS 
-			finalOut = linearToSRGBSafe(FFXCasFilter(texelPos, CAS_STRENGTH) * HdrGamePeakBrightness * HdrGamePaperWhiteBrightness / HdrUIBrightness);
+			finalOut = linearToSRGBSafe(Rec2020_2_sRGB * FFXCasFilter(texelPos, CAS_STRENGTH) * HdrGamePeakBrightness * HdrGamePaperWhiteBrightness / HdrUIBrightness);
 		#else
 			finalOut = FFXCasFilter(texelPos, CAS_STRENGTH);
 		#endif
