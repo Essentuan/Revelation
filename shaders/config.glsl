@@ -27,6 +27,12 @@
 	const int 	colortex14Format 			= RG16;
 //  const int 	colortex15Format 			= ;
 
+#ifdef VOXY
+	// Translucent data
+	const int 	colortex16Format 			= RGBA16UI;
+	const int 	colortex17Format 			= RGBA16_SNORM;
+#endif
+
 	const bool	colortex0Clear				= false;
 	const bool 	colortex1Clear				= false;
 	const bool	colortex2Clear				= false;

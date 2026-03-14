@@ -1,0 +1,41 @@
+/*
+--------------------------------------------------------------------------------
+
+	Revelation Shaders
+
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
+
+	Pass: Blit voxy transparent data (since it is rendered before deferred pass)
+
+--------------------------------------------------------------------------------
+*/
+
+//======// Input //===============================================================================//
+
+layout (local_size_x = 16, local_size_y = 16) in;
+const vec2 workGroupsRender = vec2(1.0, 1.0);
+
+//======// Utility //=============================================================================//
+
+#include "/lib/Utility.glsl"
+
+//======// Uniform //=============================================================================//
+
+writeonly uniform uimage2D colorimg7;
+writeonly uniform image2D colorimg8;
+
+uniform usampler2D colortex16;
+uniform sampler2D colortex17;
+
+//======// Main //================================================================================//
+void main() {
+	ivec2 texelPos = ivec2(gl_GlobalInvocationID.xy);
+
+	uvec4 materialData = texelFetch(colortex16, texelPos, 0);
+
+    if (materialData.y > 0u) {
+		imageStore(colorimg7, texelPos, materialData);
+		imageStore(colorimg8, texelPos, texelFetch(colortex17, texelPos, 0));
+	}
+}
