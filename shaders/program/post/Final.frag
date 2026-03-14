@@ -40,18 +40,10 @@ out vec3 finalOut;
 // Reference: Lou Kramer, FidelityFX CAS, AMD Developer Day 2019,
 // https://gpuopen.com/wp-content/uploads/2019/07/FidelityFX-CAS.pptx
 // https://github.com/GPUOpen-Effects/FidelityFX-CAS
-vec3 AFromPq(in vec3 color) {
-	vec3 p = pow(color, vec3(0.0126833));
-	return pow(saturate(p - vec3(0.835938))/(vec3(18.8516) - vec3(18.6875)*p), vec3(6.27739));
-}
 
-vec3 AToPq(in vec3 color) {
-	vec3 p = pow(color, vec3(0.159302));
-	return pow((vec3(0.835938) + vec3(18.8516) * p)/(vec3(1.0)+vec3(18.6875)*p),vec3(78.8438));
-}
 vec3 FFXCasFilter(in ivec2 texel, in float sharpness) {
 	#ifdef HDR_ENABLED
-		#define CasLoad(offset) AFromPq(texelFetchOffset(colortex8, texel, 0, offset).rgb)
+		#define CasLoad(offset) saturate(texelFetchOffset(colortex0, texel, 0, offset).rgb / HdrGamePeakBrightness)
 	#else
 		#define CasLoad(offset) texelFetchOffset(colortex0, texel, 0, offset).rgb
 	#endif
@@ -117,8 +109,8 @@ void main() {
 		finalOut = texelFetch(colortex4, texelPos, 0).rgb;
 	#else
 		#ifdef HDR_ENABLED
-			// PQ decode back up to game brightness after CAS 
-			finalOut = linearToSRGBSafe(PqToLinear(AToPq(FFXCasFilter(texelPos, CAS_STRENGTH)), HdrUIBrightness) * Rec2020_2_sRGB);
+			// sRGB encode after CAS 
+			finalOut = linearToSRGBSafe(FFXCasFilter(texelPos, CAS_STRENGTH) * HdrGamePeakBrightness * HdrGamePaperWhiteBrightness / HdrUIBrightness);
 		#else
 			finalOut = FFXCasFilter(texelPos, CAS_STRENGTH);
 		#endif

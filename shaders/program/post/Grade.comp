@@ -207,10 +207,9 @@ void main() {
 
 		// Working to display space
 		#ifdef HDR_ENABLED
-			// Normalize for FFX CAS using PQ encoding
+			// Limited in Rec2020 non negative linear value range for CAS
 			color *= sRGB_2_Rec2020;
-			color = max(vec3(0.0), color); // Avoid negative values causing issues with PQ encoding
-			color = saturate(linearToPq(color, HdrGamePaperWhiteBrightness));
+			color = max(color, vec3(0.0));
 		#else
 			color = saturate(linearToSRGB(color));
 		#endif
