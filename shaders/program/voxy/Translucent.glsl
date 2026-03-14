@@ -6,7 +6,7 @@
 
 layout(location = 0) out uvec4 materialOut;
 layout(location = 1) out vec4 normalOut;
-layout(location = 2) out vec2 waterOut;
+layout(location = 2) out vec4 waterOut;
 
 vec3 VoxyFaceNormal(in uint face) {
 	return vec3(
@@ -49,7 +49,7 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 
 	normalOut.xy = normalOut.zw = encodedNormal;
 
-	waterOut = vec2(0.0);
+	waterOut = vec4(0.0);
 
 	if (waterMask) {
 		vec3 viewPos = ScreenToViewPos(vec3(screenCoord, gl_FragCoord.z));
@@ -76,7 +76,7 @@ void voxy_emitFragment(in VoxyFragmentParameters parameters) {
 		vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
 		float waterDepth = distance(worldPos, worldPosBack);
 
-		waterOut = vec2(waterDepth * rcp255, Packup2x8(encodedWaterNormal));
+		waterOut = vec4(waterDepth * rcp255, Packup2x8(encodedWaterNormal), 0.0, 1.0);
 	} else {
 		materialOut.z = Packup2x8U(baseColor.xy);
 		materialOut.w = Packup2x8U(baseColor.zw);
