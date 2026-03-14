@@ -37,28 +37,25 @@
 
 #if defined PASS_COMPOSITE
 #if defined VOLUMETRIC_FOG || defined UW_VOLUMETRIC_FOG
-	mat2x3 UnpackFogData(in uvec3 data) {
-		vec2 unpackedZ = unpackHalf2x16(data.z);
-		vec3 scattering = vec3(unpackHalf2x16(data.x), unpackedZ.x);
-		vec3 transmittance = vec3(unpackUnorm2x16(data.y), unpackedZ.y);
-		return mat2x3(scattering, transmittance);
+	mat2x3 UnpackFogData(in uvec2 data) {
+		return mat2x3(DecodeRGBE8U(data.x), DecodeRGBE8U(data.y));
 	}
 
 	mat2x3 UpscaleVolumetricFog(in ivec2 texelPos, in float linearDepth) {
 		ivec2 randTexel = ivec2(vec2(texelPos >> 1) + BlueNoise(texelPos, frameCounter + 7));
 		float sigmaZ = -64.0 / linearDepth;
 
-		mat2x3 sum = UnpackFogData(texelFetch(colortex11, randTexel, 0).rgb);
+		mat2x3 sum = UnpackFogData(texelFetch(colortex11, randTexel, 0).xy);
 		float sumWeight = 1.0;
 
 		for (uint i = 0u; i < 8u; ++i) {
 			ivec2 sampleTexel = randTexel + offset3x3N[i];
-			uvec4 sampleFogData = texelFetch(colortex11, sampleTexel, 0);
+			uvec3 sampleFogData = texelFetch(colortex11, sampleTexel, 0).xyz;
 
-			float sampleDepth = uintBitsToFloat(sampleFogData.w);
+			float sampleDepth = uintBitsToFloat(sampleFogData.z);
 			float weight = exp2(abs(sampleDepth - linearDepth) * sigmaZ);
 
-			sum += UnpackFogData(sampleFogData.rgb) * weight;
+			sum += UnpackFogData(sampleFogData.xy) * weight;
 			sumWeight += weight;
 		}
 
