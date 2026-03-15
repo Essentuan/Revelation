@@ -82,7 +82,7 @@ void CombineBloomAndFog(inout vec3 scene, in ivec2 texel, in float exposure) {
 	float bloomIntensity = BLOOM_INTENSITY * 0.1;
 
 	#ifdef BLOOMY_FOG
-		float fogMask = texelFetch(colortex0, texel, 0).w;
+		float fogMask = texture(colortex0, screenCoord + taaJitter * 0.5).w;
 		bloomIntensity = max(bloomIntensity, fogMask * BLOOMY_FOG_INTENSITY);
 	#endif
 
