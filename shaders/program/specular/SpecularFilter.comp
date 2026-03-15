@@ -81,7 +81,7 @@ void SpecularFilter(inout vec4 specularData, in ivec2 texel, in float roughness,
     float linearDepth = ScreenToViewDepth(loadDepth0(texel));
 
     float sharpenWeight = 0.125 + 0.375 * saturate(specularData.a * 0.25);
-    ivec2 texelEnd = ivec2(viewSize) - 1;
+    ivec2 texelEnd = ivec2(viewSize) - 2;
 
     // Sharpen
     specularData.rgb *= pow(sdot(specularData.rgb) + EPS, 0.5 * sharpenWeight - 0.5);
@@ -89,24 +89,26 @@ void SpecularFilter(inout vec4 specularData, in ivec2 texel, in float roughness,
 
     for (uint i = 0u; i < 8u; ++i) {
         vec2 offset = offset3x3N[i] + randOffset;
-        ivec2 sampleTexel = clamp(texel + ivec2(tangent * offset.x + bitangent * offset.y), ivec2(0), texelEnd);
+        ivec2 sampleTexel = texel + ivec2(tangent * offset.x + bitangent * offset.y);
 
-        vec4 sampleData = texelFetch(colortex3, sampleTexel, 0);
+        if (clamp(sampleTexel, ivec2(1), texelEnd) == sampleTexel) {
+            vec4 sampleData = texelFetch(colortex3, sampleTexel, 0);
 
-        float sampleLinearDepth = ScreenToViewDepth(loadDepth0(sampleTexel));
-        vec3 sampleWorldNormal = FetchSurfaceNormal(sampleTexel);
-        // vec3 sampleReflectedDir = reflect(-worldDir, sampleWorldNormal);
-        float sampleRoughness = sqr(1.0 - Unpack2x8UX(loadMaterialPack(sampleTexel).z));
+            float sampleLinearDepth = ScreenToViewDepth(loadDepth0(sampleTexel));
+            vec3 sampleWorldNormal = FetchSurfaceNormal(sampleTexel);
+            // vec3 sampleReflectedDir = reflect(-worldDir, sampleWorldNormal);
+            float sampleRoughness = sqr(1.0 - Unpack2x8UX(loadMaterialPack(sampleTexel).z));
 
-        float weight = lobeWeight(worldNormal, sampleWorldNormal, roughness, sampleRoughness, 2.0);
-        weight *= exp2(-4.0 * NdotV * abs(linearDepth - sampleLinearDepth));
-        weight = saturate(weight);
+            float weight = lobeWeight(worldNormal, sampleWorldNormal, roughness, sampleRoughness, 2.0);
+            weight *= exp2(-4.0 * NdotV * abs(linearDepth - sampleLinearDepth));
+            weight = saturate(weight);
 
-        // Sharpen
-        sampleData.rgb *= pow(sdot(sampleData.rgb) + EPS, 0.5 * sharpenWeight - 0.5);
+            // Sharpen
+            sampleData.rgb *= pow(sdot(sampleData.rgb) + EPS, 0.5 * sharpenWeight - 0.5);
 
-        specularData += sampleData * weight;
-        sumWeight += weight;
+            specularData += sampleData * weight;
+            sumWeight += weight;
+        }
     }
 
     specularData *= 1.0 / sumWeight;
