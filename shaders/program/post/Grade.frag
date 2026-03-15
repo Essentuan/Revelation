@@ -79,8 +79,8 @@ void CombineBloomAndFog(inout vec3 scene, in ivec2 texel, in float exposure) {
 
 	bloomData *= rcp(sumWeight);
 
-	float bloomIntensity = BLOOM_INTENSITY * 0.25;
-	bloomIntensity /= max(exposure, 1.0) + 2.0;
+	float bloomIntensity = BLOOM_INTENSITY * 0.1;
+	bloomIntensity /= max(exposure, 1.0) + 1.0;
 
 	#ifdef BLOOMY_FOG
 		float fogMask = texelFetch(colortex0, texel, 0).w;
