@@ -46,19 +46,14 @@ vec3 GetSpecularDominantDir(vec3 N, vec3 V, float roughness) {
     return normalize(mix(N, R, f));
 }
 
-// https://alakhag.github.io/posts/sg/
-float sphericalGaussian(in vec3 v, in vec3 p, in float lambda) {
-    return exp(lambda * (saturate(dot(v, p)) - 1.0));
-}
+float LobeWeightFast(in vec3 CN, in vec3 SN, in float CR, in float SR) {
+    const float factor = 4.0;
+    float lambdaC = 2.0 / CR, lambdaS = 2.0 / SR;
+    float product = lambdaC * lambdaS, summa = lambdaC + lambdaS;
 
-float lobeSharpness(in float roughness) {
-    return 2.0 / (roughness * roughness);
-}
-
-float lobeWeight(in vec3 cNormal, in vec3 sNormal, in float cRoughness, in float sRoughness, const float factor) {
-    float cLambda = lobeSharpness(cRoughness), sLambda = lobeSharpness(sRoughness);
-    float product = cLambda * sLambda, summa = cLambda + sLambda;
-    return pow(summa * inversesqrt(product) * 0.5, -factor) * sphericalGaussian(cNormal, sNormal, product * (factor / maxEps(summa)));
+    float weightN = product * (factor / maxEps(summa)) * (saturate(dot(CN, SN)) - 1.0);
+    float weightR = oms(log2(summa * inversesqrt(product))) * factor;
+    return exp2(weightN + weightR);
 }
 
 void SpecularFilter(inout vec4 specularData, in ivec2 texel, in float roughness, in vec3 worldNormal, in vec3 worldDir, in float filterSize, in vec2 randOffset) {
@@ -74,9 +69,6 @@ void SpecularFilter(inout vec4 specularData, in ivec2 texel, in float roughness,
 
     float skewFactor = mix(0.5 + 0.5 * roughness, 1.0, NdotV);
     bitangent *= 1.0 / skewFactor;
-
-    // float sigmaN = 128.0 / (roughness + 0.125);
-    // float hitDistPhi = -0.125 * NdotV * oms(roughness) / (specularData.a + 1.0);
 
     float linearDepth = ScreenToViewDepth(loadDepth0(texel));
 
@@ -99,9 +91,9 @@ void SpecularFilter(inout vec4 specularData, in ivec2 texel, in float roughness,
             // vec3 sampleReflectedDir = reflect(-worldDir, sampleWorldNormal);
             float sampleRoughness = sqr(1.0 - Unpack2x8UX(loadMaterialPack(sampleTexel).z));
 
-            float weight = lobeWeight(worldNormal, sampleWorldNormal, roughness, sampleRoughness, 2.0);
+            float weight = LobeWeightFast(worldNormal, sampleWorldNormal, roughness, sampleRoughness);
             weight *= exp2(-4.0 * NdotV * abs(linearDepth - sampleLinearDepth));
-            weight = saturate(weight);
+            // weight = saturate(weight);
 
             // Sharpen
             sampleData.rgb *= pow(sdot(sampleData.rgb) + EPS, 0.5 * sharpenWeight - 0.5);
