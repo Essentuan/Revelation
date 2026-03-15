@@ -20,6 +20,11 @@ layout (location = 0) out vec4 albedoOut;
 layout (location = 1) out uvec4 materialOut;
 layout (location = 2) out vec4 normalOut;
 
+#if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
+/* RENDERTARGETS: 6,7,8,0 */
+layout (location = 3) out float parallaxShadowOut;
+#endif
+
 //======// Uniform //=============================================================================//
 
 uniform sampler2D tex;
@@ -91,5 +96,9 @@ void main() {
 		normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
 	#else
 		normalOut.zw = normalOut.xy;
+	#endif
+
+	#if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
+		parallaxShadowOut = 0.0;
 	#endif
 }

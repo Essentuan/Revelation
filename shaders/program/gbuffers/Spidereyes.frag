@@ -19,6 +19,11 @@
 layout (location = 0) out vec4 albedoOut;
 layout (location = 1) out uvec2 materialOut;
 
+#if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
+/* RENDERTARGETS: 6,7,0 */
+layout (location = 2) out float parallaxShadowOut;
+#endif
+
 //======// Uniform //=============================================================================//
 
 uniform sampler2D tex;
@@ -44,4 +49,8 @@ void main() {
 	albedoOut = vec4(albedo.rgb, 1.0);
 
 	materialOut.y = 20u;
+
+	#if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
+		parallaxShadowOut = 0.0;
+	#endif
 }
