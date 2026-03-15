@@ -264,6 +264,8 @@ value.TEXTURE_FORMAT.2=§c§k???
 option.NORMAL_MAPPING=Normal Mapping
 option.SPECULAR_MAPPING=Specular Mapping
 
+option.LABPBR_HARDCODED_METAL=labPBR Hardcoded Metal
+
 option.AUTO_GENERATED_NORMAL=Auto Generated Normal
 option.AGN_RESOLUTION=AGN Resolution
 option.AGN_STRENGTH=AGN Strength

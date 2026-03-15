@@ -59,9 +59,11 @@ vec3 GetMaterialF0(in float metalness, in vec3 albedo) {
 		if (metalIndex < 230u) {
 			// Dielectrics
 			f0 = vec3(mix(DEFAULT_DIELECTRIC_F0, 1.0, metalness));
+	#ifdef LABPBR_HARDCODED_METAL
 		} else if (metalIndex < 238u) {
 			// Hardcoded metals
 			f0 = HardcodedMetalF0[metalIndex - 230u];
+	#endif
 		} else {
 			// Other metals
 			f0 = albedo;

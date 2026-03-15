@@ -11,11 +11,6 @@
 --------------------------------------------------------------------------------
 */
 
-//======// Input //===============================================================================//
-
-layout (local_size_x = 16, local_size_y = 16) in;
-const vec2 workGroupsRender = vec2(1.0, 1.0);
-
 //======// Utility //=============================================================================//
 
 #include "/lib/Utility.glsl"
@@ -37,9 +32,12 @@ const vec2 workGroupsRender = vec2(1.0, 1.0);
 #define VIGNETTE_STRENGTH 1.0 // [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.5 3.0 3.5 4.0 5.0]
 #define VIGNETTE_ROUNDNESS 0.5 // [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.5 3.0 3.5 4.0 5.0]
 
-//======// Uniform //=============================================================================//
+//======// Output //==============================================================================//
 
-writeonly uniform image2D colorimg0; // Tonemapped output
+/* RENDERTARGETS: 0 */
+out vec3 color; // Tonemapped output
+
+//======// Uniform //=============================================================================//
 
 #include "/lib/universal/Uniform.glsl"
 
@@ -81,13 +79,15 @@ void CombineBloomAndFog(inout vec3 scene, in ivec2 texel, in float exposure) {
 
 	bloomData *= rcp(sumWeight);
 
-	float bloomIntensity = BLOOM_INTENSITY * 0.25;
-	bloomIntensity /= max(exposure, 1.0) + 2.0;
+	float bloomIntensity = BLOOM_INTENSITY * 0.1;
 
 	#ifdef BLOOMY_FOG
-		float fogMask = texelFetch(colortex0, texel, 0).w;
+		float fogMask = texture(colortex0, screenCoord + taaJitter * 0.5).w;
 		bloomIntensity = max(bloomIntensity, fogMask * BLOOMY_FOG_INTENSITY);
 	#endif
+
+	// Exposure adaptation
+	bloomIntensity /= max(exposure, 1.0) + 1.0;
 
 	#if BLOOM_BLENDING_MODE == 0
 		scene += bloomData * bloomIntensity;
@@ -152,8 +152,7 @@ vec3 Lottes(in vec3 x) {
 
 //======// Main //================================================================================//
 void main() {
-    uvec2 localPos = QuadLayout16x16(gl_LocalInvocationIndex);
-    ivec2 texelPos = ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy);
+    ivec2 texelPos = ivec2(gl_FragCoord.xy);
 
  	#if EXPOSURE_MODE == MANUAL
 		float exposure = exp2(-MANUAL_EV);
@@ -162,9 +161,9 @@ void main() {
 	#endif
 
 	#ifdef MOTION_BLUR
-		vec3 color = texelFetch(colortex0, texelPos, 0).rgb;
+		color = texelFetch(colortex0, texelPos, 0).rgb;
 	#else
-		vec3 color = texelFetch(colortex1, texelPos, 0).rgb;
+		color = texelFetch(colortex1, texelPos, 0).rgb;
 	#endif
 
 	// Bloom and fog
@@ -225,6 +224,4 @@ void main() {
 		color = vec3(0.25) * step(uv.x, 1.0);
 		color = mix(vec3(1.0), color, plot);
 	#endif
-
-	imageStore(colorimg0, texelPos, vec4(color, 1.0));
 }

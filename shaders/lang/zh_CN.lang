@@ -268,6 +268,8 @@ value.TEXTURE_FORMAT.2=§c§k???
 option.NORMAL_MAPPING=法线贴图支持
 option.SPECULAR_MAPPING=高光贴图支持
 
+option.LABPBR_HARDCODED_METAL=labPBR金属预设
+
 option.AUTO_GENERATED_NORMAL=自动生成法线
 option.AGN_RESOLUTION=分辨率
 option.AGN_STRENGTH=强度

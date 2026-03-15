@@ -86,6 +86,7 @@ void ParallelPrefixSum(in uint index) {
 
         prefix += gl_SubgroupID > 0u ? sharedPrefix[gl_SubgroupID - 1u] : 0u;
         sharedPrefix[index] = prefix;
+        barrier();
     #else
         sharedPrefix[index] = exposure.histogram[index];
         for (uint stride = 1u; stride < HISTOGRAM_BIN_COUNT; stride <<= 1u) {
