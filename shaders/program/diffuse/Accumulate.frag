@@ -21,19 +21,13 @@ const bool colortex3MipmapEnabled = true;
 
 //======// Output //==============================================================================//
 
-/* RENDERTARGETS: 3,14 */
-layout (location = 0) out vec4 indirectCurrent;
-layout (location = 1) out vec2 varianceMoments;
+/* RENDERTARGETS: 2,14 */
+layout (location = 0) out vec4 integratedDiffuse;
+layout (location = 1) out vec3 encodedNormalDepth;
 
 //======// Uniform //=============================================================================//
 
-writeonly restrict uniform image2D colorimg2;
-
 #include "/lib/universal/Uniform.glsl"
-
-//======// SSBO //================================================================================//
-
-#include "/lib/universal/SSBO.glsl"
 
 //======// Function //============================================================================//
 
@@ -41,48 +35,25 @@ writeonly restrict uniform image2D colorimg2;
 #include "/lib/universal/Fetch.glsl"
 #include "/lib/universal/Random.glsl"
 
-vec4 TemporalFilter(in ivec2 texelPos, in vec3 screenPos, in vec3 worldNormal, out float viewDistance) {
-    ivec2 texelEnd = ivec2(halfViewEnd) - 1;
-    {
-        float luma = texelFetch(colortex3, texelPos, 0).r; // We use YCoCg color space
-
-        // Estimate spatial variance
-        vec2 currMoments = vec2(luma, luma * luma);
-        #if 1
-            for (uint i = 0u; i < 8u; ++i) {
-                ivec2 sampleTexel = clamp(texelPos + offset3x3N[i], ivec2(1), texelEnd);
-                float sampleLuma = texelFetch(colortex3, sampleTexel, 0).r; // We use YCoCg color space
-
-                currMoments += vec2(sampleLuma, sampleLuma * sampleLuma);
-            }
-
-            currMoments *= 1.0 / 9.0;
-        #endif
-        varianceMoments.xy = currMoments;
-    }
-    vec2 currCoord = texelToUv(texelPos);
-
+void TemporalFilter(in ivec2 texelPos, in vec3 screenPos, in vec3 worldNormal) {
 	vec3 viewPos = ScreenToViewPos(screenPos);
     vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
-    viewDistance = sdot(worldPos);
 
-    float distInv = inversesqrt(viewDistance);
-    vec3 worldDir = worldPos * distInv;
-    viewDistance *= distInv;
-
-	worldPos += cameraMovement * step(0.56, screenPos.z); // To previous frame's world space
-    worldPos = transMAD(gbufferPreviousModelView, worldPos); // To previous frame's view space
-	worldPos = projMAD(gbufferPreviousProjection, worldPos) * rcp(-worldPos.z); // To previous frame's NDC space
+	vec3 prevWorldPos = worldPos + (cameraPosition - previousCameraPosition) * step(0.56, screenPos.z); // To previous frame's world space
+    vec3 prevViewPos = transMAD(gbufferPreviousModelView, prevWorldPos); // To previous frame's view space
+	vec3 prevNDCPos = projMAD(gbufferPreviousProjection, prevViewPos) * rcp(-prevViewPos.z); // To previous frame's NDC space
 
     #ifdef TAA_ENABLED
-        worldPos.xy += taaJitter;
+        prevNDCPos.xy += taaJitter;
     #endif
-    vec2 prevCoord = worldPos.xy * 0.5 + 0.5;
+    vec2 prevCoord = prevNDCPos.xy * 0.5 + 0.5;
     prevCoord += (taaJitterPrev - taaJitter) * 0.25;
+
+    vec2 currCoord = texelToUv(texelPos);
+    encodedNormalDepth = vec3(OctEncodeSnorm(worldNormal), length(viewPos));
 
     if (saturate(prevCoord) == prevCoord && !worldTimeChanged) {
         vec4 prevDiffuse = vec4(0.0);
-        vec2 prevMoments = vec2(0.0);
         float sumWeight = 0.0;
         float confidence = 0.0;
 
@@ -101,25 +72,25 @@ vec4 TemporalFilter(in ivec2 texelPos, in vec3 screenPos, in vec3 worldNormal, o
             fractTexel.x      * fractTexel.y
         };
 
-        ivec2 tileOffset = ivec2(halfViewSize.x, 0);
+        ivec2 texelEnd = ivec2(halfViewSize) - 1;
+
+        vec3 worldDir = normalize(worldPos - gbufferModelViewInverse[3].xyz);
 		float NdotV = abs(dot(worldNormal, worldDir));
 
         for (uint i = 0u; i < 4u; ++i) {
             ivec2 sampleTexel = floorTexel + offset2x2[i];
-            if (clamp(sampleTexel, ivec2(1), texelEnd) == sampleTexel) {
-                vec3 sampleAux = texelFetch(colortex2, sampleTexel + tileOffset, 0).rgb;
+            if (clamp(sampleTexel, ivec2(0), texelEnd) == sampleTexel) {
+			    vec3 sampleAux = texelFetch(colortex14, sampleTexel, 0).xyz;
+                vec4 sampleIrradiance = texelFetch(colortex2, sampleTexel, 0);
 
-                vec4 sampleDiffuse = texelFetch(colortex2, sampleTexel, 0);
-
-                float weight = -distance(viewDistance, sampleAux.z) * NdotV;
+                float weight = -distance(encodedNormalDepth.z, sampleAux.z) * NdotV;
                 weight += log2(saturate(dot(OctDecodeSnorm(sampleAux.xy), worldNormal)));
-                weight = exp2(weight * sampleDiffuse.a * (16.0 / SSILVB_MAX_ACCUM_FRAMES));
+                weight = exp2(weight * sampleIrradiance.a * (8.0 / SSILVB_MAX_ACCUM_FRAMES));
 
                 confidence = max(confidence, weight);
                 weight *= bilinearWeight[i];
 
-                prevDiffuse += sampleDiffuse * weight;
-                prevMoments += texelFetch(colortex14, sampleTexel, 0).xy * weight;
+                prevDiffuse += sampleIrradiance * weight;
                 sumWeight += weight;
             }
         }
@@ -127,26 +98,19 @@ vec4 TemporalFilter(in ivec2 texelPos, in vec3 screenPos, in vec3 worldNormal, o
         if (sumWeight > EPS) {
             sumWeight = 1.0 / sumWeight;
             prevDiffuse *= sumWeight;
-            prevMoments *= sumWeight;
 
-            float sampleIndex = min(prevDiffuse.a * confidence + 1.0, SSILVB_MAX_ACCUM_FRAMES);
-            float alpha = rcp(sampleIndex);
+            integratedDiffuse.a = min(prevDiffuse.a * confidence + 1.0, SSILVB_MAX_ACCUM_FRAMES);
 
-            float mipLevel = 3.0 * saturate(1.0 - sampleIndex * rcp(8.0));
-            indirectCurrent.rgb = textureLod(colortex3, currCoord, mipLevel).rgb;
-            indirectCurrent.rgb = mix(prevDiffuse.rgb, indirectCurrent.rgb, alpha);
+            float mipLevel = 3.0 * saturate(1.0 - integratedDiffuse.a * rcp(12.0));
+            integratedDiffuse.rgb = textureLod(colortex3, currCoord, mipLevel).rgb;
 
-            varianceMoments.xy = mix(prevMoments, varianceMoments.xy, alpha);
-            indirectCurrent.a = max0(varianceMoments.y - varianceMoments.x * varianceMoments.x);
-
-            return vec4(indirectCurrent.rgb, sampleIndex);
+            float alpha = rcp(integratedDiffuse.a);
+            integratedDiffuse.rgb = mix(min(prevDiffuse.rgb, FP16_MAX), integratedDiffuse.rgb, alpha);
+            return;
         }
     }
 
-    indirectCurrent.rgb = textureLod(colortex3, currCoord, 3.0).rgb;
-    indirectCurrent.a = sqr(varianceMoments.x);
-
-    return vec4(indirectCurrent.rgb, 1.0);
+    integratedDiffuse.rgb = textureLod(colortex3, currCoord, 3.0).rgb;
 }
 
 float GetClosestDepthN(in ivec2 texel) {
@@ -168,38 +132,24 @@ void main() {
     ivec2 renderTexel = texelPos * 2 + checkerboardOffset2x2[frameCounter & 3u];
     vec2 renderCoord = texelToUv(renderTexel);
 
-    indirectCurrent = vec4(0.0);
-    varianceMoments = vec2(0.0);
+    float depth = loadDepth0(renderTexel);
+    bool terrainCheck = min(GetClosestDepthN(renderTexel), depth) < 1.0;
+    #if defined LOD_MOD
+        bool lodMask = !terrainCheck;
+        if (lodMask) {
+            depth = loadDepth0Lod(renderTexel);
+            terrainCheck = depth < 1.0;
+        }
+    #endif
 
-    if (saturate(renderCoord) == renderCoord) {
-        float depth = loadDepth0(renderTexel);
-        bool terrainCheck = min(GetClosestDepthN(renderTexel), depth) < 1.0;
+    if (terrainCheck) {
         #if defined LOD_MOD
-            bool lodMask = !terrainCheck;
-            if (lodMask) {
-                depth = loadDepth0Lod(renderTexel);
-                terrainCheck = depth < 1.0;
-            }
+            if (lodMask) depth = ViewToScreenDepth(ScreenToViewDepthLod(depth));
         #endif
 
-        if (terrainCheck) {
-            #if defined LOD_MOD
-			    if (lodMask) depth = ViewToScreenDepth(ScreenToViewDepthLod(depth));
-            #endif
+        vec3 screenPos = vec3(renderCoord, depth);
+        vec3 worldNormal = FetchSurfaceNormal(renderTexel);
 
-            vec3 screenPos = vec3(renderCoord, depth);
-            vec3 worldNormal = FetchSurfaceNormal(renderTexel);
-
-            float viewDistance;
-            vec4 indirectHistory = TemporalFilter(texelPos, screenPos, worldNormal, viewDistance);
-
-            // Vanilla lightmap blending
-            float blocklight = Unpack2x8UX(loadMaterialPack(renderTexel).x);
-            blocklight = pow5(blocklight) * exp2(-16.0 * indirectCurrent.x * exposure.value);
-            indirectCurrent.rgb += RGBToYCoCg(blocklightColor) * saturate(blocklight) * SSILVB_BLENDED_LIGHTMAP;
-
-            imageStore(colorimg2, texelPos, indirectHistory);
-            imageStore(colorimg2, texelPos + ivec2(halfViewSize.x, 0), vec4(OctEncodeSnorm(worldNormal), viewDistance, 1.0));
-        }
+        TemporalFilter(texelPos, screenPos, worldNormal);
     }
 }

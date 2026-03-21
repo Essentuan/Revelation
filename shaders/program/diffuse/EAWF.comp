@@ -93,10 +93,7 @@ void main() {
 	uvec2 localPos = QuadLayout8x8(gl_LocalInvocationIndex);
 	ivec2 texelPos = ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy);
 
-	ivec2 tileOffset = ivec2(halfViewSize.x, 0);
-	ivec2 texelEnd = ivec2(halfViewEnd) - 1;
-
-	f16vec3 normalDepthData = f16vec3(texelFetch(colortex2, texelPos + tileOffset, 0).rgb);
+	f16vec3 normalDepthData = f16vec3(texelFetch(colortex14, texelPos, 0).rgb);
 	// vec2 depthGradient = vec2(dFdx(normalDepthData.w), dFdy(normalDepthData.w));
 
 	// 0.0625 0.125 0.0625
@@ -114,7 +111,7 @@ void main() {
 
 	// float variance = CalculateVariance(ivec2(localPos + padRadius));
 	float16_t variance = filteredColVar.a;
-	float16_t variancePhi = float16_t(-inversesqrt(variance + EPS));
+	float16_t variancePhi = float16_t(-0.5 * inversesqrt(variance + EPS));
 
 	const float sigmaZ = -4.0 * inversesqrt(float(ATROUS_FILTER_SIZE));
 	const float sigmaN = 32.0;
@@ -125,9 +122,11 @@ void main() {
 	// filteredColVar *= vec4(vec3(sumWeight), sumWeight * sumWeight);
 	ivec2 randTexel = texelPos + ivec2((BlueNoise(texelPos, frameCounter + ATROUS_FILTER_SIZE) - 0.5) * float(min(ATROUS_FILTER_SIZE, 8)));
 
+	ivec2 texelEnd = ivec2(halfViewEnd) - 1;
+
 	for (uint i = 0u; i < 9u; ++i) {
 		ivec2 sampleTexel = clamp(randTexel + offset3x3[i] * ATROUS_FILTER_SIZE, ivec2(1), texelEnd);
-		f16vec3 sampleAux = f16vec3(texelFetch(colortex2, sampleTexel + tileOffset, 0).rgb);
+		f16vec3 sampleAux = f16vec3(texelFetch(colortex14, sampleTexel, 0).rgb);
 
 		f16vec4 sampleColVar = f16vec4(imageLoad(colorimg3, sampleTexel));
 		float16_t sampleLuma = sampleColVar.r; // We use YCoCg color space

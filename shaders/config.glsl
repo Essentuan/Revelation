@@ -24,7 +24,7 @@
 	const int 	colortex11Format 			= RGB32UI;
 	const int 	colortex12Format 			= RG16;
 	const int 	colortex13Format 			= R8I;
-	const int 	colortex14Format 			= RG16;
+	const int 	colortex14Format 			= RGB16F;
 //  const int 	colortex15Format 			= ;
 
 #ifdef VOXY
@@ -70,7 +70,7 @@
 	|———————————————|———————————————————|———————————————|———————————————————————————
 	|	colortex0	|   rgba16f  		|	Full res  	|	Scene data
 	|	colortex1	|   rgba16f		    |	Full res  	|	Scene history
-	|	colortex2	|   rgba16f         |	Full res	|	Indirect diffuse lighting history
+	|	colortex2	|   rgba16f         |	Half res	|	Indirect diffuse lighting history
 	|	colortex3	|   rgba16f         |	Full res  	|	Indirect diffuse lighting -> Indirect specular lighting -> Motion vector
 	|	colortex4	|   r11f_g11f_b10f  |	Full res  	|	Reprojected scene history -> Bloom tiles
 	|	colortex5	|   rgba16f  		|	256, 256   	|	Sky environment map
@@ -82,7 +82,7 @@
 	|	colortex11	|   rgb32ui         |	Half res  	|	Volumetric fog, linear depth
 	|	colortex12	|   rg16          	|	Full res	|	Water data
 	|	colortex13	|   r8i	        	|	Full res  	|	Cloud frame index
-	|	colortex14	|   rg16            |	Full res	|	Variance history
+	|	colortex14	|   rgb16f          |	Half res	|	Encoded normal, linear depth
 	|	colortex15	|   	           	|				|	Unused
 
 --------------------------------------------------------------------------------

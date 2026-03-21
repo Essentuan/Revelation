@@ -1,3 +1,3 @@
 #version 460 compatibility
 
-#include "/program/prepare/GenCloudShadow.comp"
+#include "/program/prepare/GenSkySH.comp"
