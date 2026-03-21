@@ -1,3 +1,5 @@
 #version 460 compatibility
 
-#include "/program/post/AutoExposure.comp"
+#define DOWNSAMPLE_LEVEL 2
+
+#include "/program/post/bloom/Downsample.comp"
