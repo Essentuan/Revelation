@@ -142,6 +142,9 @@ void main() {
         }
     #endif
 
+    integratedDiffuse = vec4(0.0);
+    encodedNormalDepth = vec3(0.0);
+
     if (terrainCheck) {
         #if defined LOD_MOD
             if (lodMask) depth = ViewToScreenDepth(ScreenToViewDepthLod(depth));
