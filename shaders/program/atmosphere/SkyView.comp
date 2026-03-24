@@ -20,7 +20,7 @@ const ivec3 workGroups = ivec3(12, 12, 1);
 
 //======// Uniform //=============================================================================//
 
-layout (rgba16f) restrict uniform image2D skyViewImg;
+writeonly restrict uniform image2D skyViewImg;
 
 #include "/lib/universal/Uniform.glsl"
 
@@ -29,7 +29,7 @@ layout (rgba16f) restrict uniform image2D skyViewImg;
 #include "/lib/atmosphere/Common.glsl"
 #include "/lib/universal/Random.glsl"
 
-vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir, float tMax, float dither) {
+vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir, float tMax) {
     float cosTheta = dot(rayDir, sunDir);
     vec2 phaseValue = AtmospherePhase(cosTheta);
 
@@ -38,7 +38,7 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir, float tMax, float
 
     float stepSize = tMax * rcp(sampleCount);
     vec3 rayStep = stepSize * rayDir;
-    rayPos += dither * rayStep;
+    rayPos += 0.5 * rayStep;
 
     vec3 lum = vec3(0.0);
     vec3 transmittance = vec3(1.0);
@@ -62,7 +62,7 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir, float tMax, float
     return lum;
 }
 
-vec3 RenderSkyView(vec2 uv, float dither) {
+vec3 RenderSkyView(vec2 uv) {
     float lightViewCos = 1.0 - sqr(uv.x) * 2.0;
     float height = atmosphereViewHeight;
     vec3 up = vec3(0.0, 1.0, 0.0);
@@ -96,11 +96,11 @@ vec3 RenderSkyView(vec2 uv, float dither) {
 
     vec3 lum = vec3(0.0);
     if (bottomDist < 0.0) {
-        lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir, topDist, dither);
-        lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir, topDist, dither) * moonlightMult;
+        lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir, topDist);
+        lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir, topDist) * moonlightMult;
     } else {
-        lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir, bottomDist, dither);
-        lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir, bottomDist, dither) * moonlightMult;
+        lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir, bottomDist);
+        lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir, bottomDist) * moonlightMult;
 
         vec3 planetPos = atmosphereViewPos + rayDir * bottomDist;
         vec3 sunTransmittance = AtmosphereTransmittanceToSun(planetPos, sunDir);
@@ -125,10 +125,5 @@ void main() {
 	ivec2 tid = ivec2(gl_GlobalInvocationID.xy);
 	vec2 uv = (vec2(tid) + 0.5) * rcp(imageSize(skyViewImg));
 
-    float dither = BlueNoise(tid, frameCounter);
-
-    vec3 result = imageLoad(skyViewImg, tid).rgb;
-    result = mix(result, RenderSkyView(uv, dither), rcp(min(frameCounter, 64)));
-
-	imageStore(skyViewImg, tid, vec4(result, 1.0));
+	imageStore(skyViewImg, tid, vec4(RenderSkyView(uv), 1.0));
 }
