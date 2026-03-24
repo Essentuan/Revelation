@@ -192,32 +192,32 @@ vec3 LightningContribution(in vec3 pos, in vec3 normal) {
 
 // Transmittance LUT function parameterisation from Bruneton 2017 https://github.com/ebruneton/precomputed_atmospheric_scattering
 // uv in [0, 1]
-// viewZenithCos in [-1, 1]
-// viewHeight in [bottomRadius, topRadius]
+// mu in [-1, 1]
+// r in [bottomRadius, topRadius]
 
-void UvToLutTransmittanceParams(out float viewHeight, out float viewZenithCos, vec2 uv) {
+void UvToLutTransmittanceParams(out float r, out float mu, vec2 uv) {
 	float x_mu = uv.x;
 	float x_r = uv.y;
 
 	float H = sqrt(atmosphere.topRadius * atmosphere.topRadius - atmosphere.bottomRadius * atmosphere.bottomRadius);
 	float rho = H * x_r;
-	viewHeight = sqrt(rho * rho + atmosphere.bottomRadius * atmosphere.bottomRadius);
+	r = sqrt(rho * rho + atmosphere.bottomRadius * atmosphere.bottomRadius);
 
-	float d_min = atmosphere.topRadius - viewHeight;
+	float d_min = atmosphere.topRadius - r;
 	float d_max = rho + H;
 	float d = d_min + x_mu * (d_max - d_min);
-	viewZenithCos = d == 0.0 ? 1.0 : (H * H - rho * rho - d * d) / (2.0 * viewHeight * d);
-	viewZenithCos = clamp(viewZenithCos, -1.0, 1.0);
+	mu = d == 0.0 ? 1.0 : (H * H - rho * rho - d * d) / (2.0 * r * d);
+	mu = clamp(mu, -1.0, 1.0);
 }
 
-vec2 LutTransmittanceParamsToUv(float viewHeight, float viewZenithCos) {
+vec2 LutTransmittanceParamsToUv(float r, float mu) {
 	float H = sqrt(max0(atmosphere.topRadius * atmosphere.topRadius - atmosphere.bottomRadius * atmosphere.bottomRadius));
-	float rho = sqrt(max0(viewHeight * viewHeight - atmosphere.bottomRadius * atmosphere.bottomRadius));
+	float rho = sqrt(max0(r * r - atmosphere.bottomRadius * atmosphere.bottomRadius));
 
-	float discriminant = viewHeight * viewHeight * (viewZenithCos * viewZenithCos - 1.0) + atmosphere.topRadius * atmosphere.topRadius;
-	float d = max0(-viewHeight * viewZenithCos + sqrt(discriminant)); // Distance to atmosphere boundary
+	float discriminant = r * r * (mu * mu - 1.0) + atmosphere.topRadius * atmosphere.topRadius;
+	float d = max0(-r * mu + sqrt(discriminant)); // Distance to atmosphere boundary
 
-	float d_min = atmosphere.topRadius - viewHeight;
+	float d_min = atmosphere.topRadius - r;
 	float d_max = rho + H;
 	float x_mu = (d - d_min) / (d_max - d_min);
 	float x_r = rho / H;
