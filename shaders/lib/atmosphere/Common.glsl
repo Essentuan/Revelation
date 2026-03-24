@@ -210,7 +210,7 @@ void UvToLutTransmittanceParams(out float viewHeight, out float viewZenithCos, v
 	viewZenithCos = clamp(viewZenithCos, -1.0, 1.0);
 }
 
-void LutTransmittanceParamsToUv(float viewHeight, float viewZenithCos, out vec2 uv) {
+vec2 LutTransmittanceParamsToUv(float viewHeight, float viewZenithCos) {
 	float H = sqrt(max0(atmosphere.topRadius * atmosphere.topRadius - atmosphere.bottomRadius * atmosphere.bottomRadius));
 	float rho = sqrt(max0(viewHeight * viewHeight - atmosphere.bottomRadius * atmosphere.bottomRadius));
 
@@ -222,7 +222,7 @@ void LutTransmittanceParamsToUv(float viewHeight, float viewZenithCos, out vec2 
 	float x_mu = (d - d_min) / (d_max - d_min);
 	float x_r = rho / H;
 
-	uv = vec2(x_mu, x_r);
+	return vec2(x_mu, x_r);
 }
 
 vec3 AtmosphereDensityAtPoint(vec3 pos) {
@@ -244,8 +244,7 @@ vec3 AtmosphereTransmittance(vec3 pos, vec3 dir) {
     float height = length(pos);
     vec3 up = pos / height;
 
-	vec2 uv;
-    LutTransmittanceParamsToUv(height, dot(dir, up), uv);
+    vec2 uv = LutTransmittanceParamsToUv(height, dot(dir, up));
     return texture(tLutTex, uv).rgb;
 }
 
