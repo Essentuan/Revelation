@@ -169,7 +169,7 @@ void main() {
 		NdotL = dot(worldNormal, worldLightDir);
 	} else {
 		// Skylight
-		lightingOut.rgb = global.skyIlluminance * cube(lightmap.y);
+		lightingOut.rgb = global.skyUpIlluminance * cube(lightmap.y);
 
 		// Blocklight
 		lightingOut.rgb += CalculateBlocklightFalloff(lightmap.x) * blocklightColor;
