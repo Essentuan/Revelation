@@ -88,6 +88,10 @@ vec3 RenderSkyView(vec2 uv, float dither) {
     float topDist = RaySphereIntersectNearest(atmosphereViewPos, rayDir, atmosphere.topRadius);
     float bottomDist = RaySphereIntersectNearest(atmosphereViewPos, rayDir, atmosphere.bottomRadius);
 
+    if (topDist < 0.0 && bottomDist < 0.0) {
+        return vec3(0.0); // No intersection with atmosphere nor earth
+    }
+
     vec3 lum = vec3(0.0);
     if (bottomDist < 0.0) {
         lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir, topDist, dither);
