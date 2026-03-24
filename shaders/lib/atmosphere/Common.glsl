@@ -260,7 +260,7 @@ vec3 AtmosphereTransmittanceToSun(float r, float mu) {
 	float sinThetaH = atmosphere.bottomRadius / r;
 	float cosThetaH = -sqrt(max0(1.0 - sinThetaH * sinThetaH));
 	return ReadTransmittanceLUT(r, mu) *
-		smoothstep(-sinThetaH * atmosphere.sunAngularRadius,
+		linearstep(-sinThetaH * atmosphere.sunAngularRadius,
 					sinThetaH * atmosphere.sunAngularRadius,
 					mu - cosThetaH);
 }
