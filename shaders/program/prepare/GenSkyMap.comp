@@ -35,7 +35,6 @@ writeonly uniform image2D skyMapImg;
 #include "/lib/universal/Random.glsl"
 
 #include "/lib/atmosphere/Common.glsl"
-#include "/lib/atmosphere/Bruneton08.glsl"
 
 #include "/lib/atmosphere/clouds/Render.glsl"
 #include "/lib/atmosphere/AtmosphericFog.glsl"
@@ -50,8 +49,7 @@ void main() {
 		vec2 uv = (vec2(tid) + 0.5) * rcp(skyMapRes);
 
 		vec3 worldDir = UnprojectSky(uv);
-		vec3 skyRadiance = GetSkyRadiance(worldDir, worldSunDir) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
-		skyRadiance = desaturate(skyRadiance, wetness * 0.5); // Post-process
+		vec3 skyRadiance = AtmosphereSkyView(atmosphereViewPos, worldDir, worldSunDir);
 
 		vec2 noise = SampleStbnVec2(tid, frameCounter);
 

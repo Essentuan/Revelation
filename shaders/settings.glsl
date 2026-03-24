@@ -299,6 +299,7 @@ const ivec2 skyMapRes = ivec2(256, 256);
 
 	// #define WHITE_WORLD
 	#define DEBUG_NORMALS 0 // [0 1 2]
+	// #define DEBUG_ATMOSPHERE_LUTS
 	// #define DEBUG_SKY_MAP
 	// #define DEBUG_BLOOM_TILES
 	// #define DEBUG_CLOUD_MAP

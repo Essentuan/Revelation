@@ -48,7 +48,7 @@ vec3 ReprojectClouds(in vec2 coord, in float depth) {
 	vec3 motionVector = vec3(0.0);
 
 	// Apply wind
-	float radius = depth + viewerHeight;
+	float radius = depth + atmosphereViewHeight;
 	if (radius < cloudMidRadius) {
 		// Low clouds
 		const float windAngle = radians(CLOUD_LOW_WIND_ANGLE);

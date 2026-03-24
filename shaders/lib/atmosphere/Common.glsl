@@ -1,10 +1,21 @@
+/*
+--------------------------------------------------------------------------------
+
+	References:
+		Sébastien Hillaire. "A Scalable and Production Ready Sky and Atmosphere Rendering Technique". EGSR 2020.
+            https://sebh.github.io/publications/egsr2020.pdf
+		Epic Games, Inc. "Unreal Engine Sky Atmosphere Rendering Technique". 2020.
+            https://github.com/sebh/UnrealEngineSkyAtmosphere
+
+--------------------------------------------------------------------------------
+*/
 
 //================================================================================================//
 
 // #define PLANET_GROUND
 
 #define VIEWER_BASE_ALTITUDE 384.0 // [64.0 128.0 256.0 384.0 512.0 1024.0 2048.0 4096.0 8192.0 16384.0 32768.0 65536.0 131072.0 262144.0 524288.0 1048576.0 2097152.0 4194304.0 8388608.0 16777216.0 33554432.0 67108864.0 134217728.0 268435456.0 536870912.0 1073741824.0]
-#define ATMOSPHERE_THICKNESS 80000.0 // [0.0 5000.0 10000.0 20000.0 30000.0 40000.0 50000.0 60000.0 70000.0 80000.0 90000.0 100000.0 110000.0 120000.0 130000.0 140000.0 150000.0 160000.0]
+#define ATMOSPHERE_THICKNESS 100000.0 // [0.0 5000.0 10000.0 20000.0 30000.0 40000.0 50000.0 60000.0 70000.0 80000.0 90000.0 100000.0 110000.0 120000.0 130000.0 140000.0 150000.0 160000.0]
 
 #define ProjectSky      OctEncodeUnorm
 #define UnprojectSky    OctDecodeUnorm
@@ -12,55 +23,15 @@
 //================================================================================================//
 
 struct AtmosphereParameters {
-    // The solar irradiance at the top of the atmosphere.
-    vec3 solar_irradiance;
-    // The sun's angular radius. Warning: the implementation uses approximations
-    // that are valid only if this angle is smaller than 0.1 radians.
-   float sun_angular_radius;
-    // The distance between the planet center and the bottom of the atmosphere.
-   float bottom_radius;
-    // The distance between the planet center and the top of the atmosphere.
-   float top_radius;
-    // The density profile of air molecules, i.e. a function from altitude to
-    // dimensionless values between 0 (null density) and 1 (maximum density).
-//    DensityProfile rayleigh_density;
-    // The scattering coefficient of air molecules at the altitude where their
-    // density is maximum (usually the bottom of the atmosphere), as a function of
-    // wavelength. The scattering coefficient at altitude h is equal to
-    // 'rayleigh_scattering' times 'rayleigh_density' at this altitude.
-    vec3 rayleigh_scattering;
-    // The density profile of aerosols, i.e. a function from altitude to
-    // dimensionless values between 0 (null density) and 1 (maximum density).
-//    DensityProfile mie_density;
-    // The scattering coefficient of aerosols at the altitude where their density
-    // is maximum (usually the bottom of the atmosphere), as a function of
-    // wavelength. The scattering coefficient at altitude h is equal to
-    // 'mie_scattering' times 'mie_density' at this altitude.
-    vec3 mie_scattering;
-    // The extinction coefficient of aerosols at the altitude where their density
-    // is maximum (usually the bottom of the atmosphere), as a function of
-    // wavelength. The extinction coefficient at altitude h is equal to
-    // 'mie_extinction' times 'mie_density' at this altitude.
-   vec3 mie_extinction;
-    // The asymetry parameter for the Cornette-Shanks phase function for the
-    // aerosols.
-//    float mie_phase_function_g;
-    // The density profile of air molecules that absorb light (e.g. ozone), i.e.
-    // a function from altitude to dimensionless values between 0 (null density)
-    // and 1 (maximum density).
-//    DensityProfile absorption_density;
-    // The extinction coefficient of molecules that absorb light (e.g. ozone) at
-    // the altitude where their density is maximum, as a function of wavelength.
-    // The extinction coefficient at altitude h is equal to
-    // 'absorption_extinction' times 'absorption_density' at this altitude.
-//    vec3 absorption_extinction;
-    // The average albedo of the ground.
-    vec3 ground_albedo;
-    // The cosine of the maximum Sun zenith angle for which atmospheric scattering
-    // must be precomputed (for maximum precision, use the smallest Sun zenith
-    // angle yielding negligible sky light radiance values. For instance, for the
-    // Earth case, 102 degrees is a good choice - yielding mu_s_min = -0.2).
-   float mu_s_min;
+    vec3 solarIrradiance;
+    float sunAngularRadius;
+    float bottomRadius;
+    float topRadius;
+    vec3 rayleighScattering;
+    vec3 mieScattering;
+    vec3 mieExtinction;
+    vec3 ozoneExtinction;
+    vec3 groundAlbedo;
 };
 
 //================================================================================================//
@@ -69,39 +40,20 @@ const float planetRadius = 6371e3; // The average radius of the Earth: 6,371 kil
 const float aerosol_g = 0.8; // Asymmetry factor for mie phase function
 const float aerosol_d = 1.6; // Mean diameter in µm
 
-float viewerHeight = planetRadius + VIEWER_BASE_ALTITUDE + eyeAltitude;
-
-const AtmosphereParameters atmosphereModel = AtmosphereParameters(
-	// vec3(1.0),
-    vec3(1.474000, 1.850400, 1.911980),
+const AtmosphereParameters atmosphere = AtmosphereParameters(
+	vec3(1.0),
 	0.004675 * SUN_RADIUS_MULT,
     planetRadius,
     planetRadius + ATMOSPHERE_THICKNESS,
-//    DensityProfile(DensityProfileLayer[2](DensityProfileLayer(0.000000,0.000000,0.000000,0.000000,0.000000),DensityProfileLayer(0.000000,1.000000,-0.125000,0.000000,0.000000))),
-    vec3(6.42905682e-3, 1.08663713e-2, 2.4844733e-2),
-//    DensityProfile(DensityProfileLayer[2](DensityProfileLayer(0.000000,0.000000,0.000000,0.000000,0.000000),DensityProfileLayer(0.000000,1.000000,-0.833333,0.000000,0.000000))),
-    vec3(0.003996, 0.003996, 0.003996),
-    vec3(0.004440, 0.004440, 0.004440),
-//    0.800000,
-//    DensityProfile(DensityProfileLayer[2](DensityProfileLayer(25.000000,0.000000,0.000000,0.066667,-0.666667),DensityProfileLayer(0.000000,0.000000,0.000000,-0.066667,2.666667))),
-//    vec3(0.000650, 0.001881, 0.000085),
-    vec3(0.04, 0.06, 0.1),
-    cos(radians(102.0))
+    vec3(0.005802, 0.013558, 0.033100) * 1e-3,
+    vec3(0.003996, 0.003996, 0.003996) * 1e-3,
+    vec3(0.004440, 0.004440, 0.004440) * 1e-3,
+    vec3(0.000650, 0.001881, 0.000085) * 1e-3,
+    vec3(0.05, 0.06, 0.1)
 );
 
-const float atmosphere_bottom_radius_sq = atmosphereModel.bottom_radius * atmosphereModel.bottom_radius;
-const float atmosphere_top_radius_sq    = atmosphereModel.top_radius * atmosphereModel.top_radius;
-
-// Values from https://github.com/ebruneton/precomputed_atmospheric_scattering
-const vec3 white_point = vec3(1.08241, 0.96756, 0.95003);
-
-#if 0
-const vec3 SKY_SPECTRAL_RADIANCE_TO_LUMINANCE = vec3(683.0, 683.0, 683.0) * 1e-3 / white_point;
-const vec3 SUN_SPECTRAL_RADIANCE_TO_LUMINANCE = vec3(98242.786222, 69954.398112, 66475.012354) * 1e-3 / white_point;
-#else
-const vec3 SKY_SPECTRAL_RADIANCE_TO_LUMINANCE = vec3(114974.916437f, 71305.954816f, 65310.548555f) * 1e-3 / white_point;
-const vec3 SUN_SPECTRAL_RADIANCE_TO_LUMINANCE = vec3(98242.786222, 69954.398112, 66475.012354) * 1e-3 / white_point;
-#endif
+float atmosphereViewHeight = planetRadius + VIEWER_BASE_ALTITUDE + eyeAltitude;
+vec3 atmosphereViewPos = vec3(0.0, atmosphereViewHeight, 0.0);
 
 //================================================================================================//
 
@@ -174,6 +126,33 @@ vec2 RaySphericalShellIntersection(in float r, in float mu, in float bottomRad, 
 	}
 }
 
+// From https://gamedev.stackexchange.com/questions/96459/fast-ray-sphere-collision-code.
+// - ro: ray origin
+// - rd: normalized ray direction
+// - sr: sphere radius
+// - Returns distance from ro to first intersecion with sphere,
+//   or -1.0 if no intersection.
+float RaySphereIntersectNearest(vec3 ro, vec3 rd, float sr) {
+    float a = dot(rd, rd);
+    float b = 2.0 * dot(rd, ro);
+    float c = dot(ro, ro) - (sr * sr);
+    float delta = b * b - 4.0 * a * c;
+    if (delta < 0.0 || a == 0.0) {
+        return -1.0;
+    }
+    float sol0 = (-b - sqrt(delta)) / (2.0 * a);
+    float sol1 = (-b + sqrt(delta)) / (2.0 * a);
+    if (sol0 < 0.0 && sol1 < 0.0) {
+        return -1.0;
+    }
+    if (sol0 < 0.0) {
+        return max0(sol1);
+    } else if (sol1 < 0.0) {
+        return max0(sol0);
+    }
+    return max0(min(sol0, sol1));
+}
+
 // https://doi.org/10.1364/JOSA.47.000176
 float AirPhase(in float mu) {
 	return uniformPhase * 0.7629 * (1.0 + 0.932 * mu * mu);
@@ -207,4 +186,69 @@ vec3 LightningContribution(in vec3 pos, in vec3 normal) {
 
     float diffuse = saturate(dot(normal, lightDir)) * 0.75 + 0.25;
 	return vec3(0.32, 0.3, 1.0) * 5e3 / (1.0 + distSq) * diffuse;
+}
+
+//================================================================================================//
+
+vec3 AtmosphereDensityAtPoint(vec3 pos) {
+    float altitudeKm = (length(pos) - atmosphere.bottomRadius) * 1e-3;
+    return vec3(exp(-altitudeKm * rcp(vec2(8.0, 1.2))), saturate(1.0 - abs(altitudeKm - 25.0) * rcp(15.0)));
+}
+
+vec3 AtmosphereExtinctionFromDensity(vec3 density) {
+	const mat3 atmosphereExtinction = mat3(
+		atmosphere.rayleighScattering,
+		atmosphere.mieScattering,
+		atmosphere.ozoneExtinction
+	);
+
+    return atmosphereExtinction * density;
+}
+
+vec3 ReadAtmosphereLUT(sampler2D tex, vec3 pos, vec3 dir) {
+    float height = length(pos);
+    vec3 up = pos / height;
+
+    vec2 uv = vec2(saturate(0.5 + 0.5 * dot(dir, up)), linearstep(atmosphere.bottomRadius, atmosphere.topRadius, height));
+    return texture(tex, uv).rgb;
+}
+
+vec3 AtmosphereTransmittance(vec3 pos, vec3 dir) {
+    return ReadAtmosphereLUT(tLutTex, pos, dir);
+}
+
+vec3 AtmosphereMultiScattering(vec3 pos, vec3 dir) {
+    return ReadAtmosphereLUT(msLutTex, pos, dir);
+}
+
+vec3 AtmosphereSkyView(vec3 viewPos, vec3 rayDir, vec3 sunDir) {
+    float height = length(viewPos);
+    vec3 up = viewPos / height;
+
+	float viewZenithCos = dot(rayDir, up);
+	vec3 sideVector = normalize(cross(up, rayDir));
+	vec3 forwardVector = normalize(cross(sideVector, up));
+
+    vec2 lightOnPlane = vec2(dot(sunDir, sideVector), dot(sunDir, forwardVector));
+	float lightViewCos = normalize(lightOnPlane).y;
+
+	vec2 uv;
+	uv.x = sqrt(-lightViewCos * 0.5 + 0.5);
+
+	float vHorizon = sqrt(height * height - atmosphere.bottomRadius * atmosphere.bottomRadius);
+	float beta = fastAcos(vHorizon / height);
+	float zenithHorizon = PI - beta;
+
+	float coord = fastAcos(viewZenithCos);
+	if (RaySphereIntersectNearest(viewPos, rayDir, atmosphere.bottomRadius) >= 0.0) {
+		coord = (coord - zenithHorizon) / beta;
+		coord = sqrt(coord); // Non-linear mapping
+		uv.y = coord * 0.5 + 0.5;
+	} else {
+		coord = 1.0 - coord / zenithHorizon;
+		coord = sqrt(coord); // Non-linear mapping
+		uv.y = (1.0 - coord) * 0.5;
+	}
+
+    return texture(skyViewTex, uv).rgb;
 }

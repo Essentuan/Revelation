@@ -43,7 +43,6 @@ writeonly uniform image2D cloudOriginImg;
 #include "/lib/universal/Transform.glsl"
 
 #include "/lib/atmosphere/Common.glsl"
-#include "/lib/atmosphere/Bruneton08.glsl"
 
 #include "/lib/atmosphere/clouds/Render.glsl"
 
