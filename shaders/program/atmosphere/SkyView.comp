@@ -105,8 +105,8 @@ vec3 RenderSkyView(vec2 uv, float dither) {
         vec3 sunTransmittance = AtmosphereTransmittanceToSun(planetPos, sunDir);
         vec3 moonTransmittance = AtmosphereTransmittanceToSun(planetPos, -sunDir);
 
-        vec3 t1 = AtmosphereTransmittance(planetPos, -rayDir);
-        vec3 t2 = AtmosphereTransmittance(atmosphereViewPos, -rayDir);
+        vec3 t1 = AtmosphereTransmittanceToPoint(planetPos, -rayDir);
+        vec3 t2 = AtmosphereTransmittanceToPoint(atmosphereViewPos, -rayDir);
         vec3 aerialT = saturate(t1 / t2);
 
         float NdotL = abs(dot(normalize(planetPos), sunDir));

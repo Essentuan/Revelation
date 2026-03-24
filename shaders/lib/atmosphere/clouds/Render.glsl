@@ -356,13 +356,13 @@ void CompositeClouds(inout vec3 skyRadiance, in vec4 cloudData, in vec3 rayDir) 
 		// Aerial perspective
 		vec3 aerialT;
 		if (sdot(atmosphereViewPos) < sdot(cloudPos)) {
-			vec3 t1 = AtmosphereTransmittance(atmosphereViewPos, rayDir);
-			vec3 t2 = AtmosphereTransmittance(cloudPos, rayDir);
+			vec3 t1 = AtmosphereTransmittanceToPoint(atmosphereViewPos, rayDir);
+			vec3 t2 = AtmosphereTransmittanceToPoint(cloudPos, rayDir);
 
 			aerialT = saturate(t1 / t2);
 		} else {
-			vec3 t1 = AtmosphereTransmittance(atmosphereViewPos, -rayDir);
-			vec3 t2 = AtmosphereTransmittance(cloudPos, -rayDir);
+			vec3 t1 = AtmosphereTransmittanceToPoint(atmosphereViewPos, -rayDir);
+			vec3 t2 = AtmosphereTransmittanceToPoint(cloudPos, -rayDir);
 
 			aerialT = saturate(t2 / t1);
 		}

@@ -249,7 +249,7 @@ bool RayIntersectPlanetGround(float r, float mu) {
 	return mu < 0.0 && r * r * (mu * mu - 1.0) + atmosphere.bottomRadius * atmosphere.bottomRadius >= 0.0;
 }
 
-vec3 AtmosphereTransmittance(vec3 pos, vec3 dir) {
+vec3 AtmosphereTransmittanceToPoint(vec3 pos, vec3 dir) {
     float r = length(pos);
 	float mu = dot(dir, pos / r);
 
@@ -269,12 +269,7 @@ vec3 AtmosphereTransmittanceToSun(vec3 pos, vec3 dir) {
     float r = length(pos);
 	float mu = dot(dir, pos / r);
 
-	float sinThetaH = atmosphere.bottomRadius / r;
-	float cosThetaH = -sqrt(max0(1.0 - sinThetaH * sinThetaH));
-	return ReadTransmittanceLUT(r, mu) *
-		smoothstep(-sinThetaH * atmosphere.sunAngularRadius,
-					sinThetaH * atmosphere.sunAngularRadius,
-					mu - cosThetaH);
+	return AtmosphereTransmittanceToSun(r, mu);
 }
 
 vec3 AtmosphereMultiScattering(vec3 pos, vec3 dir) {
