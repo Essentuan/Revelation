@@ -116,7 +116,7 @@ vec3 RenderSkyView(vec2 uv, float dither) {
     }
 
     lum = desaturate(lum, wetness * 0.5); // Post-process
-    return lum * 683.0;
+    return lum * 128.0;
 }
 
 //======// Main //================================================================================//
