@@ -107,7 +107,7 @@ vec3 RenderSkyView(vec2 uv, float dither) {
 
         vec3 t1 = AtmosphereTransmittance(planetPos, -rayDir);
         vec3 t2 = AtmosphereTransmittance(atmosphereViewPos, -rayDir);
-        vec3 aerialT = t1 / t2;
+        vec3 aerialT = saturate(t1 / t2);
 
         float NdotL = abs(dot(normalize(planetPos), sunDir));
         vec3 lambertian = atmosphere.groundAlbedo * NdotL * rPI;
