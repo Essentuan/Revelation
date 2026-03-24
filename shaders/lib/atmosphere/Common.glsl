@@ -190,6 +190,41 @@ vec3 LightningContribution(in vec3 pos, in vec3 normal) {
 
 //================================================================================================//
 
+// Transmittance LUT function parameterisation from Bruneton 2017 https://github.com/ebruneton/precomputed_atmospheric_scattering
+// uv in [0, 1]
+// viewZenithCos in [-1, 1]
+// viewHeight in [bottomRadius, topRadius]
+
+void UvToLutTransmittanceParams(out float viewHeight, out float viewZenithCos, vec2 uv) {
+	float x_mu = uv.x;
+	float x_r = uv.y;
+
+	float H = sqrt(atmosphere.topRadius * atmosphere.topRadius - atmosphere.bottomRadius * atmosphere.bottomRadius);
+	float rho = H * x_r;
+	viewHeight = sqrt(rho * rho + atmosphere.bottomRadius * atmosphere.bottomRadius);
+
+	float d_min = atmosphere.topRadius - viewHeight;
+	float d_max = rho + H;
+	float d = d_min + x_mu * (d_max - d_min);
+	viewZenithCos = d == 0.0 ? 1.0 : (H * H - rho * rho - d * d) / (2.0 * viewHeight * d);
+	viewZenithCos = clamp(viewZenithCos, -1.0, 1.0);
+}
+
+void LutTransmittanceParamsToUv(float viewHeight, float viewZenithCos, out vec2 uv) {
+	float H = sqrt(max0(atmosphere.topRadius * atmosphere.topRadius - atmosphere.bottomRadius * atmosphere.bottomRadius));
+	float rho = sqrt(max0(viewHeight * viewHeight - atmosphere.bottomRadius * atmosphere.bottomRadius));
+
+	float discriminant = viewHeight * viewHeight * (viewZenithCos * viewZenithCos - 1.0) + atmosphere.topRadius * atmosphere.topRadius;
+	float d = max0(-viewHeight * viewZenithCos + sqrt(discriminant)); // Distance to atmosphere boundary
+
+	float d_min = atmosphere.topRadius - viewHeight;
+	float d_max = rho + H;
+	float x_mu = (d - d_min) / (d_max - d_min);
+	float x_r = rho / H;
+
+	uv = vec2(x_mu, x_r);
+}
+
 vec3 AtmosphereDensityAtPoint(vec3 pos) {
     float altitudeKm = (length(pos) - atmosphere.bottomRadius) * 1e-3;
     return vec3(exp(-altitudeKm * rcp(vec2(8.0, 1.2))), saturate(1.0 - abs(altitudeKm - 25.0) * rcp(15.0)));
@@ -205,20 +240,21 @@ vec3 AtmosphereExtinctionFromDensity(vec3 density) {
     return atmosphereExtinction * density;
 }
 
-vec3 ReadAtmosphereLUT(sampler2D tex, vec3 pos, vec3 dir) {
+vec3 AtmosphereTransmittance(vec3 pos, vec3 dir) {
+    float height = length(pos);
+    vec3 up = pos / height;
+
+	vec2 uv;
+    LutTransmittanceParamsToUv(height, dot(dir, up), uv);
+    return texture(tLutTex, uv).rgb;
+}
+
+vec3 AtmosphereMultiScattering(vec3 pos, vec3 dir) {
     float height = length(pos);
     vec3 up = pos / height;
 
     vec2 uv = vec2(saturate(0.5 + 0.5 * dot(dir, up)), linearstep(atmosphere.bottomRadius, atmosphere.topRadius, height));
-    return texture(tex, uv).rgb;
-}
-
-vec3 AtmosphereTransmittance(vec3 pos, vec3 dir) {
-    return ReadAtmosphereLUT(tLutTex, pos, dir);
-}
-
-vec3 AtmosphereMultiScattering(vec3 pos, vec3 dir) {
-    return ReadAtmosphereLUT(msLutTex, pos, dir);
+    return texture(msLutTex, uv).rgb;
 }
 
 vec3 AtmosphereSkyView(vec3 viewPos, vec3 rayDir, vec3 sunDir) {
