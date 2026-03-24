@@ -40,8 +40,7 @@ mat2x3 RaymarchMultiScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
 
     float cosTheta = dot(rayDir, sunDir);
 
-    float rayleighPhase = RayleighPhase(cosTheta);
-    float miePhase = AerosolPhase(cosTheta);
+    vec2 phaseValue = AtmospherePhase(cosTheta);
 
     float stepSize = tMax * rcp(32.0);
     vec3 rayStep = stepSize * rayDir;
@@ -50,23 +49,17 @@ mat2x3 RaymarchMultiScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
     vec3 lum = vec3(0.0), fms = vec3(0.0), transmittance = vec3(1.0);
     for (uint i = 0u; i < 16u; ++i, rayPos += rayStep) {
         vec3 density = AtmosphereDensityAtPoint(rayPos);
-        vec3 extinction = AtmosphereExtinctionFromDensity(density);
-
-        vec3 rayleighScattering = atmosphere.rayleighScattering * density.x;
-        vec3 mieScattering = atmosphere.mieScattering * density.y;
+        vec3 extinction = atmosphereExtinction * density;
 
         vec3 sampleTransmittance = exp(-stepSize * extinction);
 
-        vec3 inScattering = rayleighScattering + mieScattering;
+        vec3 inScattering = atmosphereScattering * density.xy;
         vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / extinction;
         fms += transmittance * scatteringIntegral;
 
         vec3 sunTransmittance = AtmosphereTransmittanceToSun(rayPos, sunDir);
 
-        vec3 rayleighInScattering = rayleighScattering * rayleighPhase;
-        vec3 mieInScattering = mieScattering * miePhase;
-
-        inScattering = (rayleighInScattering + mieInScattering) * sunTransmittance;
+        inScattering = atmosphereScattering * (phaseValue * density.xy) * sunTransmittance;
         scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / extinction;
 
         lum += scatteringIntegral * transmittance;

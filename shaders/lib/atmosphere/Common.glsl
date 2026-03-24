@@ -58,6 +58,17 @@ const AtmosphereParameters atmosphere = AtmosphereParameters(
     vec3(0.05, 0.06, 0.1)
 );
 
+const mat3 atmosphereExtinction = mat3(
+	atmosphere.rayleighScattering,
+	atmosphere.mieExtinction,
+	atmosphere.ozoneExtinction
+);
+
+const mat2x3 atmosphereScattering = mat2x3(
+	atmosphere.rayleighScattering,
+	atmosphere.mieScattering
+);
+
 float atmosphereViewHeight = planetRadius + VIEWER_BASE_ALTITUDE + eyeAltitude;
 vec3 atmosphereViewPos = vec3(0.0, atmosphereViewHeight, 0.0);
 
@@ -176,6 +187,10 @@ float AerosolPhase(in float mu) {
 	return mix(HenyeyGreensteinPhase(mu, gHG), DrainePhase(mu, gD, a), wD);
 }
 
+vec2 AtmospherePhase(in float mu) {
+	return vec2(RayleighPhase(mu), AerosolPhase(mu));
+}
+
 vec3 LightningContribution(in vec3 pos) {
 	if (lightningBoltPosition.w < 0.5) return vec3(0.0);
 
@@ -234,16 +249,6 @@ vec2 LutTransmittanceParamsToUv(float r, float mu) {
 vec3 AtmosphereDensityAtPoint(vec3 pos) {
     float altitudeKm = (length(pos) - atmosphere.bottomRadius) * 1e-3;
     return vec3(exp(-altitudeKm * rcp(vec2(8.0, 1.2))), saturate(1.0 - abs(altitudeKm - 25.0) * rcp(15.0)));
-}
-
-vec3 AtmosphereExtinctionFromDensity(vec3 density) {
-	const mat3 atmosphereExtinction = mat3(
-		atmosphere.rayleighScattering,
-		atmosphere.mieScattering,
-		atmosphere.ozoneExtinction
-	);
-
-    return atmosphereExtinction * density;
 }
 
 vec3 ReadTransmittanceLUT(float r, float mu) {
