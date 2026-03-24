@@ -40,15 +40,21 @@ const float planetRadius = 6371e3; // The average radius of the Earth: 6,371 kil
 const float aerosol_g = 0.8; // Asymmetry factor for mie phase function
 const float aerosol_d = 1.6; // Mean diameter in µm
 
+// https://www.desmos.com/calculator/giz0uiar7k
+#define PreethamMieScatteringCoeff(turbidity) \
+	max(vec3(-7.67542206226e-6, -8.22772032997e-6, -1.21707541321e-5) + \
+		vec3( 7.71550875198e-6,  8.27069152678e-6, 	1.22343187466e-5) * turbidity, 0.0)
+
+// Every length is in m
 const AtmosphereParameters atmosphere = AtmosphereParameters(
 	vec3(1.0),
 	0.004675 * SUN_RADIUS_MULT,
     planetRadius,
     planetRadius + ATMOSPHERE_THICKNESS,
-    vec3(0.005802, 0.013558, 0.033100) * 1e-3,
-    vec3(0.003996, 0.003996, 0.003996) * 1e-3,
-    vec3(0.004440, 0.004440, 0.004440) * 1e-3,
-    vec3(0.000650, 0.001881, 0.000085) * 1e-3,
+    vec3(8.059375432e-6, 1.671209429e-5, 4.080133294e-5),
+    PreethamMieScatteringCoeff(2.0) * 0.9,
+    PreethamMieScatteringCoeff(2.0),
+    vec3(8.304280072e-7, 1.314911970e-6, 5.440679729e-8),
     vec3(0.05, 0.06, 0.1)
 );
 
