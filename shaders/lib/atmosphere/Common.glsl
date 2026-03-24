@@ -240,19 +240,48 @@ vec3 AtmosphereExtinctionFromDensity(vec3 density) {
     return atmosphereExtinction * density;
 }
 
-vec3 AtmosphereTransmittance(vec3 pos, vec3 dir) {
-    float height = length(pos);
-    vec3 up = pos / height;
-
-    vec2 uv = LutTransmittanceParamsToUv(height, dot(dir, up));
+vec3 ReadTransmittanceLUT(float r, float mu) {
+    vec2 uv = LutTransmittanceParamsToUv(r, mu);
     return texture(tLutTex, uv).rgb;
 }
 
-vec3 AtmosphereMultiScattering(vec3 pos, vec3 dir) {
-    float height = length(pos);
-    vec3 up = pos / height;
+bool RayIntersectPlanetGround(float r, float mu) {
+	return mu < 0.0 && r * r * (mu * mu - 1.0) + atmosphere.bottomRadius * atmosphere.bottomRadius >= 0.0;
+}
 
-    vec2 uv = vec2(saturate(0.5 + 0.5 * dot(dir, up)), linearstep(atmosphere.bottomRadius, atmosphere.topRadius, height));
+vec3 AtmosphereTransmittance(vec3 pos, vec3 dir) {
+    float r = length(pos);
+	float mu = dot(dir, pos / r);
+
+    return ReadTransmittanceLUT(r, mu) * float(!RayIntersectPlanetGround(r, mu));
+}
+
+vec3 AtmosphereTransmittanceToSun(float r, float mu) {
+	float sinThetaH = atmosphere.bottomRadius / r;
+	float cosThetaH = -sqrt(max0(1.0 - sinThetaH * sinThetaH));
+	return ReadTransmittanceLUT(r, mu) *
+		smoothstep(-sinThetaH * atmosphere.sunAngularRadius,
+					sinThetaH * atmosphere.sunAngularRadius,
+					mu - cosThetaH);
+}
+
+vec3 AtmosphereTransmittanceToSun(vec3 pos, vec3 dir) {
+    float r = length(pos);
+	float mu = dot(dir, pos / r);
+
+	float sinThetaH = atmosphere.bottomRadius / r;
+	float cosThetaH = -sqrt(max0(1.0 - sinThetaH * sinThetaH));
+	return ReadTransmittanceLUT(r, mu) *
+		smoothstep(-sinThetaH * atmosphere.sunAngularRadius,
+					sinThetaH * atmosphere.sunAngularRadius,
+					mu - cosThetaH);
+}
+
+vec3 AtmosphereMultiScattering(vec3 pos, vec3 dir) {
+    float r = length(pos);
+	float mu = dot(dir, pos / r);
+
+    vec2 uv = vec2(saturate(0.5 + 0.5 * mu), linearstep(atmosphere.bottomRadius, atmosphere.topRadius, r));
     return texture(msLutTex, uv).rgb;
 }
 

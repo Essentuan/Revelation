@@ -61,7 +61,7 @@ mat2x3 RaymarchMultiScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
         vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / extinction;
         fms += transmittance * scatteringIntegral;
 
-        vec3 sunTransmittance = AtmosphereTransmittance(rayPos, sunDir);
+        vec3 sunTransmittance = AtmosphereTransmittanceToSun(rayPos, sunDir);
 
         vec3 rayleighInScattering = rayleighScattering * rayleighPhase;
         vec3 mieInScattering = mieScattering * miePhase;
@@ -77,7 +77,7 @@ mat2x3 RaymarchMultiScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
     if (bottomDist > 0.0) {
         if (dot(rayPos, sunDir) > EPS) {
             vec3 hitPos = normalize(rayPos + bottomDist * rayDir) * atmosphere.bottomRadius;
-            lum += transmittance * atmosphere.groundAlbedo * AtmosphereTransmittance(hitPos, sunDir);
+            lum += transmittance * atmosphere.groundAlbedo * AtmosphereTransmittanceToSun(hitPos, sunDir);
         }
     }
 

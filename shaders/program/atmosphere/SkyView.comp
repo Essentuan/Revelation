@@ -48,7 +48,7 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir, float tMax, float
         vec3 rayleighScattering = atmosphere.rayleighScattering * density.x;
         vec3 mieScattering = atmosphere.mieScattering * density.y;
 
-        vec3 sunTransmittance = AtmosphereTransmittance(rayPos, sunDir);
+        vec3 sunTransmittance = AtmosphereTransmittanceToSun(rayPos, sunDir);
         vec3 psiMs = AtmosphereMultiScattering(rayPos, sunDir);
 
         vec3 rayleighInScattering = rayleighScattering * (rayleighPhase * sunTransmittance + psiMs);
@@ -102,8 +102,8 @@ vec3 RenderSkyView(vec2 uv, float dither) {
         lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir, bottomDist, dither) * moonlightMult;
 
         vec3 planetPos = atmosphereViewPos + rayDir * bottomDist;
-        vec3 sunTransmittance = AtmosphereTransmittance(planetPos, sunDir);
-        vec3 moonTransmittance = AtmosphereTransmittance(planetPos, -sunDir);
+        vec3 sunTransmittance = AtmosphereTransmittanceToSun(planetPos, sunDir);
+        vec3 moonTransmittance = AtmosphereTransmittanceToSun(planetPos, -sunDir);
 
         vec3 t1 = AtmosphereTransmittance(planetPos, -rayDir);
         vec3 t2 = AtmosphereTransmittance(atmosphereViewPos, -rayDir);

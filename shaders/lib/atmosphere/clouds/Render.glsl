@@ -176,7 +176,7 @@ vec4 RenderClouds(in vec3 rayDir, in vec2 noise) {
 	float r = atmosphereViewHeight; // length(atmosphereViewPos)
 	float mu = rayDir.y; // dot(atmosphereViewPos, rayDir) / r
 
-	bool planetIntersection = mu < 0.0 && r * r * (mu * mu - 1.0) + sqr(atmosphere.bottomRadius) >= 0.0;
+	bool planetIntersection = RayIntersectPlanetGround(r, mu);
 
 	//================================================================================================//
 
@@ -339,8 +339,8 @@ void CompositeClouds(inout vec3 skyRadiance, in vec4 cloudData, in vec3 rayDir) 
 		vec3 cloudPos = atmosphereViewPos + rayDir * cloudData.z;
 
 		// Compute irradiance
-        vec3 sunIrradiance = atmosphere.solarIrradiance * AtmosphereTransmittance(cloudPos, worldSunDir);
-        vec3 moonIrradiance = atmosphere.solarIrradiance * AtmosphereTransmittance(cloudPos, -worldSunDir) * moonlightMult;
+        vec3 sunIrradiance = atmosphere.solarIrradiance * AtmosphereTransmittanceToSun(cloudPos, worldSunDir);
+        vec3 moonIrradiance = atmosphere.solarIrradiance * AtmosphereTransmittanceToSun(cloudPos, -worldSunDir) * moonlightMult;
 
 		vec3 directIlluminance = 128.0 * (sunIrradiance + moonIrradiance);
 
