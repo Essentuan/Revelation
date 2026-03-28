@@ -102,18 +102,19 @@ vec3 RenderSkyView(vec2 uv) {
         lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir, bottomDist);
         lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir, bottomDist) * moonlightMult;
 
+        // Ground diffuse
         vec3 planetPos = atmosphereViewPos + rayDir * bottomDist;
-        vec3 sunTransmittance = AtmosphereTransmittanceToSun(planetPos, sunDir);
-        vec3 moonTransmittance = AtmosphereTransmittanceToSun(planetPos, -sunDir);
+        float planetHeight = length(planetPos);
+        vec3 upVector = planetPos / planetHeight;
+
+        vec3 transmittanceToSun = AtmosphereTransmittanceToSun(planetHeight, dot(upVector, sunDir));
+        float NdotL = saturate(dot(upVector, sunDir));
 
         vec3 t1 = AtmosphereTransmittanceToPoint(planetPos, -rayDir);
         vec3 t2 = AtmosphereTransmittanceToPoint(atmosphereViewPos, -rayDir);
         vec3 aerialT = saturate(t1 / t2);
 
-        float NdotL = abs(dot(normalize(planetPos), sunDir));
-        vec3 lambertian = atmosphere.groundAlbedo * NdotL * rPI;
-
-        lum += lambertian * (sunTransmittance + moonTransmittance * moonlightMult) * aerialT;
+        lum += atmosphere.groundAlbedo * rPI * NdotL * transmittanceToSun * aerialT;
     }
 
     lum = desaturate(lum, wetness * 0.5); // Post-process

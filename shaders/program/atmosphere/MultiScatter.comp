@@ -60,12 +60,15 @@ mat2x3 RaymarchMultiScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
         transmittance *= sampleTransmittance;
     }
 
-    // Ground reflection
+    // Ground diffuse
     if (bottomDist > 0.0) {
-        if (dot(rayPos, sunDir) > EPS) {
-            vec3 hitPos = normalize(rayPos + bottomDist * rayDir) * atmosphere.bottomRadius;
-            lum += transmittance * atmosphere.groundAlbedo * AtmosphereTransmittanceToSun(hitPos, sunDir);
-        }
+        vec3 planetPos = rayPos + rayDir * bottomDist;
+        float planetHeight = length(planetPos);
+        vec3 upVector = planetPos / planetHeight;
+
+        vec3 transmittanceToSun = AtmosphereTransmittanceToSun(planetHeight, dot(upVector, sunDir));
+        float NdotL = saturate(dot(upVector, sunDir));
+        lum += atmosphere.groundAlbedo * rPI * NdotL * transmittance * transmittanceToSun;
     }
 
     return mat2x3(lum, fms);
