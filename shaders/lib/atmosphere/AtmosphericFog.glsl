@@ -54,12 +54,12 @@ mat2x3 RaymarchAtmosphericFog(in vec3 startPos, in vec3 endPos, in float dither,
 
 	float maxDist = min(lodRenderDist, 4096.0); // Limit to avoid visible noise
 	if (skyMask) {
-		// vec2 intersection = RaySphericalShellIntersection(viewerHeight, worldDir.y, planetRadius, cumulusTopRadius);
+		// vec2 intersection = RaySphericalShellIntersection(atmosphereViewHeight, worldDir.y, planetRadius, cumulusTopRadius);
 
 		// // Not intersecting the volume
-		// if (intersection.y < 0.0 || viewerHeight > cumulusBottomRadius) return mat2x3(vec3(0.0), vec3(1.0));
+		// if (intersection.y < 0.0 || atmosphereViewHeight > cumulusBottomRadius) return mat2x3(vec3(0.0), vec3(1.0));
 
-		rayLength = clamp((cumulusTopRadius - viewerHeight) / max0(worldDir.y), 0.0, maxDist);
+		rayLength = clamp((cumulusTopRadius - atmosphereViewHeight) / max0(worldDir.y), 0.0, maxDist);
 	}
 
 	float rSteps = rcp(float(steps));
@@ -84,8 +84,8 @@ mat2x3 RaymarchAtmosphericFog(in vec3 startPos, in vec3 endPos, in float dither,
 		mieDensityMult *= max(wetness, 1.5 - approxSqrt(timeNoon) * 1.5 - timeSunset * 0.75 - timeMidnight * 0.5);
 	#endif
 
-	vec3 fogMieExtinction = atmosphereModel.mie_extinction * mieDensityMult;
-	vec3 fogMieScattering = atmosphereModel.mie_scattering * mieDensityMult;
+	vec3 fogMieExtinction = atmosphere.mie_extinction * mieDensityMult;
+	vec3 fogMieScattering = atmosphere.mie_scattering * mieDensityMult;
 
 	#ifdef PER_BIOME_FOG
 		vec3 biomeAlbedo = mix(vec3(1.0), vec3(1.1, 0.9, 0.7), biomeSandstorm);
@@ -95,12 +95,12 @@ mat2x3 RaymarchAtmosphericFog(in vec3 startPos, in vec3 endPos, in float dither,
 
 	mat2x3 fogExtinctionCoeff = mat2x3(
 		fogMieExtinction,
-		atmosphereModel.rayleigh_scattering * VF_RAYLEIGH_DENSITY * 0.05
+		atmosphere.rayleigh_scattering * VF_RAYLEIGH_DENSITY * 0.05
 	);
 
 	mat2x3 fogScatteringCoeff = mat2x3(
 		fogMieScattering,
-		atmosphereModel.rayleigh_scattering * VF_RAYLEIGH_DENSITY * 0.05
+		atmosphere.rayleigh_scattering * VF_RAYLEIGH_DENSITY * 0.05
 	);
 
 	float uniformFog = (16.0 + wetness * VF_MIE_DENSITY_RAIN_MULT * 16.0) / maxDist;

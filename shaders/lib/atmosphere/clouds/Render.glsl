@@ -173,8 +173,8 @@ vec4 RenderClouds(in vec3 rayDir, in vec2 noise) {
 	#endif
 	// float phases[cloudMsCount] = SetupParticipatingMediaPhases(phase, cloudMsFalloffC);
 
-	vec3 camera = vec3(0.0, viewerHeight, 0.0);
-	float r = viewerHeight; // length(camera)
+	vec3 camera = atmosphereViewPos;
+	float r = atmosphereViewHeight; // length(camera)
 	float mu = rayDir.y;	// dot(camera, rayDir) / r
 
 	bool planetIntersection = RayIntersectsGround(r, mu);
@@ -337,8 +337,7 @@ vec4 RenderClouds(in vec3 rayDir, in vec2 noise) {
 void CompositeClouds(inout vec3 skyRadiance, in vec4 cloudData, in vec3 rayDir) {
 	// x: sunlight, y: skylight, z: depth, w: transmittance
 	if (cloudData.w < 1.0) {
-		vec3 camera = vec3(0.0, viewerHeight, 0.0);
-		vec3 cloudPos = camera + rayDir * cloudData.z;
+		vec3 cloudPos = atmosphereViewPos + rayDir * cloudData.z;
 
 		// Compute irradiance
 		vec3 sunIrradiance, moonIrradiance;
@@ -348,10 +347,12 @@ void CompositeClouds(inout vec3 skyRadiance, in vec4 cloudData, in vec3 rayDir) 
 		vec3 scattering = cloudData.x * directIlluminance;
 		scattering += cloudData.y * rPI * skyIlluminance;
 
-		scattering += LightningContribution(cloudPos - camera) * sqr(cloudData.y);
+		scattering += LightningContribution(cloudPos - atmosphereViewPos) * sqr(cloudData.y);
 
 		// Aerial perspective
-		vec3 aerialT = sqr(GetTransmittance(cloudPos)); // Artificially boost
-		skyRadiance = skyRadiance * oms(oms(cloudData.w) * aerialT) + scattering * aerialT;
+		vec3 aerialT;
+		vec3 aerialSL = GetSkyRadianceToPoint(cloudPos, worldSunDir, aerialT) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
+		if (aerialSL == aerialSL) skyRadiance = mix(aerialSL, skyRadiance, cloudData.w);
+		skyRadiance += scattering * aerialT;
 	}
 }

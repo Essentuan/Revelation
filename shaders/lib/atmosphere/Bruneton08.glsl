@@ -23,7 +23,7 @@ float ClampCosine(float mu) {
 }
 
 float ClampRadius(float r) {
-    return clamp(r, atmosphereModel.bottom_radius, atmosphereModel.top_radius);
+    return clamp(r, atmosphere.bottom_radius, atmosphere.top_radius);
 }
 
 float SafeSqrt(float a) {
@@ -80,7 +80,7 @@ vec2 GetTransmittanceTextureUvFromRMu(
         // Distance to the top atmosphere boundary for the ray (r,mu), and its minimum
         // and maximum values over all mu - obtained for (r,1) and (r,mu_horizon).
         float d = DistanceToTopAtmosphereBoundary(r, mu);
-        float d_min = atmosphereModel.top_radius - r;
+        float d_min = atmosphere.top_radius - r;
         float d_max = rho + H;
         float x_mu = (d - d_min) / (d_max - d_min);
         float x_r = rho / H;
@@ -105,15 +105,13 @@ vec3 GetTransmittance(
         float mu_d = ClampCosine((r * mu + d) / r_d);
 
         if (ray_r_mu_intersects_ground) {
-            return min(
+            return saturate(
                 GetTransmittanceToTopAtmosphereBoundary(r_d, -mu_d) /
-                GetTransmittanceToTopAtmosphereBoundary(r, -mu),
-            vec3(1.0));
+                GetTransmittanceToTopAtmosphereBoundary(r, -mu));
         } else {
-            return min(
+            return saturate(
                 GetTransmittanceToTopAtmosphereBoundary(r, mu) /
-                GetTransmittanceToTopAtmosphereBoundary(r_d, mu_d),
-            vec3(1.0));
+                GetTransmittanceToTopAtmosphereBoundary(r_d, mu_d));
         }
 }
 
@@ -121,7 +119,7 @@ vec3 GetTransmittance(
     //vec3 camera,
     vec3 point
     ) {
-		vec3 camera = vec3(0.0, viewerHeight, 0.0);
+		vec3 camera = atmosphereViewPos;
         // Compute the distance to the top atmosphere boundary along the view ray,
         // assuming the viewer is in space (or NaN if the view ray does not intersect
         // the atmosphere).
@@ -134,7 +132,7 @@ vec3 GetTransmittance(
         // the viewer to the top atmosphere boundary (along the view ray):
         if (distance_to_top_atmosphere_boundary > 0.0) {
             camera += view_ray * distance_to_top_atmosphere_boundary;
-            r = atmosphereModel.top_radius;
+            r = atmosphere.top_radius;
             rmu += distance_to_top_atmosphere_boundary;
         }
 
@@ -151,12 +149,12 @@ vec3 GetTransmittanceToSun(
     float r,
     float mu_s
     ) {
-        float sin_theta_h = atmosphereModel.bottom_radius / r;
+        float sin_theta_h = atmosphere.bottom_radius / r;
         float cos_theta_h = -SafeSqrt(1.0 - sin_theta_h * sin_theta_h);
 
         return GetTransmittanceToTopAtmosphereBoundary(r, mu_s) *
-            smoothstep(-sin_theta_h * atmosphereModel.sun_angular_radius,
-                        sin_theta_h * atmosphereModel.sun_angular_radius,
+            smoothstep(-sin_theta_h * atmosphere.sun_angular_radius,
+                        sin_theta_h * atmosphere.sun_angular_radius,
                         mu_s - cos_theta_h);
 }
 
@@ -186,7 +184,7 @@ vec4 GetScatteringTextureUvwzFromRMuMuSNu(
             // Distance to the ground for the ray (r,mu), and its minimum and maximum
             // values over all mu - obtained for (r,-1) and (r,mu_horizon).
             float d = -r_mu - SafeSqrt(discriminant);
-            float d_min = r - atmosphereModel.bottom_radius;
+            float d_min = r - atmosphere.bottom_radius;
             float d_max = rho;
             u_mu = 0.5 - 0.5 * GetTextureCoordFromUnitRange(d_max == d_min ? 0.0 : (d - d_min) / (d_max - d_min), SCATTERING_TEXTURE_MU_SIZE * 0.5);
         } else {
@@ -194,16 +192,16 @@ vec4 GetScatteringTextureUvwzFromRMuMuSNu(
             // minimum and maximum values over all mu - obtained for (r,1) and
             // (r,mu_horizon).
             float d = -r_mu + SafeSqrt(discriminant + H * H);
-            float d_min = atmosphereModel.top_radius - r;
+            float d_min = atmosphere.top_radius - r;
             float d_max = rho + H;
             u_mu = 0.5 + 0.5 * GetTextureCoordFromUnitRange((d - d_min) / (d_max - d_min), SCATTERING_TEXTURE_MU_SIZE * 0.5);
         }
 
-        float d = DistanceToTopAtmosphereBoundary(atmosphereModel.bottom_radius, mu_s);
-        float d_min = atmosphereModel.top_radius - atmosphereModel.bottom_radius;
+        float d = DistanceToTopAtmosphereBoundary(atmosphere.bottom_radius, mu_s);
+        float d_min = atmosphere.top_radius - atmosphere.bottom_radius;
         float d_max = H;
         float a = (d - d_min) / (d_max - d_min);
-        float D = DistanceToTopAtmosphereBoundary(atmosphereModel.bottom_radius, atmosphereModel.mu_s_min);
+        float D = DistanceToTopAtmosphereBoundary(atmosphere.bottom_radius, atmosphere.mu_s_min);
         float A = (D - d_min) / (d_max - d_min);
         // An ad-hoc function equal to 0 for mu_s = mu_s_min (because then d = D and
         // thus a = A), equal to 1 for mu_s = 1 (because then d = d_min and thus
@@ -223,8 +221,8 @@ vec3 GetExtrapolatedSingleMieScattering(
             return vec3(0.0);
         }
         return scattering.rgb * scattering.a / scattering.r *
-            (atmosphereModel.rayleigh_scattering.r / atmosphereModel.mie_scattering.r) *
-            (atmosphereModel.mie_scattering / atmosphereModel.rayleigh_scattering);
+            (atmosphere.rayleigh_scattering.r / atmosphere.mie_scattering.r) *
+            (atmosphere.mie_scattering / atmosphere.rayleigh_scattering);
 }
 
 vec3 GetCombinedScattering(
@@ -242,7 +240,7 @@ vec3 GetCombinedScattering(
         vec3 uvw0 = vec3((tex_x + uvwz.y) / SCATTERING_TEXTURE_NU_SIZE, uvwz.z, uvwz.w);
         vec3 uvw1 = vec3((tex_x + 1.0 + uvwz.y) / SCATTERING_TEXTURE_NU_SIZE, uvwz.z, uvwz.w);
 
-        vec4 combined_scattering = textureLod(scatteringLut, uvw0, 0.0) * oms(lerp) + textureLod(scatteringLut, uvw1, 0.0) * lerp;
+        vec4 combined_scattering = mix(textureLod(scatteringLut, uvw0, 0.0), textureLod(scatteringLut, uvw1, 0.0), lerp);
 
         vec3 scattering = vec3(combined_scattering);
         single_mie_scattering = GetExtrapolatedSingleMieScattering(combined_scattering);
@@ -256,7 +254,7 @@ vec3 GetIrradiance(
     float r,
     float mu_s
     ) {
-        float x_r = (r - atmosphereModel.bottom_radius) / (atmosphereModel.top_radius - atmosphereModel.bottom_radius);
+        float x_r = (r - atmosphere.bottom_radius) / (atmosphere.top_radius - atmosphere.bottom_radius);
         float x_mu_s = mu_s * 0.5 + 0.5;
         vec2 uv = vec2(x_mu_s, x_r);
 
@@ -276,8 +274,8 @@ vec3 GetSunAndSkyIrradiance(
         float mu_s = dot(point, sun_direction) / r;
 
         // Direct irradiance.
-        sun_irradiance = atmosphereModel.solar_irradiance * GetTransmittanceToSun(r, mu_s);
-        moon_irradiance = atmosphereModel.solar_irradiance * GetTransmittanceToSun(r, -mu_s) * moonlightMult;
+        sun_irradiance = atmosphere.solar_irradiance * GetTransmittanceToSun(r, mu_s);
+        moon_irradiance = atmosphere.solar_irradiance * GetTransmittanceToSun(r, -mu_s) * moonlightMult;
 
         // Indirect irradiance (approximated if the surface is not horizontal).
         vec3 sky_irradiance = GetIrradiance(r, mu_s) + GetIrradiance(r, -mu_s) * moonlightMult;
@@ -290,7 +288,7 @@ vec3 GetSkyRadianceToPoint(
     vec3 sun_direction,
     out vec3 transmittance
     ) {
-		vec3 camera = vec3(0.0, viewerHeight, 0.0);
+		vec3 camera = atmosphereViewPos;
         // Compute the distance to the top atmosphere boundary along the view ray,
         // assuming the viewer is in space (or NaN if the view ray does not intersect
         // the atmosphere).
@@ -303,7 +301,7 @@ vec3 GetSkyRadianceToPoint(
         // the viewer to the top atmosphere boundary (along the view ray):
         if (distance_to_top_atmosphere_boundary > 0.0) {
             camera += view_ray * distance_to_top_atmosphere_boundary;
-            r = atmosphereModel.top_radius;
+            r = atmosphere.top_radius;
             rmu += distance_to_top_atmosphere_boundary;
         }
 
@@ -360,7 +358,7 @@ vec3 GetSkyRadiance(
     vec3 sun_direction,
     out vec3 transmittance
     ) {
-		vec3 camera = vec3(0.0, viewerHeight, 0.0);
+		vec3 camera = atmosphereViewPos;
         // Compute the distance to the top atmosphere boundary along the view ray,
         // assuming the viewer is in space (or NaN if the view ray does not intersect
         // the atmosphere).
@@ -372,9 +370,9 @@ vec3 GetSkyRadiance(
         // the viewer to the top atmosphere boundary (along the view ray):
         if (distance_to_top_atmosphere_boundary > 0.0) {
             camera += view_ray * distance_to_top_atmosphere_boundary;
-            r = atmosphereModel.top_radius;
+            r = atmosphere.top_radius;
             rmu += distance_to_top_atmosphere_boundary;
-        } else if (r > atmosphereModel.top_radius) {
+        } else if (r > atmosphere.top_radius) {
             // If the view ray does not intersect the atmosphere, simply return 0.
             transmittance = vec3(1.0);
             return vec3(0.0);
@@ -408,10 +406,11 @@ vec3 GetSkyRadiance(
                 vec3 sun_irradiance, moon_irradiance;
                 vec3 sky_irradiance = GetSunAndSkyIrradiance(planet_point, planet_normal, sun_direction, sun_irradiance, moon_irradiance);
 
-                sun_irradiance *= saturate(dot(planet_normal, sun_direction));
-                moon_irradiance *= saturate(dot(planet_normal, -sun_direction));
+                float NdotL = dot(planet_normal, sun_direction);
+                sun_irradiance *= saturate(NdotL);
+                moon_irradiance *= saturate(-NdotL);
                 vec3 diffuse = (sun_irradiance + moon_irradiance) * (SUN_SPECTRAL_RADIANCE_TO_LUMINANCE / SKY_SPECTRAL_RADIANCE_TO_LUMINANCE);
-                ground = atmosphereModel.ground_albedo * rPI * (sky_irradiance + diffuse);
+                ground = atmosphere.ground_albedo * rPI * (sky_irradiance + diffuse);
 
                 vec3 transmitAP;
                 vec3 scatterAP = GetSkyRadianceToPoint(planet_point, sun_direction, transmitAP);
@@ -435,7 +434,7 @@ vec3 GetSkyRadiance(
     vec3 view_ray,
     vec3 sun_direction
     ) {
-		vec3 camera = vec3(0.0, viewerHeight, 0.0);
+		vec3 camera = atmosphereViewPos;
         // Compute the distance to the top atmosphere boundary along the view ray,
         // assuming the viewer is in space (or NaN if the view ray does not intersect
         // the atmosphere).
@@ -447,9 +446,9 @@ vec3 GetSkyRadiance(
         // the viewer to the top atmosphere boundary (along the view ray):
         if (distance_to_top_atmosphere_boundary > 0.0) {
             camera += view_ray * distance_to_top_atmosphere_boundary;
-            r = atmosphereModel.top_radius;
+            r = atmosphere.top_radius;
             rmu += distance_to_top_atmosphere_boundary;
-        } else if (r > atmosphereModel.top_radius) {
+        } else if (r > atmosphere.top_radius) {
             // If the view ray does not intersect the atmosphere, simply return 0.
             return vec3(0.0);
         }
@@ -480,10 +479,11 @@ vec3 GetSkyRadiance(
                 vec3 sun_irradiance, moon_irradiance;
                 vec3 sky_irradiance = GetSunAndSkyIrradiance(planet_point, planet_normal, sun_direction, sun_irradiance, moon_irradiance);
 
-                sun_irradiance *= saturate(dot(planet_normal, sun_direction));
-                moon_irradiance *= saturate(dot(planet_normal, -sun_direction));
+                float NdotL = dot(planet_normal, sun_direction);
+                sun_irradiance *= saturate(NdotL);
+                moon_irradiance *= saturate(-NdotL);
                 vec3 diffuse = (sun_irradiance + moon_irradiance) * (SUN_SPECTRAL_RADIANCE_TO_LUMINANCE / SKY_SPECTRAL_RADIANCE_TO_LUMINANCE);
-                ground = atmosphereModel.ground_albedo * rPI * (sky_irradiance + diffuse);
+                ground = atmosphere.ground_albedo * rPI * (sky_irradiance + diffuse);
 
                 vec3 transmitAP;
                 vec3 scatterAP = GetSkyRadianceToPoint(planet_point, sun_direction, transmitAP);

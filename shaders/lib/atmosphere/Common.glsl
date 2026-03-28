@@ -69,9 +69,7 @@ const float planetRadius = 6371e3; // The average radius of the Earth: 6,371 kil
 const float aerosol_g = 0.8; // Asymmetry factor for mie phase function
 const float aerosol_d = 1.6; // Mean diameter in µm
 
-float viewerHeight = planetRadius + VIEWER_BASE_ALTITUDE + eyeAltitude;
-
-const AtmosphereParameters atmosphereModel = AtmosphereParameters(
+const AtmosphereParameters atmosphere = AtmosphereParameters(
 	// vec3(1.0),
     vec3(1.474000, 1.850400, 1.911980),
 	0.004675 * SUN_RADIUS_MULT,
@@ -89,8 +87,8 @@ const AtmosphereParameters atmosphereModel = AtmosphereParameters(
     cos(radians(102.0))
 );
 
-const float atmosphere_bottom_radius_sq = atmosphereModel.bottom_radius * atmosphereModel.bottom_radius;
-const float atmosphere_top_radius_sq    = atmosphereModel.top_radius * atmosphereModel.top_radius;
+const float atmosphere_bottom_radius_sq = atmosphere.bottom_radius * atmosphere.bottom_radius;
+const float atmosphere_top_radius_sq    = atmosphere.top_radius * atmosphere.top_radius;
 
 // Values from https://github.com/ebruneton/precomputed_atmospheric_scattering
 const vec3 white_point = vec3(1.08241, 0.96756, 0.95003);
@@ -102,6 +100,9 @@ const vec3 SUN_SPECTRAL_RADIANCE_TO_LUMINANCE = vec3(98242.786222, 69954.398112,
 const vec3 SKY_SPECTRAL_RADIANCE_TO_LUMINANCE = vec3(114974.916437f, 71305.954816f, 65310.548555f) * 1e-3 / white_point;
 const vec3 SUN_SPECTRAL_RADIANCE_TO_LUMINANCE = vec3(98242.786222, 69954.398112, 66475.012354) * 1e-3 / white_point;
 #endif
+
+float atmosphereViewHeight = planetRadius + VIEWER_BASE_ALTITUDE + eyeAltitude;
+vec3 atmosphereViewPos = vec3(0.0, atmosphereViewHeight, 0.0);
 
 //================================================================================================//
 
