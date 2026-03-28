@@ -39,11 +39,14 @@ struct AtmosphereParameters {
 const float planetRadius = 6371e3; // The average radius of the Earth: 6,371 kilometers
 const float aerosol_g = 0.8; // Asymmetry factor for mie phase function
 const float aerosol_d = 1.6; // Mean diameter in µm
+const float aerosol_t = 2.0; // Turbidity factor
 
 // https://www.desmos.com/calculator/giz0uiar7k
 #define PreethamMieScatteringCoeff(turbidity) \
 	max(vec3(-7.67542206226e-6, -8.22772032997e-6, -1.21707541321e-5) + \
 		vec3( 7.71550875198e-6,  8.27069152678e-6, 	1.22343187466e-5) * turbidity, 0.0)
+
+const vec3 mieCoeffBase = PreethamMieScatteringCoeff(aerosol_t);
 
 // Every length is in m
 const AtmosphereParameters atmosphere = AtmosphereParameters(
@@ -52,8 +55,8 @@ const AtmosphereParameters atmosphere = AtmosphereParameters(
     planetRadius,
     planetRadius + ATMOSPHERE_THICKNESS,
     vec3(8.059375432e-6, 1.671209429e-5, 4.080133294e-5),
-    PreethamMieScatteringCoeff(2.0) * 0.9,
-    PreethamMieScatteringCoeff(2.0),
+    mieCoeffBase * 0.9,
+    mieCoeffBase,
     vec3(8.304280072e-7, 1.314911970e-6, 5.440679729e-8),
     vec3(0.1, 0.12, 0.2)
 );
