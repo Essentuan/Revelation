@@ -325,3 +325,35 @@ vec3 AtmosphereSkyView(vec3 viewPos, vec3 rayDir, vec3 sunDir) {
 
     return texture(skyViewTex, uv).rgb;
 }
+
+bool AtmosphereSetupRay(inout vec3 rayPos, vec3 rayDir, out float tMax, out bool groundHit) {
+    float viewHeight = length(rayPos);
+
+    if (viewHeight > atmosphere.topRadius) {
+        float tTop = RaySphereIntersectNearest(rayPos, rayDir, atmosphere.topRadius);
+        if (tTop < 0.0) {
+            return true; // No intersection with atmosphere
+        }
+        vec3 upVector = rayPos / viewHeight;
+        rayPos += rayDir * tTop - upVector;
+    }
+
+    float tBottom = RaySphereIntersectNearest(rayPos, rayDir, atmosphere.bottomRadius);
+    float tTop = RaySphereIntersectNearest(rayPos, rayDir, atmosphere.topRadius);
+
+    if (tBottom < 0.0) {
+        if (tTop < 0.0) {
+            return true; // No intersection with earth nor atmosphere
+        } else {
+            tMax = tTop;
+        }
+    } else {
+        if (tTop > 0.0) {
+            tMax = min(tTop, tBottom);
+        }
+    }
+
+    groundHit = tMax == tBottom;
+
+    return false;
+}
