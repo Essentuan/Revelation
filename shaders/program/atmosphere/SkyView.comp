@@ -29,7 +29,16 @@ writeonly restrict uniform image2D skyViewImg;
 #include "/lib/atmosphere/Common.glsl"
 #include "/lib/universal/Random.glsl"
 
-vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir, float tMax, bool ground) {
+vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
+    float topDist = RaySphereIntersectNearest(rayPos, rayDir, atmosphere.topRadius);
+    float bottomDist = RaySphereIntersectNearest(rayPos, rayDir, atmosphere.bottomRadius);
+
+    if (topDist < 0.0 && bottomDist < 0.0) {
+        return vec3(0.0); // No intersection with atmosphere nor earth
+    }
+
+    float tMax = bottomDist > 0.0 ? bottomDist : topDist;
+
     float cosTheta = dot(rayDir, sunDir);
     vec2 phaseValue = AtmospherePhase(cosTheta);
 
@@ -61,8 +70,8 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir, float tMax, bool 
     }
 
     // Ground diffuse
-    if (ground) {
-        vec3 planetPos = rayPos + rayDir * tMax;
+    if (bottomDist > 0.0) {
+        vec3 planetPos = rayPos + rayDir * bottomDist;
         float planetHeight = length(planetPos);
         vec3 upVector = planetPos / planetHeight;
 
@@ -102,18 +111,8 @@ vec3 RenderSkyView(vec2 uv) {
     float topDist = RaySphereIntersectNearest(atmosphereViewPos, rayDir, atmosphere.topRadius);
     float bottomDist = RaySphereIntersectNearest(atmosphereViewPos, rayDir, atmosphere.bottomRadius);
 
-    if (topDist < 0.0 && bottomDist < 0.0) {
-        return vec3(0.0); // No intersection with atmosphere nor earth
-    }
-
-    vec3 lum = vec3(0.0);
-    if (bottomDist < 0.0) {
-        lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir, topDist, false);
-        lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir, topDist, false) * moonlightMult;
-    } else {
-        lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir, bottomDist, true);
-        lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir, bottomDist, true) * moonlightMult;
-    }
+    vec3 lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir);
+        lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir) * moonlightMult;
 
     lum = desaturate(lum, wetness * 0.5); // Post-process
     return lum * 128.0;

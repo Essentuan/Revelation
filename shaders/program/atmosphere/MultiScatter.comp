@@ -33,10 +33,12 @@ writeonly uniform image2D msLutImg;
 mat2x3 RaymarchMultiScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
     float topDist = RaySphereIntersectNearest(rayPos, rayDir, atmosphere.topRadius);
     float bottomDist = RaySphereIntersectNearest(rayPos, rayDir, atmosphere.bottomRadius);
-    float tMax = topDist;
-    if (bottomDist > 0.0) {
-        tMax = bottomDist;
+
+    if (topDist < 0.0 && bottomDist < 0.0) {
+        return mat2x3(0.0); // No intersection with atmosphere nor earth
     }
+
+    float tMax = bottomDist > 0.0 ? bottomDist : topDist;
 
     float stepSize = tMax * rcp(32.0);
     vec3 rayStep = stepSize * rayDir;
