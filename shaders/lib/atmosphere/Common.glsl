@@ -263,9 +263,16 @@ bool RayIntersectPlanetGround(float r, float mu) {
 	return mu < 0.0 && r * r * (mu * mu - 1.0) + atmosphere.bottomRadius * atmosphere.bottomRadius >= 0.0;
 }
 
+bool RayIntersectPlanetGround(vec3 pos, vec3 dir) {
+    float r = length(pos);
+	float mu = dot(dir, pos) / r;
+
+	return RayIntersectPlanetGround(r, mu);
+}
+
 vec3 AtmosphereTransmittanceToPoint(vec3 pos, vec3 dir) {
     float r = length(pos);
-	float mu = dot(dir, pos / r);
+	float mu = dot(dir, pos) / r;
 
     return ReadTransmittanceLUT(r, mu) * float(!RayIntersectPlanetGround(r, mu));
 }
@@ -281,14 +288,14 @@ vec3 AtmosphereTransmittanceToSun(float r, float mu) {
 
 vec3 AtmosphereTransmittanceToSun(vec3 pos, vec3 dir) {
     float r = length(pos);
-	float mu = dot(dir, pos / r);
+	float mu = dot(dir, pos) / r;
 
 	return AtmosphereTransmittanceToSun(r, mu);
 }
 
 vec3 AtmosphereMultiScattering(vec3 pos, vec3 dir) {
     float r = length(pos);
-	float mu = dot(dir, pos / r);
+	float mu = dot(dir, pos) / r;
 
     vec2 uv = vec2(saturate(0.5 + 0.5 * mu), linearstep(atmosphere.bottomRadius, atmosphere.topRadius, r));
     return texture(msLutTex, uv).rgb;
@@ -313,7 +320,7 @@ vec3 AtmosphereSkyView(vec3 viewPos, vec3 rayDir, vec3 sunDir) {
 	float zenithHorizon = PI - beta;
 
 	float coord = fastAcos(viewZenithCos);
-	if (RaySphereIntersectNearest(viewPos, rayDir, atmosphere.bottomRadius) >= 0.0) {
+	if (RayIntersectPlanetGround(viewPos, rayDir)) {
 		coord = (coord - zenithHorizon) / beta;
 		coord = sqrt(coord); // Non-linear mapping
 		uv.y = coord * 0.5 + 0.5;
