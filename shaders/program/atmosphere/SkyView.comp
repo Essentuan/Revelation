@@ -29,7 +29,7 @@ writeonly restrict uniform image2D skyViewImg;
 #include "/lib/atmosphere/Common.glsl"
 #include "/lib/universal/Random.glsl"
 
-vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir, float tMax) {
+vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir, float tMax, bool ground) {
     float cosTheta = dot(rayDir, sunDir);
     vec2 phaseValue = AtmospherePhase(cosTheta);
 
@@ -59,6 +59,18 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir, float tMax) {
 
         transmittance *= sampleTransmittance;
     }
+
+    // Ground diffuse
+    if (ground) {
+        vec3 planetPos = rayPos + rayDir * tMax;
+        float planetHeight = length(planetPos);
+        vec3 upVector = planetPos / planetHeight;
+
+        vec3 transmittanceToSun = AtmosphereTransmittanceToSun(planetHeight, dot(upVector, sunDir));
+        float NdotL = saturate(dot(upVector, sunDir));
+        lum += atmosphere.groundAlbedo * rPI * NdotL * transmittance * transmittanceToSun;
+    }
+
     return lum;
 }
 
@@ -96,25 +108,11 @@ vec3 RenderSkyView(vec2 uv) {
 
     vec3 lum = vec3(0.0);
     if (bottomDist < 0.0) {
-        lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir, topDist);
-        lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir, topDist) * moonlightMult;
+        lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir, topDist, false);
+        lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir, topDist, false) * moonlightMult;
     } else {
-        lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir, bottomDist);
-        lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir, bottomDist) * moonlightMult;
-
-        // Ground diffuse
-        vec3 planetPos = atmosphereViewPos + rayDir * bottomDist;
-        float planetHeight = length(planetPos);
-        vec3 upVector = planetPos / planetHeight;
-
-        vec3 transmittanceToSun = AtmosphereTransmittanceToSun(planetHeight, dot(upVector, sunDir));
-        float NdotL = saturate(dot(upVector, sunDir));
-
-        vec3 t1 = AtmosphereTransmittanceToPoint(planetPos, -rayDir);
-        vec3 t2 = AtmosphereTransmittanceToPoint(atmosphereViewPos, -rayDir);
-        vec3 aerialT = saturate(t1 / t2);
-
-        lum += atmosphere.groundAlbedo * rPI * NdotL * transmittanceToSun * aerialT;
+        lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir, bottomDist, true);
+        lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir, bottomDist, true) * moonlightMult;
     }
 
     lum = desaturate(lum, wetness * 0.5); // Post-process

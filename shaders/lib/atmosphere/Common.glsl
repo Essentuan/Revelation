@@ -55,7 +55,7 @@ const AtmosphereParameters atmosphere = AtmosphereParameters(
     PreethamMieScatteringCoeff(2.0) * 0.9,
     PreethamMieScatteringCoeff(2.0),
     vec3(8.304280072e-7, 1.314911970e-6, 5.440679729e-8),
-    vec3(0.05, 0.06, 0.1)
+    vec3(0.1, 0.12, 0.2)
 );
 
 const mat3 atmosphereExtinction = mat3(
