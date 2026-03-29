@@ -267,17 +267,17 @@ bool RayIntersectPlanetGround(float r, float mu) {
 vec3 AtmosphereTransmittanceToPoint(vec3 pos, vec3 dir) {
     float r = length(pos);
 	float mu = dot(dir, pos) / r;
+    float earthShadow = float(!RayIntersectPlanetGround(r, mu));
 
-    return ReadTransmittanceLUT(r, mu) * float(!RayIntersectPlanetGround(r, mu));
+    return ReadTransmittanceLUT(r, mu) * earthShadow;
 }
 
 vec3 AtmosphereTransmittanceToSun(float r, float mu) {
 	float sinThetaH = atmosphere.bottomRadius / r;
-	float cosThetaH = -sqrt(max0(1.0 - sinThetaH * sinThetaH));
-	return ReadTransmittanceLUT(r, mu) *
-		linearstep(-sinThetaH * sunAngularRadius,
-					sinThetaH * sunAngularRadius,
-					mu - cosThetaH);
+	float cosThetaH = sqrt(saturate(1.0 - sinThetaH * sinThetaH));
+    float earthShadow = linearstep(-sinThetaH * sunAngularRadius, sinThetaH * sunAngularRadius, mu + cosThetaH);
+
+	return ReadTransmittanceLUT(r, mu) * earthShadow;
 }
 
 vec3 AtmosphereTransmittanceToSun(vec3 pos, vec3 dir) {
@@ -287,10 +287,7 @@ vec3 AtmosphereTransmittanceToSun(vec3 pos, vec3 dir) {
 	return AtmosphereTransmittanceToSun(r, mu);
 }
 
-vec3 AtmosphereMultiScattering(vec3 pos, vec3 dir) {
-    float r = length(pos);
-	float mu = dot(dir, pos) / r;
-
+vec3 AtmosphereMultiScattering(float r, float mu) {
     vec2 uv = vec2(saturate(0.5 + 0.5 * mu), linearstep(atmosphere.bottomRadius, atmosphere.topRadius, r));
     return texture(msLutTex, uv).rgb;
 }
