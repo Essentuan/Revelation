@@ -10,6 +10,7 @@ screen.PostProcessing=后处理
 screen.Debug=调试
 screen.Compatibility=兼容
 
+screen.Atmosphere=大气
 screen.OuterSpace=太空
 screen.Weather=天气
 screen.Foliage=植物

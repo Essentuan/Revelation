@@ -46,7 +46,7 @@ void main() {
     // Checkerboard render
 	ivec2 offset = checkerboardOffset2x2[frameCounter & 3];
 	if ((tid & 1) == offset || worldTimeChanged) {
-		vec2 uv = (vec2(tid) + 0.5) * rcp(skyMapRes);
+		vec2 uv = (vec2(tid) + 0.5) * rcp(imageSize(skyMapImg));
 
 		vec3 worldDir = UnprojectSky(uv);
 		vec3 skyRadiance = AtmosphereSkyView(atmosphereViewPos, worldDir, worldSunDir);

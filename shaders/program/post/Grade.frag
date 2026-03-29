@@ -175,7 +175,7 @@ void main() {
 
 	// Debug sky environment map
 	#ifdef DEBUG_SKY_MAP
-		if (all(lessThan(texelPos, skyMapRes))) {
+		if (all(lessThan(texelPos, textureSize(skyMapTex, 0)))) {
 			color = texelFetch(skyMapTex, texelPos, 0).rgb;
 		}
 	#endif
