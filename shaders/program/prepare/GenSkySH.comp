@@ -115,7 +115,7 @@ void main() {
 	if (index == 0u) {
 		global.skySH = shCoeff;
 
-		// Evaluate sky illuminance from SH coefficients (facing up)
-		global.skyIlluminance = ReconstructSH3(shCoeff, vec3(0.0, 1.0, 0.0));
+		// Evaluate sky up illuminance from SH coefficients
+		global.skyUpIlluminance = ReconstructSH3(shCoeff, vec3(0.0, 1.0, 0.0));
 	}
 }

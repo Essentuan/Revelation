@@ -10,6 +10,7 @@ screen.PostProcessing=Post-Processing
 screen.Debug=Debug
 screen.Compatibility=Compatibility
 
+screen.Atmosphere=Atmosphere
 screen.OuterSpace=Outer Space
 screen.Weather=Weather
 screen.Foliage=Foliage
@@ -67,6 +68,12 @@ suffix.VIEWER_BASE_ALTITUDE=m
 
 option.ATMOSPHERE_THICKNESS=Atmosphere Thickness
 suffix.ATMOSPHERE_THICKNESS=m
+
+option.ATMOSPHERE_TURBIDITY=Atmosphere Turbidity
+
+option.ATMOSPHERE_SKY_SAMPLES=Atmosphere Sky Samples
+option.ATMOSPHERE_TLUT_SAMPLES=Transmittance LUT Samples
+option.ATMOSPHERE_MSLUT_SAMPLES=Multi-Scatter LUT Samples
 
 option.SUN_RADIUS_MULT=Sun Radius Multiplier
 

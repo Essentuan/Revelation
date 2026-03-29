@@ -175,8 +175,23 @@ void main() {
 
 	// Debug sky environment map
 	#ifdef DEBUG_SKY_MAP
-		if (all(lessThan(texelPos, skyMapRes))) {
+		if (all(lessThan(texelPos, textureSize(skyMapTex, 0)))) {
 			color = texelFetch(skyMapTex, texelPos, 0).rgb;
+		}
+	#endif
+
+	#ifdef DEBUG_ATMOSPHERE_LUTS
+		ivec2 tempTexel = texelPos;
+		if (all(lessThan(tempTexel, textureSize(skyViewTex, 0)))) {
+			color = texelFetch(skyViewTex, tempTexel, 0).rgb;
+		}
+		tempTexel.x -= textureSize(skyViewTex, 0).x;
+		if (clamp(tempTexel, ivec2(0), textureSize(tLutTex, 0) - 1) == tempTexel) {
+			color = texelFetch(tLutTex, tempTexel, 0).rgb * 64.0;
+		}
+		tempTexel.x -= textureSize(tLutTex, 0).x;
+		if (clamp(tempTexel, ivec2(0), textureSize(msLutTex, 0) - 1) == tempTexel) {
+			color = texelFetch(msLutTex, tempTexel, 0).rgb * 512.0;
 		}
 	#endif
 

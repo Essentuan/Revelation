@@ -7,8 +7,8 @@ uniform float biomeGreenVapor;
 
 //================================================================================================//
 
-// x: Mie y: Rayleigh
-const vec2 falloffScale = -1.0 / vec2(12.0, 32.0);
+// x: Rayleigh y: Mie
+const vec2 falloffScale = -1.0 / vec2(32.0, 12.0);
 
 vec2 CalculateFogDensity(in vec3 rayPos, in float uniformFog) {
 	rayPos += cameraPosition;
@@ -30,7 +30,7 @@ vec2 CalculateFogDensity(in vec3 rayPos, in float uniformFog) {
 	noise -= Pseudo3DNoise(rayPos * 4.0 - windOffset);
 #endif
 
-	density.x *= sqr(noise) * (2.0 + biomeSandstorm * 8.0 + biomeSnowstorm * 4.0);
+	density.y *= sqr(noise) * (2.0 + biomeSandstorm * 8.0 + biomeSnowstorm * 4.0);
 	density += uniformFog;
 
 	return density * linearstep(cumulusTopAltitude, cumulusBottomAltitude, rayPos.y);
@@ -54,12 +54,12 @@ mat2x3 RaymarchAtmosphericFog(in vec3 startPos, in vec3 endPos, in float dither,
 
 	float maxDist = min(lodRenderDist, 4096.0); // Limit to avoid visible noise
 	if (skyMask) {
-		// vec2 intersection = RaySphericalShellIntersection(viewerHeight, worldDir.y, planetRadius, cumulusTopRadius);
+		// vec2 intersection = RaySphericalShellIntersection(atmosphereViewHeight, worldDir.y, planetRadius, cumulusTopRadius);
 
 		// // Not intersecting the volume
-		// if (intersection.y < 0.0 || viewerHeight > cumulusBottomRadius) return mat2x3(vec3(0.0), vec3(1.0));
+		// if (intersection.y < 0.0 || atmosphereViewHeight > cumulusBottomRadius) return mat2x3(vec3(0.0), vec3(1.0));
 
-		rayLength = clamp((cumulusTopRadius - viewerHeight) / max0(worldDir.y), 0.0, maxDist);
+		rayLength = clamp((cumulusTopRadius - atmosphereViewHeight) / max0(worldDir.y), 0.0, maxDist);
 	}
 
 	float rSteps = rcp(float(steps));
@@ -76,16 +76,16 @@ mat2x3 RaymarchAtmosphericFog(in vec3 startPos, in vec3 endPos, in float dither,
 	vec3 shadowPos = shadowStart + shadowStep * dither;
 
 	float LdotV = dot(worldLightDir, worldDir);
-	vec2 phase = vec2(AerosolPhase(LdotV), RayleighPhase(LdotV));
+	vec2 phase = AtmospherePhase(LdotV);
 
-	float mieDensityMult = VF_MIE_DENSITY * (1.0 + wetness * VF_MIE_DENSITY_RAIN_MULT);
+	float mieDensityMult = VF_MIE_DENSITY * 5e2 * (1.0 + wetness * VF_MIE_DENSITY_RAIN_MULT);
 
 	#ifdef VF_TIME_FADE
 		mieDensityMult *= max(wetness, 1.5 - approxSqrt(timeNoon) * 1.5 - timeSunset * 0.75 - timeMidnight * 0.5);
 	#endif
 
-	vec3 fogMieExtinction = atmosphereModel.mie_extinction * mieDensityMult;
-	vec3 fogMieScattering = atmosphereModel.mie_scattering * mieDensityMult;
+	vec3 fogMieExtinction = atmosphere.mieExtinction * mieDensityMult;
+	vec3 fogMieScattering = atmosphere.mieScattering * mieDensityMult;
 
 	#ifdef PER_BIOME_FOG
 		vec3 biomeAlbedo = mix(vec3(1.0), vec3(1.1, 0.9, 0.7), biomeSandstorm);
@@ -94,13 +94,13 @@ mat2x3 RaymarchAtmosphericFog(in vec3 startPos, in vec3 endPos, in float dither,
 	#endif
 
 	mat2x3 fogExtinctionCoeff = mat2x3(
-		fogMieExtinction,
-		atmosphereModel.rayleigh_scattering * VF_RAYLEIGH_DENSITY * 0.05
+		atmosphere.rayleighScattering * (VF_RAYLEIGH_DENSITY * 16.0),
+		fogMieExtinction
 	);
 
 	mat2x3 fogScatteringCoeff = mat2x3(
-		fogMieScattering,
-		atmosphereModel.rayleigh_scattering * VF_RAYLEIGH_DENSITY * 0.05
+		atmosphere.rayleighScattering * (VF_RAYLEIGH_DENSITY * 16.0),
+		fogMieScattering
 	);
 
 	float uniformFog = (16.0 + wetness * VF_MIE_DENSITY_RAIN_MULT * 16.0) / maxDist;
@@ -199,7 +199,7 @@ mat2x3 RaymarchAtmosphericFog(in vec3 startPos, in vec3 endPos, in float dither,
 	#endif
 
 	vec3 scattering = scatteringSun * global.directIlluminance;
-	scattering += scatteringSky * uniformPhase * global.skyIlluminance;
+	scattering += scatteringSky * uniformPhase * global.skyUpIlluminance;
 
 	return mat2x3(scattering, transmittance);
 }

@@ -133,8 +133,8 @@ void main() {
 		if (all(lessThan(tempTexel, textureSize(cloudMapTex, 0)))) {
 			finalOut = vec3(texelFetch(cloudMapTex, tempTexel, 0).x);
 		}
-		tempTexel -= ivec2(textureSize(cloudMapTex, 0).x, 0);
-		if (all(greaterThanEqual(tempTexel, ivec2(0)) && lessThan(tempTexel, textureSize(cloudMapTex, 0)))) {
+		tempTexel.x -= textureSize(cloudMapTex, 0).x;
+		if (clamp(tempTexel, ivec2(0), textureSize(cloudMapTex, 0) - 1) == tempTexel) {
 			finalOut = vec3(texelFetch(cloudMapTex, tempTexel, 0).y);
 		}
 	#endif
