@@ -23,8 +23,6 @@
 //================================================================================================//
 
 struct AtmosphereParameters {
-    vec3 solarIrradiance;
-    float sunAngularRadius;
     float bottomRadius;
     float topRadius;
     vec3 rayleighScattering;
@@ -41,6 +39,9 @@ const float aerosol_g = 0.8; // Asymmetry factor for mie phase function
 const float aerosol_d = 1.6; // Mean diameter in µm
 const float aerosol_t = 2.0; // Turbidity factor
 
+const vec3 sunIrradiance = vec3(1.0, 0.949, 0.937);
+const float sunAngularRadius = 0.004675 * SUN_RADIUS_MULT;
+
 // https://www.desmos.com/calculator/giz0uiar7k
 #define PreethamMieScatteringCoeff(turbidity) \
 	max(vec3(-7.67542206226e-6, -8.22772032997e-6, -1.21707541321e-5) + \
@@ -50,8 +51,6 @@ const vec3 mieCoeffBase = PreethamMieScatteringCoeff(aerosol_t);
 
 // Every length is in m
 const AtmosphereParameters atmosphere = AtmosphereParameters(
-	vec3(1.0),
-	0.004675 * SUN_RADIUS_MULT,
     planetRadius,
     planetRadius + ATMOSPHERE_THICKNESS,
     vec3(8.059375432e-6, 1.671209429e-5, 4.080133294e-5),
@@ -281,8 +280,8 @@ vec3 AtmosphereTransmittanceToSun(float r, float mu) {
 	float sinThetaH = atmosphere.bottomRadius / r;
 	float cosThetaH = -sqrt(max0(1.0 - sinThetaH * sinThetaH));
 	return ReadTransmittanceLUT(r, mu) *
-		linearstep(-sinThetaH * atmosphere.sunAngularRadius,
-					sinThetaH * atmosphere.sunAngularRadius,
+		linearstep(-sinThetaH * sunAngularRadius,
+					sinThetaH * sunAngularRadius,
 					mu - cosThetaH);
 }
 

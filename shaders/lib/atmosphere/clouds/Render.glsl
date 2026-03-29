@@ -339,8 +339,8 @@ void CompositeClouds(inout vec3 skyRadiance, in vec4 cloudData, in vec3 rayDir) 
 		vec3 cloudPos = atmosphereViewPos + rayDir * cloudData.z;
 
 		// Compute irradiance
-        vec3 sunIrradiance = atmosphere.solarIrradiance * AtmosphereTransmittanceToSun(cloudPos, worldSunDir);
-        vec3 moonIrradiance = atmosphere.solarIrradiance * AtmosphereTransmittanceToSun(cloudPos, -worldSunDir) * moonlightMult;
+        vec3 sunIrradiance = sunIrradiance * AtmosphereTransmittanceToSun(cloudPos, worldSunDir);
+        vec3 moonIrradiance = sunIrradiance * AtmosphereTransmittanceToSun(cloudPos, -worldSunDir) * moonlightMult;
 
 		vec3 directIlluminance = 128.0 * (sunIrradiance + moonIrradiance);
 

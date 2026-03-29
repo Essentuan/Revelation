@@ -74,7 +74,7 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
         lum += atmosphere.groundAlbedo * rPI * NdotL * transmittance * transmittanceToSun;
     }
 
-    return lum;
+    return lum * sunIrradiance;
 }
 
 vec3 RenderSkyView(vec2 uv) {
