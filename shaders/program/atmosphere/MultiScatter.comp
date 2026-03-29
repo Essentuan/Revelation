@@ -71,9 +71,10 @@ mat2x3 RaymarchMultiScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
         float planetHeight = length(rayPos);
         vec3 upVector = rayPos / planetHeight;
 
-        vec3 transmittanceToSun = AtmosphereTransmittanceToSun(planetHeight, dot(upVector, sunDir));
-        float NdotL = saturate(dot(upVector, sunDir));
-        lum += sunIrradiance * atmosphere.groundAlbedo * rPI * NdotL * transmittance * transmittanceToSun;
+        float cosSunZenith = dot(upVector, sunDir);
+        vec3 transmittanceToSun = AtmosphereTransmittanceToSun(planetHeight, cosSunZenith);
+
+        lum += sunIrradiance * atmosphere.groundAlbedo * rPI * saturate(cosSunZenith) * transmittance * transmittanceToSun;
     }
 
     return mat2x3(lum, fms);
