@@ -85,10 +85,10 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
         float planetHeight = length(rayPos);
         vec3 upVector = rayPos / planetHeight;
 
-        float cosSunZenith = dot(upVector, sunDir);
-        vec3 transmittanceToSun = AtmosphereTransmittanceToSun(planetHeight, cosSunZenith);
+        float sunZenithCos = dot(upVector, sunDir);
+        vec3 transmittanceToSun = AtmosphereTransmittanceToSun(planetHeight, sunZenithCos);
 
-        lum += atmosphere.groundAlbedo * rPI * saturate(cosSunZenith) * transmittance * transmittanceToSun;
+        lum += atmosphere.groundAlbedo * rPI * saturate(sunZenithCos) * transmittance * transmittanceToSun;
     }
 
     return lum * sunIrradiance;

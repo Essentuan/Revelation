@@ -264,13 +264,6 @@ bool RayIntersectPlanetGround(float r, float mu) {
 	return mu < 0.0 && r * r * (mu * mu - 1.0) + atmosphere.bottomRadius * atmosphere.bottomRadius >= 0.0;
 }
 
-bool RayIntersectPlanetGround(vec3 pos, vec3 dir) {
-    float r = length(pos);
-	float mu = dot(dir, pos) / r;
-
-	return RayIntersectPlanetGround(r, mu);
-}
-
 vec3 AtmosphereTransmittanceToPoint(vec3 pos, vec3 dir) {
     float r = length(pos);
 	float mu = dot(dir, pos) / r;
@@ -321,7 +314,7 @@ vec3 AtmosphereSkyView(vec3 viewPos, vec3 rayDir, vec3 sunDir) {
 	float zenithHorizon = PI - beta;
 
 	float coord = fastAcos(viewZenithCos);
-	if (RayIntersectPlanetGround(viewPos, rayDir)) {
+	if (RayIntersectPlanetGround(height, viewZenithCos)) {
 		coord = (coord - zenithHorizon) / beta;
 		coord = sqrt(coord); // Non-linear mapping
 		uv.y = coord * 0.5 + 0.5;
