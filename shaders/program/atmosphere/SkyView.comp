@@ -38,7 +38,8 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
     vec2 phaseValue = AtmospherePhase(cosTheta);
 
     // Adaptive sample count
-	float sampleCount = round(mix(8.0, 16.0, saturate(tMax * 1e-5)));
+    const float maxSamples = ATMOSPHERE_SKY_SAMPLES;
+	float sampleCount = round(maxSamples * saturate(0.5 + tMax * 1e-5));
 
     float stepSize = tMax * rcp(sampleCount);
     vec3 rayStep = stepSize * rayDir;

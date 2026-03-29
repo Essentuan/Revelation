@@ -75,6 +75,8 @@ suffix.ATMOSPHERE_THICKNESS=m
 
 option.ATMOSPHERE_TURBIDITY=大气浊度
 
+option.ATMOSPHERE_SKY_SAMPLES=天空采样数
+
 option.SUN_RADIUS_MULT=太阳半径乘数
 
 option.STARS_COVERAGE=星星覆盖率
