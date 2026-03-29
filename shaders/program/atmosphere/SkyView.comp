@@ -30,11 +30,20 @@ writeonly restrict uniform image2D skyViewImg;
 #include "/lib/universal/Random.glsl"
 
 vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
+    float cosTheta = dot(rayDir, sunDir);
+
+    #ifndef PLANET_GROUND
+        // Hacks to simulate atmosphere on the ground
+        if (rayDir.y < 0.0) {
+            rayDir.y *= saturate(exp2(atmosphereViewHeight * 1e-3 - atmosphere.topRadius * 1e-3));
+            rayDir = normalize(rayDir);
+        }
+    #endif
+
     float tMax;
     bool groundHit;
     if (AtmosphereSetupRay(rayPos, rayDir, tMax, groundHit)) return vec3(0.0);
 
-    float cosTheta = dot(rayDir, sunDir);
     vec2 phaseValue = AtmospherePhase(cosTheta);
 
     // Adaptive sample count
