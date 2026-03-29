@@ -17,6 +17,8 @@
 #define VIEWER_BASE_ALTITUDE 256.0 // [64.0 128.0 256.0 384.0 512.0 1024.0 2048.0 4096.0 8192.0 16384.0 32768.0 65536.0 131072.0 262144.0 524288.0 1048576.0 2097152.0 4194304.0 8388608.0 16777216.0 33554432.0 67108864.0 134217728.0 268435456.0 536870912.0 1073741824.0]
 #define ATMOSPHERE_THICKNESS 100000.0 // [0.0 5000.0 10000.0 20000.0 30000.0 40000.0 50000.0 60000.0 70000.0 80000.0 90000.0 100000.0 110000.0 120000.0 130000.0 140000.0 150000.0 160000.0]
 
+#define ATMOSPHERE_TURBIDITY 1.0 // [0.0 0.25 0.5 0.75 1.0 1.25 1.5 1.75 2.0 2.25 2.5 2.75 3.0 3.25 3.5 3.75 4.0 4.25 4.5 4.75 5.0]
+
 #define ProjectSky      OctEncodeUnorm
 #define UnprojectSky    OctDecodeUnorm
 
@@ -37,14 +39,13 @@ struct AtmosphereParameters {
 const float planetRadius = 6371e3; // The average radius of the Earth: 6,371 kilometers
 const float aerosol_g = 0.8; // Asymmetry factor for mie phase function
 const float aerosol_d = 1.6; // Mean diameter in µm
-const float aerosol_t = 2.0; // Turbidity factor
 
 // https://www.desmos.com/calculator/giz0uiar7k
 #define PreethamMieScatteringCoeff(turbidity) \
 	max(vec3(-7.67542206226e-6, -8.22772032997e-6, -1.21707541321e-5) + \
 		vec3( 7.71550875198e-6,  8.27069152678e-6, 	1.22343187466e-5) * turbidity, 0.0)
 
-const vec3 mieCoeffBase = PreethamMieScatteringCoeff(aerosol_t);
+const vec3 mieCoeffBase = PreethamMieScatteringCoeff(exp2(ATMOSPHERE_TURBIDITY));
 
 // Every length is in m
 const AtmosphereParameters atmosphere = AtmosphereParameters(
