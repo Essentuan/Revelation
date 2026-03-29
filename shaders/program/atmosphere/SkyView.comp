@@ -6,6 +6,12 @@
 	Copyright (C) 2026 HaringPro
 	Apache License 2.0
 
+	References:
+		Sébastien Hillaire. "A Scalable and Production Ready Sky and Atmosphere Rendering Technique". EGSR 2020.
+            https://sebh.github.io/publications/egsr2020.pdf
+		Epic Games, Inc. "Unreal Engine Sky Atmosphere Rendering Technique". 2020.
+            https://github.com/sebh/UnrealEngineSkyAtmosphere
+
 --------------------------------------------------------------------------------
 */
 
