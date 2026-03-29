@@ -249,8 +249,8 @@ vec2 LutTransmittanceParamsToUv(float r, float mu) {
 }
 
 vec3 AtmosphereDensityAtPoint(vec3 pos) {
-    float altitudeKm = (length(pos) - atmosphere.bottomRadius) * 1e-3;
-    return vec3(exp(-altitudeKm * rcp(vec2(8.0, 1.2))), saturate(1.0 - abs(altitudeKm - 25.0) * rcp(15.0)));
+    float altitude = length(pos) - atmosphere.bottomRadius;
+    return vec3(exp(-altitude * rcp(vec2(8e3, 1.4e3))), saturate(1.0 - abs(altitude - 2.5e4) * rcp(1.5e4)));
 }
 
 vec3 ReadTransmittanceLUT(float r, float mu) {
