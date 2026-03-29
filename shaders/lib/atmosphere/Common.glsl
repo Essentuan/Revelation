@@ -76,9 +76,6 @@ const mat2x3 atmosphereScattering = mat2x3(
 float atmosphereViewHeight = planetRadius + VIEWER_BASE_ALTITUDE + eyeAltitude;
 vec3 atmosphereViewPos = vec3(0.0, atmosphereViewHeight, 0.0);
 
-float atmosphereViewHeight = planetRadius + VIEWER_BASE_ALTITUDE + eyeAltitude;
-vec3 atmosphereViewPos = vec3(0.0, atmosphereViewHeight, 0.0);
-
 //================================================================================================//
 
 vec2 RaySphereIntersection(in vec3 pos, in vec3 dir, in float rad) {
