@@ -5,7 +5,7 @@
 layout (std430, binding = 0) SSBO_DECLARED_TPYE buffer GlobalData {
     float prevWorldTime;
     vec3 directIlluminance;
-    vec3 skyIlluminance;
+    vec3 skyUpIlluminance;
     vec3[9] skySH;
 } global;
 

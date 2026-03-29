@@ -10,6 +10,7 @@ screen.PostProcessing=后处理
 screen.Debug=调试
 screen.Compatibility=兼容
 
+screen.Atmosphere=大气
 screen.OuterSpace=太空
 screen.Weather=天气
 screen.Foliage=植物
@@ -71,6 +72,12 @@ suffix.VIEWER_BASE_ALTITUDE=m
 
 option.ATMOSPHERE_THICKNESS=大气厚度
 suffix.ATMOSPHERE_THICKNESS=m
+
+option.ATMOSPHERE_TURBIDITY=大气浊度
+
+option.ATMOSPHERE_SKY_SAMPLES=天空采样数
+option.ATMOSPHERE_TLUT_SAMPLES=透射率LUT采样数
+option.ATMOSPHERE_MSLUT_SAMPLES=多重散射LUT采样数
 
 option.SUN_RADIUS_MULT=太阳半径乘数
 

@@ -32,17 +32,16 @@ const ivec3 workGroups = ivec3(1, 1, 1);
 //======// Function //============================================================================//
 
 #include "/lib/atmosphere/Common.glsl"
-#include "/lib/atmosphere/Bruneton08.glsl"
 #include "/lib/atmosphere/clouds/Common.glsl"
 
 //======// Main //================================================================================//
 void main() {
 	// Compute illuminance
-	vec3 sunIrradiance, moonIrradiance;
-	global.skyIlluminance = GetSunAndSkyIrradiance(atmosphereViewPos, vec3(0.0, 1.0, 0.0), worldSunDir, sunIrradiance, moonIrradiance) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
+	vec3 sunIrradiance = sunIrradiance * AtmosphereTransmittanceToSun(atmosphereViewPos, worldSunDir);
+	vec3 moonIrradiance = sunIrradiance * AtmosphereTransmittanceToSun(atmosphereViewPos, -worldSunDir) * moonlightMult;
 
 	// Irradiance to illuminance
-	global.directIlluminance = SUN_SPECTRAL_RADIANCE_TO_LUMINANCE * (sunIrradiance + moonIrradiance);
+	global.directIlluminance = 128.0 * (sunIrradiance + moonIrradiance);
 
 	// Avoid the misalignment at sunrise and sunset
 	global.directIlluminance *= smoothstep(0.0, 0.01, worldLightDir.y);

@@ -22,9 +22,9 @@ uniform sampler2D depthtex1;
 uniform sampler2D depthtex2;
 
 // Custom samplers
-uniform sampler3D scatteringLut;
-uniform sampler2D transmittanceLut;
-uniform sampler2D irradianceLut;
+uniform sampler2D tLutTex;
+uniform sampler2D msLutTex;
+uniform sampler2D skyViewTex;
 
 uniform sampler2D brdfLutTex;
 

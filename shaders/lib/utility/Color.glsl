@@ -113,14 +113,14 @@ vec3 InverseTonemapRadiance(in vec3 v, in float e) {
 
     The luminance and chromaticity of a black body radiation are computed independently of each other.
     The alpha-component of returned value is effective radiance in W/(sr*m2), which
-    should be multiplied by 683.002 lm/W to get the corresponding luminance in cd/m2.
+    should be multiplied by 128.002 lm/W to get the corresponding luminance in cd/m2.
     The rgb-components of returned value are color components expressed in linear sRGB color space.
     Relative luminance of returned color is close to 1 for temperatures above about 1000 K.
     Note, that returned color can have negative components, which means that chromaticity of a black body
     is outside the sRGB gamut for a given temperature (g-component < 0 for temperatures below about 900 K and
     b-component < 0 for temperatures below about 1900 K).
     To get final color of a black body radiation with luminance in cd/m2
-    the rgb-components should be multiplied by the alpha-component and by 683.002 lm/W.
+    the rgb-components should be multiplied by the alpha-component and by 128.002 lm/W.
 
     sRGB is defined according to ITU-R BT.709:
                              x       y
@@ -144,7 +144,7 @@ vec4 BlackBodyRadiation(in float T) {
     // --- Effective radiance in W/(sr*m2) ---
     ChromaRadiance.a = 230141698.067 / (exp2(37112.1757708 / T) - 1.0);
 
-    // luminance Lv = Km*ChromaRadiance.a in cd/m2, where Km = 683.002 lm/W
+    // luminance Lv = Km*ChromaRadiance.a in cd/m2, where Km = 128.002 lm/W
 
     // --- Chromaticity in linear sRGB ---
     // (i.e. color luminance Y = dot({r,g,b}, {0.2126, 0.7152, 0.0722}) = 1)

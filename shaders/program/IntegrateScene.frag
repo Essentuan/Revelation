@@ -41,7 +41,6 @@ layout (location = 0) out vec4 sceneOut;
 #include "/lib/universal/Random.glsl"
 
 #include "/lib/atmosphere/Common.glsl"
-#include "/lib/atmosphere/Bruneton08.glsl"
 
 #include "/lib/atmosphere/Rainbow.glsl"
 #include "/lib/atmosphere/CommonFog.glsl"
@@ -161,8 +160,7 @@ void main() {
 				float density = exp2(-0.1 * max0(worldPos.y - 63.0)) * pow8(sdot(worldPos.xz) * rcp(lodRenderDist * lodRenderDist));
 				float transmittance = exp2(-BORDER_FOG_FALLOFF * density);
 
-				vec3 skyRadiance = GetSkyRadiance(worldDir, worldSunDir) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
-				skyRadiance = desaturate(skyRadiance, wetness * 0.5); // Post-process
+				vec3 skyRadiance = AtmosphereSkyView(atmosphereViewPos, worldDir, worldSunDir);
 				sceneColor = mix(skyRadiance, sceneColor, transmittance);
 			}
 		#endif

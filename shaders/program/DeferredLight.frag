@@ -46,7 +46,6 @@ uniform sampler2D cloudOriginTex;
 #include "/lib/universal/Random.glsl"
 
 #include "/lib/atmosphere/Common.glsl"
-#include "/lib/atmosphere/Bruneton08.glsl"
 #include "/lib/atmosphere/Celestial.glsl"
 
 #include "/lib/atmosphere/clouds/Render.glsl"
@@ -100,9 +99,10 @@ void main() {
 	sceneOut = vec3(0.0);
 
 	if (materialID == 0u) { // Sky
-		vec3 transmittance;
-		vec3 skyRadiance = GetSkyRadiance(worldDir, worldSunDir, transmittance) * SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
-		sceneOut = desaturate(skyRadiance, wetness * 0.5); // Post-process
+		vec3 transmittance = AtmosphereTransmittanceToPoint(atmosphereViewPos, worldDir);
+		vec3 skyRadiance = AtmosphereSkyView(atmosphereViewPos, worldDir, worldSunDir);
+
+		sceneOut = skyRadiance;
 
 		#ifdef CLOUDS
 			#ifdef CLOUD_TAAU_ENABLED
