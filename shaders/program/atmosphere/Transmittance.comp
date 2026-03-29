@@ -40,12 +40,13 @@ vec3 RaymarchSunTransmittance(vec3 rayPos, vec3 rayDir) {
         return vec3(0.0);
     }
 
-    float stepSize = RaySphereIntersectNearest(rayPos, rayDir, atmosphere.topRadius) * rcp(64.0);
+    const float rcpStepSize = 1.0 / float(ATMOSPHERE_TLUT_SAMPLES);
+    float stepSize = RaySphereIntersectNearest(rayPos, rayDir, atmosphere.topRadius) * rcpStepSize;
     vec3 rayStep = stepSize * rayDir;
     rayPos += 0.5 * rayStep;
 
     vec3 od = vec3(0.0);
-    for (uint i = 0u; i < 64u; ++i, rayPos += rayStep) {
+    for (uint i = 0u; i < ATMOSPHERE_TLUT_SAMPLES; ++i, rayPos += rayStep) {
         vec3 density = AtmosphereDensityAtPoint(rayPos);
         od += atmosphereExtinction * density;
     }

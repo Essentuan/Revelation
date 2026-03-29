@@ -41,12 +41,12 @@ mat2x3 RaymarchMultiScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
     bool groundHit;
     if (AtmosphereSetupRay(rayPos, rayDir, tMax, groundHit)) return mat2x3(0.0);
 
-    float stepSize = tMax * rcp(32.0);
+    float stepSize = tMax * rcp(float(ATMOSPHERE_MSLUT_SAMPLES));
     vec3 rayStep = stepSize * rayDir;
     rayPos += 0.5 * rayStep;
 
     vec3 lum = vec3(0.0), fms = vec3(0.0), transmittance = vec3(1.0);
-    for (uint i = 0u; i < 16u; ++i, rayPos += rayStep) {
+    for (uint i = 0u; i < ATMOSPHERE_MSLUT_SAMPLES; ++i, rayPos += rayStep) {
         vec3 density = AtmosphereDensityAtPoint(rayPos);
         vec3 extinction = atmosphereExtinction * density;
 

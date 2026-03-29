@@ -72,6 +72,8 @@ suffix.ATMOSPHERE_THICKNESS=m
 option.ATMOSPHERE_TURBIDITY=Atmosphere Turbidity
 
 option.ATMOSPHERE_SKY_SAMPLES=Atmosphere Sky Samples
+option.ATMOSPHERE_TLUT_SAMPLES=Transmittance LUT Samples
+option.ATMOSPHERE_MSLUT_SAMPLES=Multi-Scatter LUT Samples
 
 option.SUN_RADIUS_MULT=Sun Radius Multiplier
 
