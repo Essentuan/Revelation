@@ -341,7 +341,7 @@ void CompositeClouds(inout vec3 skyRadiance, in vec4 cloudData, in vec3 rayDir) 
 		// Compute illumination to clouds
         vec3 sunIlluminance = sunIrradiance * AtmosphereTransmittanceToSun(cloudPos, worldSunDir);
         vec3 moonIlluminance = sunIrradiance * AtmosphereTransmittanceToSun(cloudPos, -worldSunDir) * moonlightMult;
-		vec3 directIlluminance = 128.0 * (sunIlluminance + moonIlluminance);
+		vec3 directIlluminance = sunIlluminance + moonIlluminance;
 
 		// Normalized height in clouds
 		float heightFraction = saturate((length(cloudPos) - cumulusBottomRadius) * rcp(cumulusThickness));
