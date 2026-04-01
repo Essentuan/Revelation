@@ -59,7 +59,7 @@ const AtmosphereParameters atmosphere = AtmosphereParameters(
     mieCoeffBase * 0.9,
     mieCoeffBase,
     vec3(8.304280072e-7, 1.314911970e-6, 5.440679729e-8),
-    vec3(0.1, 0.12, 0.2)
+    vec3(0.2, 0.25, 0.45)
 );
 
 const mat3 atmosphereExtinction = mat3(
