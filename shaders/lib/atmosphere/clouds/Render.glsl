@@ -348,7 +348,7 @@ void CompositeClouds(inout vec3 skyRadiance, in vec4 cloudData, in vec3 rayDir) 
 		vec3 skyIlluminance = mix(ReconstructSH3(global.skySH, vec3(0.0, -1.0, 0.0)), global.skyUpIlluminance, heightFraction);
 
 		vec3 scattering = cloudData.x * directIlluminance;
-		scattering += cloudData.y * rPI * skyIlluminance;
+		scattering += cloudData.y * skyIlluminance;
 
 		scattering += LightningContribution(cloudPos - atmosphereViewPos) * sqr(cloudData.y);
 
