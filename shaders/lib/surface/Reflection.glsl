@@ -3,55 +3,36 @@
 vec4 CalculateSpecularReflections(Material material, in vec3 worldNormal, in vec3 screenPos, in vec3 worldDir, in vec3 viewPos, in float skylight, in float dither) {
 	viewPos += mat3(gbufferModelView) * worldNormal * saturate(length(viewPos) * 3e-4);
 
+	vec3 halfway = worldNormal;
 #ifdef ROUGH_REFLECTIONS
 	if (material.isRough) {
 		mat3 tbnMatrix = BuildOrthonormalBasis(worldNormal);
 
         vec2 noise = SampleStbnVec2(ivec2(gl_FragCoord.xy), frameCounter + 3);
-		vec3 halfway = tbnMatrix * SampleGGXVNDF(-worldDir * tbnMatrix, material.roughness, noise);
-
-		vec3 lightDir = reflect(worldDir, halfway);
-
-		float NdotL = dot(worldNormal, lightDir);
-		if (NdotL < EPS) return vec4(0.0);
-
-		vec4 reflection = vec4(0.0, 0.0, 0.0, FP16_MAX);
-		if (skylight > EPS && isEyeInWater == 0) {
-			vec3 skyRadiance = textureBicubic(skyMapTex, saturate(ProjectSky(lightDir))).rgb;
-			reflection.rgb = skyRadiance * smoothstep(0.3, 0.7, skylight);
-		}
-
-		if (ScreenSpaceRaytrace(viewPos, mat3(gbufferModelView) * lightDir, dither, uint(SSRT_MAX_SAMPLES * oms(material.roughness)), screenPos)) {
-			float edgeFade = screenPos.x * screenPos.y * oms(screenPos.x) * oms(screenPos.y);
-			edgeFade *= 1e2 + cube(saturate(1.0 - gbufferModelViewInverse[2].y)) * 1e3;
-			reflection.rgb += (texture(colortex4, screenPos.xy * 0.5).rgb - reflection.rgb) * saturate(edgeFade);
-
-			ivec2 texel = uvToTexel(screenPos.xy);
-			vec3 reflectViewPos = ScreenToViewPos(vec3(screenPos.xy, loadDepth0(texel)));
-			reflection.a = distance(reflectViewPos, viewPos);
-		}
-
-		return reflection;
-	} else
-#endif
-	{
-		vec3 lightDir = reflect(worldDir, worldNormal);
-
-		float NdotL = dot(worldNormal, lightDir);
-		if (NdotL < EPS) return vec4(0.0);
-
-		vec3 reflection = vec3(0.0);
-		if (skylight > EPS && isEyeInWater == 0) {
-			vec3 skyRadiance = textureBicubic(skyMapTex, ProjectSky(lightDir)).rgb;
-			reflection = skyRadiance * smoothstep(0.3, 0.7, skylight);
-		}
-
-		if (ScreenSpaceRaytrace(viewPos, mat3(gbufferModelView) * lightDir, dither, SSRT_MAX_SAMPLES, screenPos)) {
-			float edgeFade = screenPos.x * screenPos.y * oms(screenPos.x) * oms(screenPos.y);
-			edgeFade *= 1e2 + cube(saturate(1.0 - gbufferModelViewInverse[2].y)) * 1e3;
-			reflection += (texture(colortex4, screenPos.xy * 0.5).rgb - reflection) * saturate(edgeFade);
-		}
-
-		return vec4(reflection, 0.0);
+		halfway = tbnMatrix * SampleGGXVNDF(-worldDir * tbnMatrix, material.roughness, noise);
 	}
+#endif
+	vec3 lightDir = reflect(worldDir, halfway);
+
+	float NdotL = dot(worldNormal, lightDir);
+	if (NdotL < EPS) return vec4(0.0);
+
+	vec4 reflection = vec4(0.0, 0.0, 0.0, FP16_MAX);
+	if (skylight > EPS && isEyeInWater == 0) {
+		vec3 skyRadiance = textureBicubic(skyMapTex, saturate(ProjectSky(lightDir))).rgb;
+		reflection.rgb = skyRadiance * smoothstep(0.3, 0.7, skylight);
+	}
+
+	uint stepCount = uint(SSRT_MAX_SAMPLES * oms(material.roughness * 0.75));
+	if (ScreenSpaceRaytrace(viewPos, mat3(gbufferModelView) * lightDir, dither, stepCount, screenPos)) {
+		float edgeFade = screenPos.x * screenPos.y * oms(screenPos.x) * oms(screenPos.y);
+		edgeFade *= 1e2 + cube(saturate(1.0 - gbufferModelViewInverse[2].y)) * 1e3;
+		reflection.rgb += (texture(colortex4, screenPos.xy * 0.5).rgb - reflection.rgb) * saturate(edgeFade);
+
+		ivec2 texel = uvToTexel(screenPos.xy);
+		vec3 reflectViewPos = ScreenToViewPos(vec3(screenPos.xy, loadDepth0(texel)));
+		reflection.a = distance(reflectViewPos, viewPos);
+	}
+
+	return reflection;
 }
