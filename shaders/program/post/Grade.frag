@@ -222,6 +222,7 @@ void main() {
 		// color *= Rec2020_2_sRGB;
 
 		// Working to display space
+		color *= Rec2020_2_sRGB;
 		color = saturate(pow(color, vec3(1.0 / GAMMA_CORRECTION)));
 	}
 

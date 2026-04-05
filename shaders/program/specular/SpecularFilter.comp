@@ -138,7 +138,7 @@ void main() {
 
     #if SPECULAR_FILTER_PASS == 2
         vec3 sceneOut = loadSceneMain(texelPos);
-        vec3 albedo = sRGBToLinear(loadAlbedo(texelPos));
+        vec3 albedo = FetchBaseColor(texelPos);
 
         float NdotV = abs(dot(worldNormal, worldDir));
         vec2 brdf = texture(brdfLutTex, vec2(material.roughness, NdotV)).xy;

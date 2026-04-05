@@ -92,7 +92,7 @@ void main() {
 	uvec4 materialPack = loadMaterialPack(texelPos);
 	uint materialID = materialPack.y;
 
-	vec3 albedo = sRGBToLinear(loadAlbedo(texelPos));
+	vec3 albedo = FetchBaseColor(texelPos);
 
 	float dither = BlueNoise(texelPos, frameCounter);
 

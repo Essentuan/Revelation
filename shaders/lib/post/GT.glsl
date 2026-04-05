@@ -429,12 +429,11 @@ void applyToneMapping(inout vec3 rgb, GT7ToneMapping tm)
 
 vec3 GT7(in vec3 color) {
     color *= 2.0;
-    color *= sRGB_2_Rec2020;
 
     GT7ToneMapping tm;
     initializeAsSDR(tm);
 
     applyToneMapping(color, tm);
 
-    return color * Rec2020_2_sRGB;
+    return color;
 }

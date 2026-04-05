@@ -396,7 +396,7 @@ vec3 RRTAndODTFit(in vec3 rgb) {
 }
 
 vec3 AcademyFit(in vec3 rgb) {
-	rgb *= sRGB_2_AP0;
+	rgb *= Rec2020_2_AP0;
 
 	// Apply RRT sweeteners
 	rgb = RRTSweeteners(rgb);
@@ -407,7 +407,7 @@ vec3 AcademyFit(in vec3 rgb) {
 	// Global desaturation
 	rgb = mix(vec3(dot(rgb, AP1_RGB2Y)), rgb, odtSatFactor);
 
-	return rgb * AP1_2_sRGB;
+	return rgb * AP1_2_Rec2020;
 }
 
 //======// ACES Full //===========================================================================//
@@ -592,13 +592,13 @@ vec3 ODT_Rec2020_P3D65limited_100nits_dim(in vec3 rgbPre) {
 }
 
 vec3 AcademyFull(in vec3 rgb) {
-	rgb *= sRGB_2_AP0;
+	rgb *= Rec2020_2_AP0;
 
 	// Apply RRT
 	rgb = RRT(rgb);
 
 	// Apply ODT
-	rgb = ODT_sRGB_100nits_dim(rgb);
+	rgb = ODT_Rec2020_P3D65limited_100nits_dim(rgb);
 
 	return sRGBToLinear(rgb);
 }
