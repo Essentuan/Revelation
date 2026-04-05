@@ -42,7 +42,7 @@ const vec2 workGroupsRender = vec2(1.0, 1.0);
 
 vec3 GetSpecularDominantDir(vec3 N, vec3 V, float roughness) {
     float f = (1.0 - roughness) * (approxSqrt(1.0 - roughness) + roughness);
-    vec3 R = reflect(-V, N);
+    vec3 R = reflect(V, N); // V is already inversed
     return normalize(mix(N, R, f));
 }
 
