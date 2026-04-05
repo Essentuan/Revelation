@@ -32,7 +32,7 @@ writeonly restrict uniform image2D colorimg4;
 
 //======// Main //================================================================================//
 void main() {
-    uvec2 localPos = QuadLayout16x16(gl_LocalInvocationIndex);
+    uvec2 localPos = RemapThread16x16(gl_LocalInvocationIndex);
     ivec2 texelPos = ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy);
 
 	float depth = loadDepth0(texelPos << 1);

@@ -111,7 +111,7 @@ void SpecularFilter(inout vec4 specularData, in ivec2 texel, in float roughness,
 
 //======// Main //================================================================================//
 void main() {
-    uvec2 localPos = QuadLayout16x16(gl_LocalInvocationIndex);
+    uvec2 localPos = RemapThread16x16(gl_LocalInvocationIndex);
     ivec2 texelPos = ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy);
 
     Material material = GetMaterialData(Unpack2x8U(loadMaterialPack(texelPos).z));
