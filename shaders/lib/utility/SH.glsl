@@ -100,7 +100,7 @@ vec3 SHToIrradiance(SH2YCoCg sh, in vec3 dir) {
     float SH0 = 0.56418958354 * rcp(sh.coeff.x + EPS);
     float SH1 = dot(sh.coeff.yzw, dir) * 1.02332670795 + sh.coeff.x * 0.88622692545;
 
-    vec3 irradiance = YCoCgToRGB(vec3(4.0 / SH0, sh.chroma));
+    vec3 irradiance = YCoCgToRGB(vec3(2.0 / SH0, sh.chroma));
     return max0(irradiance * SH0 * SH1);
 }
 
