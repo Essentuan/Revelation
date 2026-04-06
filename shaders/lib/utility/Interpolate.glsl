@@ -79,23 +79,6 @@ vec4 textureBicubicLod(in sampler2D tex, in vec2 coord, in float lod) {
     return mix(mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy);
 }
 
-vec4 textureSmooth(in sampler2D tex, in vec2 coord) {
-	vec2 res = vec2(textureSize(tex, 0));
-
-	coord = coord * res - 0.5;
-
-    vec2 p = floor(coord);
-    vec2 f = curve(coord - p);
-
-	p *= rcp(res);
-    vec4 sample0 = texture(tex, p);
-    vec4 sample1 = textureOffset(tex, p, ivec2(1, 0));
-    vec4 sample2 = textureOffset(tex, p, ivec2(0, 1));
-    vec4 sample3 = textureOffset(tex, p, ivec2(1, 1));
-
-    return mix(mix(sample0, sample1, f.x), mix(sample2, sample3, f.x), f.y);
-}
-
 vec4 catmullRom(in float f) {
     return vec4(
         f * (-0.5 + f * (1.0 - 0.5 * f)),
@@ -280,6 +263,21 @@ vec4 textureLanczos(in sampler2D tex, in vec2 coord) {
     }
 
     return sum * rcp(sumWeight);
+}
+
+vec3 textureRGBE8(in sampler2D tex, in vec2 coord) {
+	vec2 res = vec2(textureSize(tex, 0));
+	coord = coord * res - 0.5;
+
+    ivec2 i = ivec2(floor(coord));
+    vec2 f = coord - i;
+
+    vec3 sample0 = DecodeRGBE8(texelFetch(tex, i, 0));
+    vec3 sample1 = DecodeRGBE8(texelFetch(tex, i + ivec2(1, 0), 0));
+    vec3 sample2 = DecodeRGBE8(texelFetch(tex, i + ivec2(0, 1), 0));
+    vec3 sample3 = DecodeRGBE8(texelFetch(tex, i + ivec2(1, 1), 0));
+
+    return mix(mix(sample0, sample1, f.x), mix(sample2, sample3, f.x), f.y);
 }
 
 vec4 textureTiling(in sampler2D tex, in vec2 coord) {

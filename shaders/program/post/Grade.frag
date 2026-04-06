@@ -183,7 +183,7 @@ void main() {
 	#ifdef DEBUG_ATMOSPHERE_LUTS
 		ivec2 tempTexel = texelPos;
 		if (all(lessThan(tempTexel, textureSize(skyViewTex, 0)))) {
-			color = texelFetch(skyViewTex, tempTexel, 0).rgb;
+			color = DecodeRGBE8(texelFetch(skyViewTex, tempTexel, 0));
 		}
 		tempTexel.x -= textureSize(skyViewTex, 0).x;
 		if (clamp(tempTexel, ivec2(0), textureSize(tLutTex, 0) - 1) == tempTexel) {

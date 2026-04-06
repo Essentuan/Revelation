@@ -215,6 +215,10 @@ vec3 LightningContribution(in vec3 pos, in vec3 normal) {
 
 //================================================================================================//
 
+vec2 UnitToSubUv(vec2 uv, vec2 res) {
+	return uv * (1.0 - 1.0 / res) + 0.5 / res;
+}
+
 // Transmittance LUT function parameterisation from Bruneton 2017 https://github.com/ebruneton/precomputed_atmospheric_scattering
 // uv in [0, 1]
 // mu in [-1, 1]
@@ -321,7 +325,8 @@ vec3 AtmosphereSkyView(vec3 viewPos, vec3 rayDir, vec3 sunDir) {
 		uv.y = (1.0 - coord) * 0.5;
 	}
 
-    return texture(skyViewTex, uv).rgb;
+	uv = UnitToSubUv(uv, textureSize(skyViewTex, 0));
+    return textureRGBE8(skyViewTex, saturate(uv));
 }
 
 bool AtmosphereSetupRay(inout vec3 rayPos, vec3 rayDir, out float tMax, out bool groundHit) {
