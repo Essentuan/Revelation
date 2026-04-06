@@ -67,3 +67,31 @@ vec3 ConvolvedReconstructSH3(in vec3[9] coeff, in vec3 dir) {
 	     + coeff[7] * basis[7] * kernel.z
 	     + coeff[8] * basis[8] * kernel.z;
 }
+
+struct SH2YCoCg {
+    vec4 coeff;
+    vec2 chroma;
+};
+
+SH2YCoCg InitSH2YCoCg() {
+	return SH2YCoCg(vec4(0.0), vec2(0.0));
+}
+
+vec3 SHToIrradiance(SH2YCoCg sh, in vec3 dir) {
+    float SH0 = 0.56418958354 * rcp(sh.coeff.x + EPS);
+    float SH1 = dot(sh.coeff.yzw, dir) * 1.02332670795 + sh.coeff.x * 0.88622692545;
+
+    vec3 irradiance = YCoCgToRGB(vec3(4.0 / SH0, sh.chroma));
+    return max0(irradiance * SH0 * SH1);
+}
+
+SH2YCoCg IrradianceToSH(in vec3 irradiance, in vec3 dir) {
+    vec3 YCoCg = RGBToYCoCg(irradiance);
+
+    SH2YCoCg sh;
+    sh.coeff.x = 0.28209479177 * YCoCg.x;
+    sh.coeff.yzw = 0.48860251190 * YCoCg.x * dir;
+    sh.chroma = YCoCg.yz;
+
+    return sh;
+}
