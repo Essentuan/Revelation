@@ -69,7 +69,7 @@ bool SkyCheck4x4(in vec2 coord) {
 
 //======// Main //================================================================================//
 void main() {
-    uvec2 localPos = QuadLayout16x16(gl_LocalInvocationIndex);
+    uvec2 localPos = RemapThread16x16(gl_LocalInvocationIndex);
     ivec2 texelPos = ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy);
 
 	vec2 coord = texelToUv(texelPos);

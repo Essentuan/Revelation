@@ -15,7 +15,7 @@
 
 // #extension GL_NV_compute_shader_derivatives : enable
 
-layout (local_size_x = 8, local_size_y = 8) in;
+layout (local_size_x = 16, local_size_y = 16) in;
 const vec2 workGroupsRender = vec2(0.5, 0.5);
 
 //======// Utility //=============================================================================//
@@ -90,7 +90,7 @@ float CalculateVariance(in ivec2 texel) {
 void main() {
 	// SharedPreload();
 
-	uvec2 localPos = QuadLayout8x8(gl_LocalInvocationIndex);
+	uvec2 localPos = RemapThread16x16(gl_LocalInvocationIndex);
 	ivec2 texelPos = ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy);
 
 	f16vec3 normalDepthData = f16vec3(texelFetch(colortex14, texelPos, 0).rgb);
@@ -107,7 +107,7 @@ void main() {
 	float16_t centerLuma = filteredColVar.r; // We use YCoCg color space
 
 	float frameIndex = texelFetch(colortex2, texelPos, 0).a;
-	float16_t historyFactor = float16_t(saturate(frameIndex * rcp(12.0)) * 0.9 + 0.1);
+	float historyFactor = saturate(frameIndex * 0.1 - 0.5) * 0.8 + 0.2;
 
 	// float variance = CalculateVariance(ivec2(localPos + padRadius));
 	float16_t variance = filteredColVar.a;

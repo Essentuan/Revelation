@@ -224,8 +224,9 @@ void main() {
 		// Working to display space
 		#ifdef HDR_ENABLED
 			// Limited in Rec2020 non negative linear value range for CAS
-			color = max(sRGB_2_Rec2020 * color, vec3(0.0));
+			color = max(color, vec3(0.0));
 		#else
+			color *= Rec2020_2_sRGB;
 			color = saturate(pow(color, vec3(1.0 / GAMMA_CORRECTION)));
 		#endif
 	}

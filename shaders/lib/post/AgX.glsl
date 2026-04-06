@@ -258,27 +258,10 @@ float equation_full_curve(float x, float x_pivot, float y_pivot, float slope_piv
 }
 
 vec3 AgXConfigurable(in vec3 rgb) {
-    const mat3 sRGB_to_XYZ = primaries_to_matrix(
-        vec2(0.708, 0.292),
-		vec2(0.170, 0.797),
-		vec2(0.131, 0.046),
-		vec2(0.3127, 0.3290));
+    const float x_pivot = abs(min_ev) / (max_ev - min_ev);
+    const float y_pivot = 0.5;
 
-    const mat3 adjusted_to_XYZ = ComputeCompressionMatrix(
-        vec2(0.708, 0.292),
-		vec2(0.170, 0.797),
-		vec2(0.131, 0.046),
-		vec2(0.3127, 0.3290));
-
-    const mat3 XYZ_to_adjusted = inverse(adjusted_to_XYZ);
-
-    vec3 xyz = rgb * sRGB_to_XYZ;
-    vec3 ajustedRGB = xyz * XYZ_to_adjusted;
-
-    float x_pivot = abs(min_ev) / (max_ev - min_ev);
-    float y_pivot = 0.5;
-
-    vec3 logRGB = open_domain_to_normalized_log2(ajustedRGB, min_ev, max_ev);
+    vec3 logRGB = open_domain_to_normalized_log2(rgb, min_ev, max_ev);
 
     float outputR = equation_full_curve(logRGB.r, x_pivot, y_pivot, slope, toe_power, shoulder_power);
     float outputG = equation_full_curve(logRGB.g, x_pivot, y_pivot, slope, toe_power, shoulder_power);

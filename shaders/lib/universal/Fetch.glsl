@@ -1,3 +1,7 @@
+vec3 FetchBaseColor(in ivec2 texel) {
+	return sRGBToLinear(loadAlbedo(texel)) * sRGB_2_Rec2020;
+}
+
 vec3 FetchGeometryNormal(in ivec2 texel) {
 	return OctDecodeSnorm(loadNormalPack(texel).xy);
 }
