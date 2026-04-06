@@ -77,6 +77,21 @@ SH2YCoCg InitSH2YCoCg() {
 	return SH2YCoCg(vec4(0.0), vec2(0.0));
 }
 
+void AddSH2YCoCg(inout SH2YCoCg a, in SH2YCoCg b) {
+	a.coeff += b.coeff;
+	a.chroma += b.chroma;
+}
+
+void MulSH2YCoCg(inout SH2YCoCg a, in float b) {
+	a.coeff *= b;
+	a.chroma *= b;
+}
+
+void DivSH2YCoCg(inout SH2YCoCg a, in float b) {
+	a.coeff /= b;
+	a.chroma /= b;
+}
+
 vec3 SHToIrradiance(SH2YCoCg sh, in vec3 dir) {
     float SH0 = 0.56418958354 * rcp(sh.coeff.x + EPS);
     float SH1 = dot(sh.coeff.yzw, dir) * 1.02332670795 + sh.coeff.x * 0.88622692545;
