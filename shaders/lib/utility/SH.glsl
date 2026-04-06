@@ -92,6 +92,10 @@ void DivSH2YCoCg(inout SH2YCoCg a, in float b) {
 	a.chroma /= b;
 }
 
+SH2YCoCg MixSH2YCoCg(in SH2YCoCg a, in SH2YCoCg b, in float t) {
+	return SH2YCoCg(mix(a.coeff, b.coeff, t), mix(a.chroma, b.chroma, t));
+}
+
 vec3 SHToIrradiance(SH2YCoCg sh, in vec3 dir) {
     float SH0 = 0.56418958354 * rcp(sh.coeff.x + EPS);
     float SH1 = dot(sh.coeff.yzw, dir) * 1.02332670795 + sh.coeff.x * 0.88622692545;
