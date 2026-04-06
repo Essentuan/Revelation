@@ -97,19 +97,19 @@ SH2YCoCg MixSH2YCoCg(in SH2YCoCg a, in SH2YCoCg b, in float t) {
 }
 
 vec3 SHToIrradiance(SH2YCoCg sh, in vec3 dir) {
-    float SH0 = 0.56418958354 * rcp(sh.coeff.x + EPS);
-    float SH1 = dot(sh.coeff.yzw, dir) * 1.02332670795 + sh.coeff.x * 0.88622692545;
+    float L = dot(sh.coeff.yzw, dir) * rcp(sh.coeff.x + EPS);
+	L = L * sqrt(4.0 * PI / 3.0) + sqrt(1.0 / 4.0);
 
-    vec3 irradiance = YCoCgToRGB(vec3(2.0 / SH0, sh.chroma));
-    return max0(irradiance * SH0 * SH1);
+    vec3 irradiance = YCoCgToRGB(vec3(sqrt(4.0 * PI) * sh.coeff.x, sh.chroma));
+    return max0(irradiance * L);
 }
 
 SH2YCoCg IrradianceToSH(in vec3 irradiance, in vec3 dir) {
     vec3 YCoCg = RGBToYCoCg(irradiance);
 
     SH2YCoCg sh;
-    sh.coeff.x = 0.28209479177 * YCoCg.x;
-    sh.coeff.yzw = 0.48860251190 * YCoCg.x * dir;
+    sh.coeff.x = sqrt(1.0 / (4.0 * PI)) * YCoCg.x;
+    sh.coeff.yzw = sqrt(3.0 / (4.0 * PI)) * YCoCg.x * dir;
     sh.chroma = YCoCg.yz;
 
     return sh;
