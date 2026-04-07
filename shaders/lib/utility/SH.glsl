@@ -68,35 +68,35 @@ vec3 ConvolvedReconstructSH3(in vec3[9] coeff, in vec3 dir) {
 	     + coeff[8] * basis[8] * kernel.z;
 }
 
-struct SH2YCoCg {
+struct AdhocSH2 {
     vec4 coeff;
     vec2 chroma;
 };
 
-SH2YCoCg InitSH2YCoCg() {
-	return SH2YCoCg(vec4(0.0), vec2(0.0));
+AdhocSH2 InitAdhocSH2() {
+	return AdhocSH2(vec4(0.0), vec2(0.0));
 }
 
-void AddSH2YCoCg(inout SH2YCoCg a, in SH2YCoCg b) {
+void AddAdhocSH2(inout AdhocSH2 a, in AdhocSH2 b) {
 	a.coeff += b.coeff;
 	a.chroma += b.chroma;
 }
 
-void MulSH2YCoCg(inout SH2YCoCg a, in float b) {
+void MulAdhocSH2(inout AdhocSH2 a, in float b) {
 	a.coeff *= b;
 	a.chroma *= b;
 }
 
-void DivSH2YCoCg(inout SH2YCoCg a, in float b) {
+void DivAdhocSH2(inout AdhocSH2 a, in float b) {
 	a.coeff /= b;
 	a.chroma /= b;
 }
 
-SH2YCoCg MixSH2YCoCg(in SH2YCoCg a, in SH2YCoCg b, in float t) {
-	return SH2YCoCg(mix(a.coeff, b.coeff, t), mix(a.chroma, b.chroma, t));
+AdhocSH2 MixAdhocSH2(in AdhocSH2 a, in AdhocSH2 b, in float t) {
+	return AdhocSH2(mix(a.coeff, b.coeff, t), mix(a.chroma, b.chroma, t));
 }
 
-vec3 SHToIrradiance(SH2YCoCg sh, in vec3 dir) {
+vec3 SHToIrradiance(AdhocSH2 sh, in vec3 dir) {
     float L = dot(sh.coeff.yzw, dir) * rcp(sh.coeff.x + EPS);
 	L = L * sqrt(1.0 / 3.0) + sqrt(1.0 / 4.0);
 
@@ -104,10 +104,10 @@ vec3 SHToIrradiance(SH2YCoCg sh, in vec3 dir) {
     return max0(irradiance * L);
 }
 
-SH2YCoCg IrradianceToSH(in vec3 irradiance, in vec3 dir) {
+AdhocSH2 IrradianceToSH(in vec3 irradiance, in vec3 dir) {
     vec3 YCoCg = RGBToYCoCg(irradiance);
 
-    SH2YCoCg sh;
+    AdhocSH2 sh;
     sh.coeff.x = sqrt(1.0 / (4.0 * PI)) * YCoCg.x;
     sh.coeff.yzw = sqrt(3.0 / (4.0 * PI)) * YCoCg.x * dir;
     sh.chroma = YCoCg.yz;
