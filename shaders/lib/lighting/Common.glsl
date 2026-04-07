@@ -3,18 +3,18 @@
 
 //================================================================================================//
 
-float CalculateFakeBouncedLight(in vec3 normal) {
+float CalculateFakeBouncedLight(vec3 normal) {
 	float bounce = saturate(dot(worldLightDir, vec3(0.01, 0.025, 0.01)));
 
 	return approxSqrt(bounce * oms(0.75 * normal.y)) * uniformPhase;
 }
 
-float CalculateBlocklightFalloff(in float blocklight) {
+float CalculateBlocklightFalloff(float blocklight) {
 	blocklight = mix(blocklight, sqr(blocklight), 0.75);
 	return blocklight * blocklight * blocklight;
 }
 
-vec4 HardCodeEmissive(in uint materialID, in vec3 albedo, in vec3 worldPos, in vec3 blocklightColor) {
+vec4 HardCodeEmissive(uint materialID, vec3 albedo, vec3 worldPos, vec3 blocklightColor) {
     float albedoLuminance = length(albedo);
 
     switch (materialID) {
