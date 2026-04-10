@@ -254,7 +254,7 @@ vec2 LutTransmittanceParamsToUv(float r, float mu) {
 	return vec2(x_mu, x_r);
 }
 
-vec3 AtmosphereDensityAtPoint(vec3 pos) {
+vec3 AtmosphereDensity(vec3 pos) {
     float altitude = length(pos) - atmosphere.bottomRadius;
     return vec3(exp(-altitude * rcp(vec2(8e3, 1.4e3))), saturate(1.0 - abs(altitude - 2.5e4) * rcp(1.5e4)));
 }
@@ -268,12 +268,30 @@ bool RayIntersectPlanetGround(float r, float mu) {
 	return mu < 0.0 && r * r * (mu * mu - 1.0) + atmosphere.bottomRadius * atmosphere.bottomRadius >= 0.0;
 }
 
-vec3 AtmosphereTransmittanceToPoint(vec3 pos, vec3 dir) {
+vec3 AtmosphereTransmittance(vec3 pos, vec3 dir) {
     float r = length(pos);
 	float mu = dot(dir, pos) / r;
     float earthShadow = float(!RayIntersectPlanetGround(r, mu));
 
     return ReadTransmittanceLUT(r, mu) * earthShadow;
+}
+
+vec3 AtmosphereTransmittanceToPoint(float r, float mu, float d, bool intersectGround) {
+	float r_d = sqrt(d * d + 2.0 * r * mu * d + r * r);
+	float mu_d = clamp((r * mu + d) / r_d, -1.0, 1.0);
+
+	if (intersectGround) {
+		return saturate(ReadTransmittanceLUT(r_d, -mu_d) / ReadTransmittanceLUT(r, -mu));
+	} else {
+		return saturate(ReadTransmittanceLUT(r, mu) / ReadTransmittanceLUT(r_d, mu_d));
+	}
+}
+
+vec3 AtmosphereTransmittanceToPoint(vec3 pos, vec3 dir, float d) {
+    float r = length(pos);
+	float mu = dot(dir, pos) / r;
+
+	return AtmosphereTransmittanceToPoint(r, mu, d, RayIntersectPlanetGround(r, mu));
 }
 
 vec3 AtmosphereTransmittanceToSun(float r, float mu) {
@@ -359,4 +377,66 @@ bool AtmosphereSetupRay(inout vec3 rayPos, vec3 rayDir, out float tMax, out bool
     groundHit = tMax == tBottom;
 
     return false;
+}
+
+vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
+    float cosTheta = dot(rayDir, sunDir);
+
+    #ifndef PLANET_GROUND
+        // Hacks to simulate atmosphere on the ground
+        if (rayDir.y < 0.0) {
+            rayDir.y *= saturate(exp2(atmosphereViewHeight * 1e-3 - atmosphere.topRadius * 1e-3));
+            rayDir = normalize(rayDir);
+        }
+    #endif
+
+    float tMax;
+    bool groundHit;
+    if (AtmosphereSetupRay(rayPos, rayDir, tMax, groundHit)) return vec3(0.0);
+
+    vec2 phaseValue = AtmospherePhase(cosTheta);
+
+    // Adaptive sample count
+    const float maxSamples = ATMOSPHERE_SKY_SAMPLES;
+	float sampleCount = round(maxSamples * saturate(0.5 + tMax * 1e-5));
+
+    float stepSize = tMax * rcp(sampleCount);
+    vec3 rayStep = stepSize * rayDir;
+    rayPos += 0.5 * rayStep;
+
+    vec3 lum = vec3(0.0);
+    vec3 transmittance = vec3(1.0);
+    for (uint i = 0u; i < uint(sampleCount); ++i, rayPos += rayStep) {
+        vec3 density = AtmosphereDensity(rayPos);
+        vec3 extinction = atmosphereExtinction * density;
+
+        float r = length(rayPos);
+        float mu = dot(sunDir, rayPos) / r;
+
+        vec3 sunTransmittance = AtmosphereTransmittanceToSun(r, mu);
+        vec3 psiMs = AtmosphereMultiScattering(r, mu);
+
+        vec3 inScattering = atmosphereScattering * (density.xy * phaseValue) * sunTransmittance;
+        inScattering += atmosphereScattering * density.xy * psiMs;
+
+        vec3 sampleTransmittance = exp(-stepSize * extinction);
+
+        vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / extinction;
+        lum += scatteringIntegral * transmittance;
+
+        transmittance *= sampleTransmittance;
+    }
+
+    // Ground diffuse
+    if (groundHit) {
+        float planetHeight = length(rayPos);
+        vec3 upVector = rayPos / planetHeight;
+
+        float sunZenithCos = dot(upVector, sunDir);
+        vec3 transmittanceToSun = AtmosphereTransmittanceToSun(planetHeight, sunZenithCos);
+
+        lum += atmosphere.groundAlbedo * rPI * saturate(sunZenithCos) * transmittance * transmittanceToSun;
+    }
+
+    return lum * sunIrradiance;
 }
