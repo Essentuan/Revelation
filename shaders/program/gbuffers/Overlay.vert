@@ -32,5 +32,5 @@ void main() {
 	#endif
 
 	vertColor = gl_Color;
-	texCoord = mat2(gl_TextureMatrix[0]) * gl_MultiTexCoord0.xy + gl_TextureMatrix[0][3].xy;
+    texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 }

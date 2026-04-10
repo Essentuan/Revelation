@@ -53,7 +53,7 @@ in vec4 at_tangent;
 //======// Main //================================================================================//
 void main() {
 	vertColor = gl_Color.rgb;
-	texCoord = mat2(gl_TextureMatrix[0]) * gl_MultiTexCoord0.xy + gl_TextureMatrix[0][3].xy;
+    texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 
 	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 

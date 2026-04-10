@@ -49,13 +49,7 @@ uniform vec2 taaJitter;
 
 //======// Main //================================================================================//
 void main() {
-	#if 0
-		// This version breaks on Intel, idk why
-		texCoord = mat2(gl_TextureMatrix[0]) * gl_MultiTexCoord0.xy + gl_TextureMatrix[0][3].xy;
-	#else
-    	texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
-	#endif
-
+    texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
 	// Nether portal
