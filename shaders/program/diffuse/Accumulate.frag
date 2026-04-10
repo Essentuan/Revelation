@@ -29,6 +29,10 @@ layout (location = 1) out vec3 encodedNormalDepth;
 
 #include "/lib/universal/Uniform.glsl"
 
+//======// SSBO //================================================================================//
+
+#include "/lib/universal/SSBO.glsl"
+
 //======// Function //============================================================================//
 
 #include "/lib/universal/Transform.glsl"
@@ -52,7 +56,7 @@ void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
     vec2 currCoord = texelToUv(texelPos);
     encodedNormalDepth = vec3(OctEncodeSnorm(worldNormal), length(viewPos));
 
-    if (saturate(prevCoord) == prevCoord && !worldTimeChanged) {
+    if (saturate(prevCoord) == prevCoord && !global.historyReset) {
         vec4 prevDiffuse = vec4(0.0);
         float sumWeight = 0.0;
         float confidence = 0.0;
