@@ -276,11 +276,11 @@ vec3 AtmosphereTransmittance(vec3 pos, vec3 dir) {
     return ReadTransmittanceLUT(r, mu) * earthShadow;
 }
 
-vec3 AtmosphereTransmittanceToPoint(float r, float mu, float d, bool intersectGround) {
+vec3 AtmosphereTransmittanceToPoint(float r, float mu, float d) {
 	float r_d = sqrt(d * d + 2.0 * r * mu * d + r * r);
 	float mu_d = clamp((r * mu + d) / r_d, -1.0, 1.0);
 
-	if (intersectGround) {
+	if (mu * d < 0.0) {
 		return saturate(ReadTransmittanceLUT(r_d, -mu_d) / ReadTransmittanceLUT(r, -mu));
 	} else {
 		return saturate(ReadTransmittanceLUT(r, mu) / ReadTransmittanceLUT(r_d, mu_d));
@@ -291,7 +291,7 @@ vec3 AtmosphereTransmittanceToPoint(vec3 pos, vec3 dir, float d) {
     float r = length(pos);
 	float mu = dot(dir, pos) / r;
 
-	return AtmosphereTransmittanceToPoint(r, mu, d, RayIntersectPlanetGround(r, mu));
+	return AtmosphereTransmittanceToPoint(r, mu, d);
 }
 
 vec3 AtmosphereTransmittanceToSun(float r, float mu) {
