@@ -48,10 +48,9 @@ void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
 	vec3 prevNDCPos = projMAD(gbufferPreviousProjection, prevViewPos) * rcp(-prevViewPos.z); // To previous frame's NDC space
 
     #ifdef TAA_ENABLED
-        prevNDCPos.xy += taaJitter;
+        prevNDCPos.xy += taaJitterPrev;
     #endif
     vec2 prevCoord = prevNDCPos.xy * 0.5 + 0.5;
-    prevCoord += (taaJitterPrev - taaJitter) * 0.25;
 
     vec2 currCoord = texelToUv(texelPos);
     encodedNormalDepth = vec3(OctEncodeSnorm(worldNormal), length(viewPos));
@@ -87,9 +86,8 @@ void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
 			    vec3 sampleAux = texelFetch(colortex14, sampleTexel, 0).xyz;
                 vec4 sampleIrradiance = texelFetch(colortex2, sampleTexel, 0);
 
-                float weight = -distance(encodedNormalDepth.z, sampleAux.z) * NdotV;
-                weight += log2(saturate(dot(OctDecodeSnorm(sampleAux.xy), worldNormal)));
-                weight = exp2(weight * sampleIrradiance.a * (8.0 / SSILVB_MAX_ACCUM_FRAMES));
+                float weight = exp2(-8.0 * distance(encodedNormalDepth.z, sampleAux.z) * NdotV);
+                weight *= linearstep(0.5, 0.8, saturate(dot(OctDecodeSnorm(sampleAux.xy), worldNormal)));
 
                 confidence = max(confidence, weight);
                 weight *= bilinearWeight[i];
@@ -105,8 +103,12 @@ void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
 
             integratedDiffuse.a = min(prevDiffuse.a * confidence + 1.0, SSILVB_MAX_ACCUM_FRAMES);
 
-            float mipLevel = 3.0 * saturate(1.0 - integratedDiffuse.a * rcp(8.0));
-            integratedDiffuse.rgb = textureLod(colortex3, currCoord, mipLevel).rgb;
+            if (integratedDiffuse.a < 8.0) {
+                float mipLevel = 3.0 * saturate(1.0 - integratedDiffuse.a * rcp(8.0));
+                integratedDiffuse.rgb = textureLod(colortex3, currCoord, mipLevel).rgb;
+            } else {
+                integratedDiffuse.rgb = texelFetch(colortex3, texelPos, 0).rgb;
+            }
 
             float alpha = rcp(integratedDiffuse.a);
             integratedDiffuse.rgb = mix(min(prevDiffuse.rgb, FP16_MAX), integratedDiffuse.rgb, alpha);
