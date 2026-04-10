@@ -99,7 +99,7 @@ void main() {
 	sceneOut = vec3(0.0);
 
 	if (materialID == 0u) { // Sky
-		vec3 transmittance = AtmosphereTransmittanceToPoint(atmosphereViewPos, worldDir);
+		vec3 transmittance = AtmosphereTransmittance(atmosphereViewPos, worldDir);
 		vec3 skyRadiance = AtmosphereSkyView(atmosphereViewPos, worldDir, worldSunDir);
 
 		sceneOut = skyRadiance;

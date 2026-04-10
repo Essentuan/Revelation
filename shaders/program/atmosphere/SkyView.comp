@@ -35,68 +35,6 @@ writeonly restrict uniform image2D skyViewImg;
 #include "/lib/atmosphere/Common.glsl"
 #include "/lib/universal/Random.glsl"
 
-vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
-    float cosTheta = dot(rayDir, sunDir);
-
-    #ifndef PLANET_GROUND
-        // Hacks to simulate atmosphere on the ground
-        if (rayDir.y < 0.0) {
-            rayDir.y *= saturate(exp2(atmosphereViewHeight * 1e-3 - atmosphere.topRadius * 1e-3));
-            rayDir = normalize(rayDir);
-        }
-    #endif
-
-    float tMax;
-    bool groundHit;
-    if (AtmosphereSetupRay(rayPos, rayDir, tMax, groundHit)) return vec3(0.0);
-
-    vec2 phaseValue = AtmospherePhase(cosTheta);
-
-    // Adaptive sample count
-    const float maxSamples = ATMOSPHERE_SKY_SAMPLES;
-	float sampleCount = round(maxSamples * saturate(0.5 + tMax * 1e-5));
-
-    float stepSize = tMax * rcp(sampleCount);
-    vec3 rayStep = stepSize * rayDir;
-    rayPos += 0.5 * rayStep;
-
-    vec3 lum = vec3(0.0);
-    vec3 transmittance = vec3(1.0);
-    for (uint i = 0u; i < uint(sampleCount); ++i, rayPos += rayStep) {
-        vec3 density = AtmosphereDensityAtPoint(rayPos);
-        vec3 extinction = atmosphereExtinction * density;
-
-        float r = length(rayPos);
-        float mu = dot(sunDir, rayPos) / r;
-
-        vec3 sunTransmittance = AtmosphereTransmittanceToSun(r, mu);
-        vec3 psiMs = AtmosphereMultiScattering(r, mu);
-
-        vec3 inScattering = atmosphereScattering * (density.xy * phaseValue) * sunTransmittance;
-        inScattering += atmosphereScattering * density.xy * psiMs;
-
-        vec3 sampleTransmittance = exp(-stepSize * extinction);
-
-        vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / extinction;
-        lum += scatteringIntegral * transmittance;
-
-        transmittance *= sampleTransmittance;
-    }
-
-    // Ground diffuse
-    if (groundHit) {
-        float planetHeight = length(rayPos);
-        vec3 upVector = rayPos / planetHeight;
-
-        float sunZenithCos = dot(upVector, sunDir);
-        vec3 transmittanceToSun = AtmosphereTransmittanceToSun(planetHeight, sunZenithCos);
-
-        lum += atmosphere.groundAlbedo * rPI * saturate(sunZenithCos) * transmittance * transmittanceToSun;
-    }
-
-    return lum * sunIrradiance;
-}
-
 vec3 RenderSkyView(vec2 uv) {
     float lightViewCos = 1.0 - sqr(uv.x) * 2.0;
     float height = atmosphereViewHeight;
@@ -125,7 +63,6 @@ vec3 RenderSkyView(vec2 uv) {
     vec3 lum = RaymarchScattering(atmosphereViewPos, rayDir, sunDir);
         lum += RaymarchScattering(atmosphereViewPos, rayDir, -sunDir) * moonlightMult;
 
-    lum = desaturate(lum, wetness * 0.5); // Post-process
     return lum;
 }
 

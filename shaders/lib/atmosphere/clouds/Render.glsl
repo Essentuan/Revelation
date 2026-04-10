@@ -353,18 +353,15 @@ void CompositeClouds(inout vec3 skyRadiance, vec4 cloudData, vec3 rayDir) {
 		scattering += LightningContribution(cloudPos - atmosphereViewPos) * sqr(cloudData.y);
 
 		// Aerial perspective
-		vec3 aerialT;
-		if (sdot(atmosphereViewPos) < sdot(cloudPos)) {
-			vec3 t1 = AtmosphereTransmittanceToPoint(atmosphereViewPos, rayDir);
-			vec3 t2 = AtmosphereTransmittanceToPoint(cloudPos, rayDir);
+		vec3 aerialT = AtmosphereTransmittanceToPoint(atmosphereViewPos, rayDir, cloudData.z);
+		#if 0
+			vec3 aerialSL = RaymarchScattering(cloudPos, rayDir, worldSunDir);
+				aerialSL += RaymarchScattering(cloudPos, rayDir, -worldSunDir) * moonlightMult;
 
-			aerialT = saturate(t1 / t2);
-		} else {
-			vec3 t1 = AtmosphereTransmittanceToPoint(atmosphereViewPos, -rayDir);
-			vec3 t2 = AtmosphereTransmittanceToPoint(cloudPos, -rayDir);
-
-			aerialT = saturate(t2 / t1);
-		}
-		skyRadiance = skyRadiance * oms(oms(cloudData.w) * aerialT) + scattering * aerialT;
+			skyRadiance += aerialSL * aerialT * (cloudData.w - 1.0);
+			skyRadiance += scattering * aerialT;
+		#else
+			skyRadiance = skyRadiance * oms(oms(cloudData.w) * aerialT) + scattering * aerialT;
+		#endif
 	}
 }
