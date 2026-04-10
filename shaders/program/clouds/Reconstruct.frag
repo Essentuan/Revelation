@@ -41,7 +41,7 @@ uniform sampler2D cloudOriginTex;
 #include "/lib/atmosphere/Common.glsl"
 #include "/lib/atmosphere/clouds/Common.glsl"
 
-vec3 ReprojectClouds(in vec2 coord, in float depth) {
+vec3 ReprojectClouds(vec2 coord, float depth) {
 	vec3 cloudPos = ScreenToViewDirRaw(coord) * depth;
 	cloudPos = transMAD(gbufferModelViewInverse, cloudPos); // To world space
 
@@ -66,7 +66,7 @@ vec3 ReprojectClouds(in vec2 coord, in float depth) {
 		const vec2 windVelocity = vec2(cos(windAngle), sin(windAngle)) * CLOUD_HIGH_WIND_SPEED;
 		motionVector.xz -= windVelocity;
 	}
-	motionVector *= (worldTime - global.prevWorldTime) * 0.05;
+	motionVector *= float(worldTime - global.prevWorldTime) * 0.05;
 	motionVector += cameraMovement;
 
 	cloudPos += motionVector; // To previous frame's world space
@@ -96,7 +96,7 @@ void main() {
 	vec2 prevCoord = ReprojectClouds(screenCoord, cloudDepth).xy;
 	uint frameIndex = texture(colortex13, prevCoord).x;
 
-	bool disocclusion = worldTimeChanged;
+	bool disocclusion = global.historyReset;
 	// Offscreen invalidation
 	disocclusion = disocclusion || saturate(prevCoord) != prevCoord;
 	// Previous ground invalidation

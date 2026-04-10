@@ -161,7 +161,7 @@ vec2 SliceRelCDF_Cos(vec2 x, float angN, float cosN) {
 
 // https://cdrinmatane.github.io/posts/ssaovb-code/
 const uint sectorCount = SSILVB_SECTOR_COUNT;
-uint updateSectors(in vec2 horizon) {
+uint updateSectors(vec2 horizon) {
     uint startBit = uint(horizon.x * float(sectorCount));
 
     uint horizonAngle = uint(ceil((horizon.y - horizon.x) * float(sectorCount)));
@@ -172,13 +172,19 @@ uint updateSectors(in vec2 horizon) {
 
 //================================================================================================//
 
-vec4 CalculateSSILVB(in vec2 fragCoord, in vec3 viewPos, in vec3 worldNormal, in float skylight) {
+vec4 CalculateSSILVB(vec2 fragCoord, vec3 viewPos, vec3 worldNormal, float skylight) {
 	const int sliceCount = SSILVB_SLICE_COUNT;
 	const int sampleCount = SSILVB_SAMPLE_COUNT;
 	const float hitThickness = SSILVB_HIT_THICKNESS * 0.1;
 
 	const float rSliceCount = 1.0 / float(sliceCount);
 	const float rSampleCount = 1.0 / float(sampleCount);
+
+    #if defined LOD_MOD
+        float screenDepthSky = ViewToScreenDepth(ScreenToViewDepthLod(1.0));
+    #else
+        #define screenDepthSky 1.0
+    #endif
 
     float dither = SampleStbnVec1(ivec2(gl_GlobalInvocationID.xy), frameCounter);
 
@@ -238,7 +244,7 @@ vec4 CalculateSSILVB(in vec2 fragCoord, in vec3 viewPos, in vec3 worldNormal, in
                 if (sampleDepth > 1.0 - EPS) sampleDepth = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth0Lod(sampleTexel)));
             #endif
 
-                if (sampleDepth > 1.0 - EPS) continue;
+                if (sampleDepth > screenDepthSky - EPS) continue;
 
                 vec3 samplePos = ScreenToViewPos(vec3(sampleUV, sampleDepth));
 

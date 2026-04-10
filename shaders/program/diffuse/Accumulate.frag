@@ -29,13 +29,17 @@ layout (location = 1) out vec3 encodedNormalDepth;
 
 #include "/lib/universal/Uniform.glsl"
 
+//======// SSBO //================================================================================//
+
+#include "/lib/universal/SSBO.glsl"
+
 //======// Function //============================================================================//
 
 #include "/lib/universal/Transform.glsl"
 #include "/lib/universal/Fetch.glsl"
 #include "/lib/universal/Random.glsl"
 
-void TemporalFilter(in ivec2 texelPos, in vec3 screenPos, in vec3 worldNormal) {
+void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
 	vec3 viewPos = ScreenToViewPos(screenPos);
     vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
@@ -44,15 +48,14 @@ void TemporalFilter(in ivec2 texelPos, in vec3 screenPos, in vec3 worldNormal) {
 	vec3 prevNDCPos = projMAD(gbufferPreviousProjection, prevViewPos) * rcp(-prevViewPos.z); // To previous frame's NDC space
 
     #ifdef TAA_ENABLED
-        prevNDCPos.xy += taaJitter;
+        prevNDCPos.xy += taaJitterPrev;
     #endif
     vec2 prevCoord = prevNDCPos.xy * 0.5 + 0.5;
-    prevCoord += (taaJitterPrev - taaJitter) * 0.25;
 
     vec2 currCoord = texelToUv(texelPos);
     encodedNormalDepth = vec3(OctEncodeSnorm(worldNormal), length(viewPos));
 
-    if (saturate(prevCoord) == prevCoord && !worldTimeChanged) {
+    if (saturate(prevCoord) == prevCoord && !global.historyReset) {
         vec4 prevDiffuse = vec4(0.0);
         float sumWeight = 0.0;
         float confidence = 0.0;
@@ -83,9 +86,8 @@ void TemporalFilter(in ivec2 texelPos, in vec3 screenPos, in vec3 worldNormal) {
 			    vec3 sampleAux = texelFetch(colortex14, sampleTexel, 0).xyz;
                 vec4 sampleIrradiance = texelFetch(colortex2, sampleTexel, 0);
 
-                float weight = -distance(encodedNormalDepth.z, sampleAux.z) * NdotV;
-                weight += log2(saturate(dot(OctDecodeSnorm(sampleAux.xy), worldNormal)));
-                weight = exp2(weight * sampleIrradiance.a * (8.0 / SSILVB_MAX_ACCUM_FRAMES));
+                float weight = exp2(-8.0 * distance(encodedNormalDepth.z, sampleAux.z) * NdotV);
+                weight *= linearstep(0.5, 0.8, saturate(dot(OctDecodeSnorm(sampleAux.xy), worldNormal)));
 
                 confidence = max(confidence, weight);
                 weight *= bilinearWeight[i];
@@ -101,8 +103,12 @@ void TemporalFilter(in ivec2 texelPos, in vec3 screenPos, in vec3 worldNormal) {
 
             integratedDiffuse.a = min(prevDiffuse.a * confidence + 1.0, SSILVB_MAX_ACCUM_FRAMES);
 
-            float mipLevel = 3.0 * saturate(1.0 - integratedDiffuse.a * rcp(8.0));
-            integratedDiffuse.rgb = textureLod(colortex3, currCoord, mipLevel).rgb;
+            if (integratedDiffuse.a < 8.0) {
+                float mipLevel = 3.0 * saturate(1.0 - integratedDiffuse.a * rcp(8.0));
+                integratedDiffuse.rgb = textureLod(colortex3, currCoord, mipLevel).rgb;
+            } else {
+                integratedDiffuse.rgb = texelFetch(colortex3, texelPos, 0).rgb;
+            }
 
             float alpha = rcp(integratedDiffuse.a);
             integratedDiffuse.rgb = mix(min(prevDiffuse.rgb, FP16_MAX), integratedDiffuse.rgb, alpha);
@@ -113,7 +119,7 @@ void TemporalFilter(in ivec2 texelPos, in vec3 screenPos, in vec3 worldNormal) {
     integratedDiffuse.rgb = textureLod(colortex3, currCoord, 3.0).rgb;
 }
 
-float GetClosestDepthN(in ivec2 texel) {
+float GetClosestDepthN(ivec2 texel) {
     float depth = 1.0;
 
     for (uint i = 0u; i < 8u; ++i) {

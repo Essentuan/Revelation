@@ -86,7 +86,7 @@ vec3 FFXCasFilter(in ivec2 texel, in float sharpness) {
 
 #include "/lib/universal/TextRenderer.glsl"
 
-void HistogramDisplay(inout vec3 color, in ivec2 texel) {
+void HistogramDisplay(inout vec3 color, ivec2 texel) {
     const int binWidth = 2;
 
     if (all(lessThan(texel, ivec2(HISTOGRAM_BIN_COUNT * binWidth, 256)))) {

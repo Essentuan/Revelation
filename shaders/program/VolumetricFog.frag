@@ -48,7 +48,7 @@ uniform sampler2D shadowcolor1;
 
 #include "/lib/water/WaterFog.glsl"
 
-mat2x3 UnpackFogData(in uvec2 data) {
+mat2x3 UnpackFogData(uvec2 data) {
 	return mat2x3(DecodeRGBE8U(data.x), DecodeRGBE8U(data.y));
 }
 
@@ -87,7 +87,7 @@ void main() {
 	// Temporal reprojection
     vec2 prevCoord = ReprojectScreenPos(screenPos).xy;
 
-    if (saturate(prevCoord) == prevCoord && !worldTimeChanged) {
+    if (saturate(prevCoord) == prevCoord && !global.historyReset) {
         uvec3 reprojectedData = texelFetch(colortex11, uvToTexel(prevCoord) >> 1, 0).xyz;
 		mat2x3 reprojectedFog = UnpackFogData(reprojectedData.xy);
 

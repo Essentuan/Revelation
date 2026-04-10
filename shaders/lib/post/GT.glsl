@@ -431,7 +431,7 @@ void applyToneMapping(inout vec3 rgb, GT7ToneMapping tm)
     rgb = tm.sdrCorrectionFactor_ * min(blended, tm.framebufferLuminanceTarget_);
 }
 
-vec3 GT7(in vec3 color) {
+vec3 GT7(vec3 color) {
     color *= 2.0;
 
     GT7ToneMapping tm;

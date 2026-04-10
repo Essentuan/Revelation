@@ -126,9 +126,6 @@ uniform float darknessLightFactor;              // lightmap variations caused by
 uniform vec4 lightningBoltPosition;
 
 // Custom uniforms
-uniform bool worldTimeChanged;
-uniform bool viewSizeChanged;
-
 uniform float moonlightMult;
 uniform float wetnessCustom;
 uniform float eyeSkylightSmooth;

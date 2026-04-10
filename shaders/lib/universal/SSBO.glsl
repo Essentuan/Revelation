@@ -3,7 +3,8 @@
 #endif
 
 layout (std430, binding = 0) SSBO_DECLARED_TPYE buffer GlobalData {
-    float prevWorldTime;
+    int prevWorldTime;
+    bool historyReset;
     vec3 directIlluminance;
     vec3 skyUpIlluminance;
     vec3[9] skySH;
