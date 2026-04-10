@@ -107,14 +107,14 @@ void main() {
 	float16_t centerLuma = filteredColVar.r; // We use YCoCg color space
 
 	float frameIndex = texelFetch(colortex2, texelPos, 0).a;
-	float historyFactor = saturate(frameIndex * 0.1 - 0.5) * 0.8 + 0.2;
+	float historyFactor = saturate(frameIndex * 0.1 - 0.25) * 0.8 + 0.2;
 
 	// float variance = CalculateVariance(ivec2(localPos + padRadius));
 	float16_t variance = filteredColVar.a;
-	float16_t variancePhi = float16_t(-0.5 * inversesqrt(variance + EPS));
+	float16_t sigmaL = float16_t(-0.5 * inversesqrt(variance + EPS));
 
 	const float sigmaZ = -4.0 * inversesqrt(float(ATROUS_FILTER_SIZE));
-	const float sigmaN = 32.0;
+	const float sigmaN = 16.0;
 
     f16vec3 worldNormal = f16vec3(OctDecodeSnorm(normalDepthData.xy));
 
@@ -136,7 +136,7 @@ void main() {
 		// wD = exp(−|D0 − D1| / (|σD(grad · off)| + ε))
 		float logWeightZ = abs(sampleAux.z - normalDepthData.z) * sigmaZ;
 		// wL = exp(−|L0 − L1| / (σLvar + ε))
-		float logWeightL = abs(sampleLuma - centerLuma) * variancePhi;
+		float logWeightL = abs(sampleLuma - centerLuma) * sigmaL;
 
 		float16_t weight = float16_t(exp2((logWeightN + logWeightZ + logWeightL) * historyFactor));
 
