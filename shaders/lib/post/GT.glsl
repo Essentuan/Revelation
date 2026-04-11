@@ -243,7 +243,7 @@ void
 rgbToICtCp(vec3 rgb, inout vec3 ictCp) // Input: linear Rec.2020
 {
     float l = (rgb[0] * 1688.0f + rgb[1] * 2146.0f + rgb[2] * 262.0f) / 4096.0f;
-    float m = (rgb[0] * 128.0f + rgb[1] * 2951.0f + rgb[2] * 462.0f) / 4096.0f;
+    float m = (rgb[0] * 683.0f + rgb[1] * 2951.0f + rgb[2] * 462.0f) / 4096.0f;
     float s = (rgb[0] * 99.0f + rgb[1] * 309.0f + rgb[2] * 3688.0f) / 4096.0f;
 
     float lPQ = inverseEotfSt2084(l, 1.0);
