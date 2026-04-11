@@ -73,7 +73,7 @@
 	|	colortex2	|   rgba16f         |	Half res	|	Indirect diffuse lighting history
 	|	colortex3	|   rgba16f         |	Full res  	|	Indirect diffuse lighting -> Indirect specular lighting -> Motion vector
 	|	colortex4	|   r11f_g11f_b10f  |	Full res  	|	Reprojected scene history -> Bloom tiles
-	|	colortex5	|   rgba16f  		|	256, 256   	|	Sky environment map
+	|	colortex5	|   rgba16f  		|	288, 192   	|	Sky cubemap
 	|	colortex6	|   rgba8           |	Full res  	|	Solid albedo, rain alpha
 	|	colortex7	|   rgba16ui        |	Full res  	|	Material data
 	|	colortex8	|   rgba16_snorm    |	Full res  	|	Normal data

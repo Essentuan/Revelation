@@ -45,6 +45,8 @@ vec2 Unpack2x8U(uint data) {
 float Unpack2x8UX(uint data) { return bitfieldExtract(data, 0, 8) * rcp255; }
 float Unpack2x8UY(uint data) { return bitfieldExtract(data, 8, 8) * rcp255; }
 
+//================================================================================================//
+
 // Octahedral encoding
 // https://jcgt.org/published/0003/02/01/paper.pdf
 vec2 OctEncodeSnorm(vec3 dir) {
@@ -116,6 +118,58 @@ vec3 UnprojectEquirectanglarNonlinear(vec2 uv) {
 
     return vec3(sincos(phi) * cos(theta), sin(theta)).yzx;
 }
+
+// [+X][+Y][+Z]
+// [-X][-Y][-Z]
+
+vec2 ProjectCubemap(vec3 dir, float tileSize) {
+	float scale = 0.5 - 1.0 / tileSize;
+	vec3 dirAbs = abs(dir);
+
+	vec2 uv;
+	if (dirAbs.x > dirAbs.y && dirAbs.x > dirAbs.z) {
+        // X
+		scale /= dirAbs.x;
+		uv = dir.yz * scale + vec2(0.0, step(0.0, dir.x));
+	} else if (dirAbs.y > dirAbs.z) {
+        // Y
+		scale /= dirAbs.y;
+		uv = dir.xz * scale + vec2(1.0, step(0.0, dir.y));
+	} else {
+        // Z
+		scale /= dirAbs.z;
+		uv = dir.xy * scale + vec2(2.0, step(0.0, dir.z));
+	}
+
+	return (uv + 0.5) * rcp(vec2(3.0, 2.0));
+}
+
+vec3 UnprojectCubemap(vec2 uv, float tileSize) {
+    uv = uv * vec2(3.0, 2.0) - 0.5;
+	float scale = tileSize / (0.5 * tileSize - 1.0);
+
+    float signAxis = step(0.5, uv.y);
+    vec2 temp = vec2((uv.y - signAxis) * scale, signAxis * 2.0 - 1.0);
+
+	vec3 dir;
+	if (uv.x < 0.5) {
+        // X
+		dir.y = uv.x * scale;
+		dir.zx = temp;
+	} else if (uv.x < 1.5) {
+        // Y
+		dir.x = (uv.x - 1.0) * scale;
+		dir.zy = temp;
+	} else {
+        // Z
+		dir.x = (uv.x - 2.0) * scale;
+		dir.yz = temp;
+	}
+
+	return normalize(dir);
+}
+
+//================================================================================================//
 
 // RGBE8 encoding
 // Exponent range: [-128, 127]
