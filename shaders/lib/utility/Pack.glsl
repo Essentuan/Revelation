@@ -126,20 +126,17 @@ vec2 ProjectCubemap(vec3 dir, float tileSize) {
 	float scale = 0.5 - 1.0 / tileSize;
 	vec3 dirAbs = abs(dir);
 
-	vec2 uv;
-	if (dirAbs.x > dirAbs.y && dirAbs.x > dirAbs.z) {
-        // X
-		scale /= dirAbs.x;
-		uv = dir.yz * scale + vec2(0.0, step(0.0, dir.x));
-	} else if (dirAbs.y > dirAbs.z) {
-        // Y
-		scale /= dirAbs.y;
-		uv = dir.xz * scale + vec2(1.0, step(0.0, dir.y));
-	} else {
-        // Z
-		scale /= dirAbs.z;
-		uv = dir.xy * scale + vec2(2.0, step(0.0, dir.z));
-	}
+    vec3 mask = step(vec3(maxOf(dirAbs)), dirAbs);
+    scale /= dot(mask, dirAbs);
+
+    vec3 scaleMasked = scale * mask;
+    float offsetX = dot(vec3(0.0, 1.0, 2.0), mask);
+    float offsetY = step(0.0, dot(mask, dir));
+
+    vec2 uv = dir.yz * scaleMasked.x;
+    uv += dir.xz * scaleMasked.y;
+    uv += dir.xy * scaleMasked.z;
+    uv += vec2(offsetX, offsetY);
 
 	return (uv + 0.5) * rcp(vec2(3.0, 2.0));
 }
