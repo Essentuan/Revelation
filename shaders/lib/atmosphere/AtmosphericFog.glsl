@@ -47,7 +47,7 @@ mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, uint ste
 	float norm = inversesqrt(rayLength);
 	rayLength *= norm;
 
-	vec3 worldDir = (endPos - startPos) * norm;
+	vec3 rayDir = (endPos - startPos) * norm;
 
 	// Adaptive step count
 	steps = min(steps, uint(float(steps) * 0.4 + rayLength * rcp(16.0)));
@@ -56,10 +56,14 @@ mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, uint ste
 	float maxDist = lodRenderDist;
 	rayLength = min(rayLength, maxDist);
 
-	vec3 shadowStart = projMAD(shadowProjection, transMAD(shadowModelView, startPos));
-	vec3 shadowDir = mat3(shadowModelView) * worldDir * diagonal3(shadowProjection);
+	// Squared step distribution
+	float stepLength = rayLength * rSteps * rSteps;
+	vec3 rayStep = rayDir * stepLength;
 
-	float LdotV = dot(worldLightDir, worldDir);
+	vec3 shadowStart = projMAD(shadowProjection, transMAD(shadowModelView, startPos));
+	vec3 shadowStep = mat3(shadowModelView) * rayStep * diagonal3(shadowProjection);
+
+	float LdotV = dot(worldLightDir, rayDir);
 	vec2 phase = AtmospherePhase(LdotV);
 
 	float mieDensityMult = VF_MIE_DENSITY * 5e2 * (1.0 + wetness * VF_MIE_DENSITY_RAIN_MULT);
@@ -95,9 +99,9 @@ mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, uint ste
 
 	for (uint i = 0u; i < steps; ++i) {
 		// Squared step distribution
-		float stepLength = rayLength * sqr((float(i) + dither) * rSteps);
-        vec3 rayPos = startPos + worldDir * stepLength;
-		vec3 shadowPos = shadowStart + shadowDir * stepLength;
+		float fi = float(i) + dither;
+        vec3 rayPos = startPos + rayStep * sqr(fi);
+		vec3 shadowPos = shadowStart + shadowStep * sqr(fi);
 
 		vec2 stepDensity = CalculateFogDensity(rayPos, uniformFog);
 
@@ -156,7 +160,7 @@ mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, uint ste
 		msEnergy += uniformPhase * msV / (oms(msV) * (1.0 + opticalDepthSun * 0.25));
 
 		vec3 stepExtinction = fogExtinctionCoeff * stepDensity;
-		vec3 stepTransmittance = exp(-stepLength * stepExtinction);
+		vec3 stepTransmittance = exp(-2.0 * fi * stepLength * stepExtinction);
 
 		vec3 stepIntegral = transmittance * oms(stepTransmittance) / maxEps(stepExtinction);
 
