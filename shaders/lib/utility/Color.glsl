@@ -74,7 +74,7 @@ vec3 YCoCgToRGB(vec3 YCoCg) {
 }
 
 float luminance(vec3 color) {
-    return dot(color, vec3(0.2126729, 0.7151522, 0.0721750));
+    return dot(color, Rec2020_2_XYZ[1]);
 }
 
 vec3 desaturate(vec3 color, float amount) {
