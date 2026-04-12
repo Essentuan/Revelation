@@ -16,6 +16,8 @@
 	#define LOD_MOD
 #endif
 
+#define ApplyFog(scene, fog) ((scene) * fog[1] + fog[0])
+
 #include "/lib/utility/Compat.glsl"
 #include "/lib/utility/Math.glsl"
 #include "/lib/utility/Matrix.glsl"
@@ -26,16 +28,4 @@
 #include "/lib/utility/SH.glsl"
 #include "/lib/utility/Offset.glsl"
 #include "/lib/utility/Load.glsl"
-
-//================================================================================================//
-
-#define ApplyFog(scene, fog) ((scene) * fog[1] + fog[0])
-
-// Remap thread index to 2D index following Z-order curve.
-uvec2 RemapThread8x8(uint idx) {
-    return uvec2((((idx >> 2) & 0x7) & 0xFFFE) | (idx & 0x1), ((idx >> 1) & 0x3) | (((idx >> 3) & 0x7) & 0xFFFC));
-}
-
-uvec2 RemapThread16x16(uint idx) {
-    return RemapThread8x8(idx & 63) + (uvec2((idx >> 6) & 1, idx >> 7) << 3);
-}
+#include "/lib/utility/Compute.glsl"
