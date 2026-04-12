@@ -123,7 +123,7 @@ void main() {
 			vec3 screenPosBack = vec3(screenPos.xy, loadDepth1(texelPos));
 			vec3 viewPosBack = ScreenToViewPos(screenPosBack);
 			vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
-			mat2x3 airFog = RaymarchAtmosphericFog(worldPos, worldPosBack, dither, screenPosBack.z > 1.0 - EPS, VF_MAX_SAMPLES >> 1);
+			mat2x3 airFog = RaymarchAtmosphericFog(worldPos, worldPosBack, dither, VF_MAX_SAMPLES >> 1);
 			sceneOut = ApplyFog(sceneOut, airFog);
 		#endif
 
