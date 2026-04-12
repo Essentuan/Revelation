@@ -9,9 +9,6 @@
 #define loadMaterialPack(texel) 	texelFetch(colortex7, texel, 0)
 #define loadNormalPack(texel) 		texelFetch(colortex8, texel, 0)
 
-#define skyMapTex					colortex5
-#define skyMapImg					colorimg5
-
 #define cloudReconstructTex			colortex9
 #define cloudReconstructImg			colorimg9
 

@@ -42,6 +42,7 @@ uniform sampler2D cloudMapTex;
 uniform sampler2D verticalLut;
 uniform sampler2D cirroLutTex;
 
+uniform sampler2D skyEnvMapTex;
 uniform sampler2D cloudShadowTex;
 
 //================================================================================================//
