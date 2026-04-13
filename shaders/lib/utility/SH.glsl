@@ -97,11 +97,12 @@ AdhocSH2 MixAdhocSH2(AdhocSH2 a, AdhocSH2 b, float t) {
 }
 
 vec3 SHToIrradiance(AdhocSH2 sh, vec3 dir) {
-    float L = dot(sh.coeff.yzw, dir) * rcp(sh.coeff.x + EPS);
-	L = L * sqrt(1.0 / 3.0) + sqrt(1.0 / 4.0);
+	float L0 = sqrt(PI / 4.0) * sh.coeff.x;
+    float L1 = sqrt(PI / 3.0) * dot(sh.coeff.yzw, dir);
+    float Y = 2.0 * (L0 + L1);
 
-    vec3 irradiance = YCoCgToRGB(vec3(sqrt(4.0 * PI) * sh.coeff.x, sh.chroma));
-    return max0(irradiance * L);
+    sh.chroma *= Y * sqrt(1.0 / (4.0 * PI)) / (sh.coeff.x + EPS);
+    return max0(YCoCgToRGB(vec3(Y, sh.chroma)));
 }
 
 AdhocSH2 IrradianceToSH(vec3 irradiance, vec3 dir) {

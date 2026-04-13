@@ -61,7 +61,7 @@ vec4 CalculateSpecularReflections(vec3 screenPos, vec3 viewPos, vec3 worldNormal
 
 	vec3 reflection = vec3(0.0);
 	if (skylight > EPS && isEyeInWater == 0) {
-		vec3 skyRadiance = textureBicubic(skyMapTex, ProjectSky(rayDir)).rgb;
+		vec3 skyRadiance = textureBicubic(skyEnvMapTex, ProjectCubemap(rayDir, 96.0)).rgb;
 		reflection = skyRadiance * smoothstep(0.3, 0.7, skylight);
 	}
 
@@ -123,7 +123,7 @@ void main() {
 			vec3 screenPosBack = vec3(screenPos.xy, loadDepth1(texelPos));
 			vec3 viewPosBack = ScreenToViewPos(screenPosBack);
 			vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
-			mat2x3 airFog = RaymarchAtmosphericFog(worldPos, worldPosBack, dither, screenPosBack.z > 1.0 - EPS, VF_MAX_SAMPLES >> 1);
+			mat2x3 airFog = RaymarchAtmosphericFog(worldPos, worldPosBack, dither, VF_MAX_SAMPLES >> 1);
 			sceneOut = ApplyFog(sceneOut, airFog);
 		#endif
 
@@ -139,8 +139,8 @@ void main() {
 				float NdotV = abs(dot(worldNormal, worldDir));
 				vec3 rayDir = worldDir + worldNormal * NdotV * 2.0;
 
-				vec2 skyViewCoord = OctEncodeUnorm(rayDir);
-				vec3 skyRadiance = textureBicubic(skyMapTex, skyViewCoord).rgb;
+				vec2 skyViewCoord = ProjectCubemap(rayDir, 96.0);
+				vec3 skyRadiance = textureBicubic(skyEnvMapTex, skyViewCoord).rgb;
 
 				vec3 reflection = skyRadiance * smoothstep(0.3, 0.7, lightmap.y);
 				float fresnel = FresnelDielectricN(NdotV, WATER_IOR);

@@ -14,7 +14,7 @@ vec2 CalculateFogDensity(vec3 rayPos, float uniformFog) {
 	rayPos += cameraPosition;
 
 	// float rayLength = length(rayPos + vec3(0.0, planetRadius, 0.0));
-	vec2 density = exp2(abs(rayPos.y - VF_HEIGHT) * oms(step(rayPos.y, VF_HEIGHT) * 0.5) * falloffScale);
+	vec2 density = exp2(abs(rayPos.y - VF_HEIGHT) * falloffScale);
 
 #if VF_NOISE_QUALITY == LOW
 	rayPos.xz -= vec2(1.0, 0.75) * worldTimeCounter;
@@ -42,40 +42,28 @@ vec2 CalculateFogDensity(vec3 rayPos, float uniformFog) {
 	#undef VF_CLOUD_SHADOWS
 #endif
 
-mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, bool skyMask, uint steps) {
+mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, uint steps) {
 	float rayLength = sdot(endPos - startPos);
 	float norm = inversesqrt(rayLength);
 	rayLength *= norm;
 
-	vec3 worldDir = (endPos - startPos) * norm;
+	vec3 rayDir = (endPos - startPos) * norm;
 
 	// Adaptive step count
 	steps = min(steps, uint(float(steps) * 0.4 + rayLength * rcp(16.0)));
-
-	float maxDist = min(lodRenderDist, 4096.0); // Limit to avoid visible noise
-	if (skyMask) {
-		// vec2 intersection = RaySphericalShellIntersection(atmosphereViewHeight, worldDir.y, planetRadius, cumulusTopRadius);
-
-		// // Not intersecting the volume
-		// if (intersection.y < 0.0 || atmosphereViewHeight > cumulusBottomRadius) return mat2x3(vec3(0.0), vec3(1.0));
-
-		rayLength = clamp((cumulusTopRadius - atmosphereViewHeight) / max0(worldDir.y), 0.0, maxDist);
-	}
-
 	float rSteps = rcp(float(steps));
 
-	float stepLength = rayLength * rSteps;
-	vec3 rayStep = stepLength * worldDir;
-	vec3 rayPos = startPos + rayStep * dither;
+	float maxDist = lodRenderDist;
+	rayLength = min(rayLength, maxDist);
 
-	vec3 shadowViewStart = transMAD(shadowModelView, startPos);
-	vec3 shadowStart = projMAD(shadowProjection, shadowViewStart);
+	// Squared step distribution
+	float stepLength = rayLength * rSteps * rSteps;
+	vec3 rayStep = rayDir * stepLength;
 
-	vec3 shadowViewStep = mat3(shadowModelView) * rayStep;
-	vec3 shadowStep = diagonal3(shadowProjection) * shadowViewStep;
-	vec3 shadowPos = shadowStart + shadowStep * dither;
+	vec3 shadowStart = projMAD(shadowProjection, transMAD(shadowModelView, startPos));
+	vec3 shadowStep = mat3(shadowModelView) * rayStep * diagonal3(shadowProjection);
 
-	float LdotV = dot(worldLightDir, worldDir);
+	float LdotV = dot(worldLightDir, rayDir);
 	vec2 phase = AtmospherePhase(LdotV);
 
 	float mieDensityMult = VF_MIE_DENSITY * 5e2 * (1.0 + wetness * VF_MIE_DENSITY_RAIN_MULT);
@@ -109,7 +97,12 @@ mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, bool sky
 	vec3 scatteringSky = vec3(0.0);
 	vec3 transmittance = vec3(1.0);
 
-	for (uint i = 0u; i < steps; ++i, rayPos += rayStep, shadowPos += shadowStep) {
+	for (uint i = 0u; i < steps; ++i) {
+		// Squared step distribution
+		float fi = float(i) + dither;
+        vec3 rayPos = startPos + rayStep * sqr(fi);
+		vec3 shadowPos = shadowStart + shadowStep * sqr(fi);
+
 		vec2 stepDensity = CalculateFogDensity(rayPos, uniformFog);
 
 		if (dot(stepDensity, vec2(1.0)) < EPS) continue; // Faster than maxOf()
@@ -167,7 +160,7 @@ mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, bool sky
 		msEnergy += uniformPhase * msV / (oms(msV) * (1.0 + opticalDepthSun * 0.25));
 
 		vec3 stepExtinction = fogExtinctionCoeff * stepDensity;
-		vec3 stepTransmittance = exp(-stepLength * stepExtinction);
+		vec3 stepTransmittance = exp(-2.0 * fi * stepLength * stepExtinction);
 
 		vec3 stepIntegral = transmittance * oms(stepTransmittance) / maxEps(stepExtinction);
 

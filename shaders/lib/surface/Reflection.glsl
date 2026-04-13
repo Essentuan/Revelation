@@ -19,7 +19,7 @@ vec4 CalculateSpecularReflections(Material material, vec3 worldNormal, vec3 scre
 
 	vec4 reflection = vec4(0.0, 0.0, 0.0, FP16_MAX);
 	if (skylight > EPS && isEyeInWater == 0) {
-		vec3 skyRadiance = textureBicubic(skyMapTex, saturate(ProjectSky(lightDir))).rgb;
+		vec3 skyRadiance = textureBicubic(skyEnvMapTex, saturate(ProjectCubemap(lightDir, 96.0))).rgb;
 		reflection.rgb = skyRadiance * smoothstep(0.3, 0.7, skylight);
 	}
 

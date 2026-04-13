@@ -23,9 +23,6 @@
 #define ATMOSPHERE_TLUT_SAMPLES 64 // [16 24 32 40 48 56 64 72 80 88 96 104 112 120 128]
 #define ATMOSPHERE_MSLUT_SAMPLES 24 // [16 24 32 40 48 56 64 72 80 88 96 104 112 120 128]
 
-#define ProjectSky      OctEncodeUnorm
-#define UnprojectSky    OctDecodeUnorm
-
 //================================================================================================//
 
 struct AtmosphereParameters {

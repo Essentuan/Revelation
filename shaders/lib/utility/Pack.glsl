@@ -1,14 +1,10 @@
 #if defined MC_NORMAL_MAP
 	void DecodeNormalTex(inout vec3 normalTex) {
-        if (any(greaterThan(normalTex, vec3(0.003)))) {
-			normalTex = normalTex * 2.0 - 1.0 + rcp255;
-			#if TEXTURE_FORMAT == 0
-				normalTex.z = sqrt(saturate(oms(sdot(normalTex.xy))));
-			#else
-				normalTex = normalize(normalTex);
-			#endif
-    		normalTex.xy = uintBitsToFloat(floatBitsToUint(max0(abs(normalTex.xy) - rcp255)) ^ (floatBitsToUint(normalTex.xy) & 0x80000000u));
-		}
+        normalTex = normalTex * 2.0 - 1.0;
+        #if TEXTURE_FORMAT == 0
+            normalTex.z = sqrt(saturate(oms(sdot(normalTex.xy))));
+        #endif
+        normalTex.xy = uintBitsToFloat(floatBitsToUint(saturate(abs(normalTex.xy) - rcp255)) ^ (floatBitsToUint(normalTex.xy) & 0x80000000u));
 	}
 #endif
 
@@ -45,6 +41,8 @@ vec2 Unpack2x8U(uint data) {
 float Unpack2x8UX(uint data) { return bitfieldExtract(data, 0, 8) * rcp255; }
 float Unpack2x8UY(uint data) { return bitfieldExtract(data, 8, 8) * rcp255; }
 
+//================================================================================================//
+
 // Octahedral encoding
 // https://jcgt.org/published/0003/02/01/paper.pdf
 vec2 OctEncodeSnorm(vec3 dir) {
@@ -73,7 +71,7 @@ vec2 ProjectMercator(vec3 dir) {
     float phi = atan(dir.x, dir.z); // Longitude
     float theta = fastAsin(dir.y); // Latitude
 
-    vec2 uv = vec2(phi, log(tan(PI * 0.25 + theta * 0.5)));
+    vec2 uv = vec2(phi, log(tan(fma(theta, 0.5, PI * 0.25))));
     return uv * rTAU + 0.5; // Scale to [0, 1]
 }
 
@@ -117,11 +115,60 @@ vec3 UnprojectEquirectanglarNonlinear(vec2 uv) {
     return vec3(sincos(phi) * cos(theta), sin(theta)).yzx;
 }
 
+// [+X][+Y][+Z]
+// [-X][-Y][-Z]
+
+vec2 ProjectCubemap(vec3 dir, float tileSize) {
+	float scale = 0.5 - 1.0 / tileSize;
+	vec3 dirAbs = abs(dir);
+
+    vec3 mask = step(vec3(maxOf(dirAbs)), dirAbs);
+    scale /= dot(mask, dirAbs);
+
+    vec3 scaleMasked = scale * mask;
+    float offsetX = dot(vec3(0.0, 1.0, 2.0), mask);
+    float offsetY = step(0.0, dot(mask, dir));
+
+    vec2 uv = dir.yz * scaleMasked.x;
+    uv += dir.xz * scaleMasked.y;
+    uv += dir.xy * scaleMasked.z;
+    uv += vec2(offsetX, offsetY);
+
+	return uv * rcp(vec2(3.0, 2.0)) + 0.5 / vec2(3.0, 2.0);
+}
+
+vec3 UnprojectCubemap(vec2 uv, float tileSize) {
+    uv = uv * vec2(3.0, 2.0) - 0.5;
+	float scale = tileSize / (0.5 * tileSize - 1.0);
+
+    float signAxis = step(0.5, uv.y);
+    vec2 temp = vec2((uv.y - signAxis) * scale, signAxis * 2.0 - 1.0);
+
+	vec3 dir;
+	if (uv.x < 0.5) {
+        // X
+		dir.y = uv.x * scale;
+		dir.zx = temp;
+	} else if (uv.x < 1.5) {
+        // Y
+		dir.x = uv.x * scale - scale;
+		dir.zy = temp;
+	} else {
+        // Z
+		dir.x = uv.x * scale - scale * 2.0;
+		dir.yz = temp;
+	}
+
+	return normalize(dir);
+}
+
+//================================================================================================//
+
 // RGBE8 encoding
 // Exponent range: [-128, 127]
 vec4 EncodeRGBE8(vec3 data) {
     float e = ceil(log2(maxOf(data)));
-    return vec4(data * exp2(-e), (e + 127.0) * rcp255);
+    return vec4(data * exp2(-e), e * rcp255 + 127.0 * rcp255);
 }
 
 vec3 DecodeRGBE8(vec4 data) {
@@ -158,7 +205,7 @@ vec4 LogLuvEncode(vec3 rgb) {
     vec3 Xp_Y_XYZp = max(logLuvM * rgb, EPS);
     result.xy = Xp_Y_XYZp.xy / Xp_Y_XYZp.z;
 
-    float Le = 2.0 * log2(Xp_Y_XYZp.y) + 127.0;
+    float Le = log2(Xp_Y_XYZp.y) * 2.0 + 127.0;
 
     result.w = fract(Le);
     result.z = (Le - (floor(result.w * 255.0)) * rcp255) * rcp255;
@@ -169,7 +216,7 @@ vec3 LogLuvDecode(vec4 logLuv) {
     float Le = logLuv.z * 255.0 + logLuv.w;
 
     vec3 Xp_Y_XYZp;
-    Xp_Y_XYZp.y = exp2((Le - 127.0) * 0.5);
+    Xp_Y_XYZp.y = exp2(Le * 0.5 - 127.0 * 0.5);
     Xp_Y_XYZp.z = Xp_Y_XYZp.y / logLuv.y;
     Xp_Y_XYZp.x = logLuv.x * Xp_Y_XYZp.z;
 
