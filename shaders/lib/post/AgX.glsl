@@ -11,6 +11,18 @@ const float shoulder_power = 3.25;
 const vec3 compression = vec3(0.1, 0.1, 0.15);
 const vec3 rotation = vec3(2.0, -1.0, -3.0);
 
+const mat3 agx_inset_matrix = mat3(
+    0.856627153315983, 0.137318972929847, 0.11189821299995,
+    0.0951212405381588, 0.761241990602591, 0.0767994186031903,
+    0.0482516061458583, 0.101439036467562, 0.811302368396859
+);
+
+const mat3 agx_inverse_outset_matrix = mat3(
+    1.1271005818144366432, -0.14132976349843826565, -0.14132976349843824772,
+    -0.1106066430966032116, 1.1578237022162717623, -0.11060664309660291788,
+    -0.016493938717834568157, -0.01649393871783425265, 1.2519364065950402828
+);
+
 //======// AgX Minimal //=========================================================================//
 
 // From https://iolite-engine.com/blog_posts/minimal_agx_implementation
@@ -73,12 +85,6 @@ vec3 agxDefaultContrastApprox_7th(vec3 x) {
 }
 
 vec3 agx(vec3 val) {
-    const mat3 agx_inset_matrix = mat3(
-        0.856627153315983, 0.137318972929847, 0.11189821299995,
-        0.0951212405381588, 0.761241990602591, 0.0767994186031903,
-        0.0482516061458583, 0.101439036467562, 0.811302368396859
-    );
-
     // const float min_ev = -12.47393f;
     // const float max_ev = 4.026069f;
 
@@ -96,12 +102,6 @@ vec3 agx(vec3 val) {
 }
 
 vec3 agxEotf(vec3 val) {
-    const mat3 agx_inverse_outset_matrix = mat3(
-        1.1271005818144366432, -0.14132976349843826565, -0.14132976349843824772,
-        -0.1106066430966032116, 1.1578237022162717623, -0.11060664309660291788,
-        -0.016493938717834568157, -0.01649393871783425265, 1.2519364065950402828
-    );
-
     // Inverse input transform (outset)
     val = agx_inverse_outset_matrix * val;
 
@@ -337,17 +337,6 @@ vec3 AgX_AllenWp(vec3 color) {
 	// See this comment from the author on the decisions made to create the matrices:
 	// https://github.com/godotengine/godot-proposals/issues/12317#issuecomment-2835824250
 
-	// Combined Rec. 709 to Rec. 2020 and Blender AgX inset matrices:
-	const mat3 rec709_to_rec2020_agx_inset_matrix = mat3(
-			0.544814746488245, 0.140416948464053, 0.0888104196149096,
-			0.373787398372697, 0.754137554567394, 0.178871756420858,
-			0.0813978551390581, 0.105445496968552, 0.732317823964232);
-
-	// Combined inverse AgX outset matrix and Rec. 2020 to Rec. 709 matrices.
-	const mat3 agx_outset_rec2020_to_rec709_matrix = mat3(
-			1.96488741169489, -0.299313364904742, -0.164352742528393,
-			-0.855988495690215, 1.32639796461980, -0.238183969428088,
-			-0.108898916004672, -0.0270845997150571, 1.40253671195648);
     #ifdef HDR_ENABLED
 	    float output_max_value = HdrGamePeakBrightness / HdrGamePaperWhiteBrightness;
     #else
@@ -355,7 +344,7 @@ vec3 AgX_AllenWp(vec3 color) {
     #endif
 
     // Apply inset matrix.
-	color = rec709_to_rec2020_agx_inset_matrix * color * 2.0;
+	color = agx_inset_matrix * color * 2.0;
 
 	// Use the allenwp tonemapping curve to match the Blender AgX curve while
 	// providing stability across all variable dyanimc range (SDR, HDR, EDR).
@@ -366,7 +355,7 @@ vec3 AgX_AllenWp(vec3 color) {
 	color = min(vec3(output_max_value), color);
 
 	// Apply outset to make the result more chroma-laden and then go back to Rec. 709.
-	color = agx_outset_rec2020_to_rec709_matrix * color;
+	color = agx_inverse_outset_matrix * color;
 
 	// Blender's lusRGB.compensate_low_side is too complex for this shader, so
 	// simply return the color, even if it has negative components. These negative
