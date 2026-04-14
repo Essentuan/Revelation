@@ -398,6 +398,9 @@ vec3 RRTAndODTFit(vec3 rgb) {
 	vec3 AcademyFit(in vec3 rgb) {
 		rgb *= Rec2020_2_AP0;
 
+		// Apply RRT sweeteners
+		rgb = RRTSweeteners(rgb);
+
 		// Apply RRT and ODT
 		rgb = RRTAndODTFit(rgb);
 
