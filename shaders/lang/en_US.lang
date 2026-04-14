@@ -49,6 +49,7 @@ screen.Bloom=Bloom
 screen.Exposure=Exposure
 screen.Vignette=Vignette
 screen.Color=Color
+screen.TonemappingParams=Tonemapping Parameters
 
 
 # OPTIONS
@@ -393,10 +394,17 @@ option.VIGNETTE_STRENGTH=Vignette Strength
 option.VIGNETTE_ROUNDNESS=Vignette Roundness
 
 option.TONE_MAPPER=Tone-Mapper
+option.TONE_MAPPER.comment=Only applied when HDR is disabled.
 value.TONE_MAPPER.AcademyFit=ACES Fit
 value.TONE_MAPPER.AcademyFull=ACES Full
 value.TONE_MAPPER.AgX_Minimal=AgX Fit
+value.TONE_MAPPER.AgX_AllenWp=AgX AllenWp
 value.TONE_MAPPER.AgX_Full=AgX Full
+
+option.HDR_TONE_MAPPER=HDR Tone-Mapper
+option.HDR_TONE_MAPPER.comment=Only applied when HDR is enabled.
+value.HDR_TONE_MAPPER.AcademyFit=ACES Fit
+value.HDR_TONE_MAPPER.AgX_AllenWp=AgX AllenWp
 
 option.AGX_LOOK=AGX Look
 value.AGX_LOOK.0=Default

@@ -15,7 +15,8 @@
 
 #include "/lib/Utility.glsl"
 
-#define TONE_MAPPER GT // [None AcademyFit AcademyFull AgX_AllenWp AgX_Minimal AgX_Full Lottes GT GT7]
+#define TONE_MAPPER AgX_Minimal // [None AcademyFit AcademyFull AgX_AllenWp AgX_Minimal AgX_Full Lottes GT GT7]
+#define HDR_TONE_MAPPER GT7 // [None AcademyFit AgX_AllenWp GT GT7]
 
 #define GAMMA_CORRECTION 2.2 // [1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 3.1 3.2 3.3 3.4 3.5 3.6 3.7 3.8 3.9 4.0 4.1 4.2 4.3 4.4 4.5 4.6 4.7 4.8 4.9 5.0]
 
@@ -216,18 +217,15 @@ void main() {
 		// color *= sRGB_2_Rec2020;
 
 		// Tone mapping
-		color = TONE_MAPPER(color);
-
-		// DRT to working space
-		// color *= Rec2020_2_sRGB;
-
-		// Working to display space
-		#ifdef HDR_ENABLED
-			// Limited in Rec2020 non negative linear value range for CAS
-			color = max(color, vec3(0.0));
-		#else
+		#ifndef HDR_ENABLED
+			color = TONE_MAPPER(color);
+			// Working to display space
 			color *= Rec2020_2_sRGB;
 			color = saturate(pow(color, vec3(1.0 / GAMMA_CORRECTION)));
+		#else
+			color = HDR_TONE_MAPPER(color);
+			// Limited in Rec2020 non negative linear value range for CAS
+			color = max(color, vec3(0.0));
 		#endif
 	}
 
