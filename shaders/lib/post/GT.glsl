@@ -70,7 +70,11 @@ vec3 GT(in vec3 x) {
 // -----------------------------------------------------------------------------
 // Defines the SDR reference white level used in our tone mapping (typically 250 nits).
 // -----------------------------------------------------------------------------
+#ifdef HDR_ENABLED
+#define GRAN_TURISMO_SDR_PAPER_WHITE HdrGamePaperWhiteBrightness // cd/m^2
+#else
 #define GRAN_TURISMO_SDR_PAPER_WHITE 250.0f // cd/m^2
+#endif
 
 // -----------------------------------------------------------------------------
 // Gran Turismo luminance-scale conversion helpers.
@@ -432,11 +436,11 @@ void applyToneMapping(inout vec3 rgb, GT7ToneMapping tm)
 }
 
 vec3 GT7(vec3 color) {
-    color *= 2.0;
+    color *= 1.2; // Scale to match the reference mid gray
 
     GT7ToneMapping tm;
     #ifdef HDR_ENABLED
-        initializeAsHDR(HdrGamePeakBrightness,tm);
+        initializeAsHDR(HdrGamePeakBrightness, tm);
     #else
         initializeAsSDR(tm);
     #endif

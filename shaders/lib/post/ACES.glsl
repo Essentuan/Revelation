@@ -395,7 +395,7 @@ vec3 RRTAndODTFit(vec3 rgb) {
 	return a / b;
 }
 #ifndef HDR_ENABLED
-	vec3 AcademyFit(in vec3 rgb) {
+	vec3 AcademyFit(vec3 rgb) {
 		rgb *= Rec2020_2_AP0;
 
 		// Apply RRT sweeteners
@@ -413,7 +413,7 @@ vec3 RRTAndODTFit(vec3 rgb) {
 	// Use this simpler fit for HDR as of now.
 	// https://knarkowicz.wordpress.com/2016/08/31/hdr-display-first-steps/
 	vec3 AcademyFit(vec3 x){
-		x *= 1.2;
+		x *= 0.65;
 		float a = 15.8f;
 		float b = 2.12f;
 		float c = 1.2f;
