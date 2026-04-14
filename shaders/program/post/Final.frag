@@ -43,7 +43,7 @@ out vec3 finalOut;
 
 vec3 FFXCasFilter(in ivec2 texel, in float sharpness) {
 	#ifdef HDR_ENABLED
-		#define CasLoad(offset) saturate(texelFetchOffset(colortex0, texel, 0, offset).rgb / HdrGamePeakBrightness)
+		#define CasLoad(offset) reinhard(texelFetchOffset(colortex0, texel, 0, offset).rgb)
 	#else
 		#define CasLoad(offset) texelFetchOffset(colortex0, texel, 0, offset).rgb
 	#endif
@@ -81,7 +81,12 @@ vec3 FFXCasFilter(in ivec2 texel, in float sharpness) {
 	//  w 1 w
 	//  0 w 0
     vec3 w = amp * -rcp(mix(8.0, 5.0, sharpness));
-	return saturate(((b + d + f + h) * w + e) / (1.0 + 4.0 * w));
+	vec3 result = saturate(((b + d + f + h) * w + e) / (1.0 + 4.0 * w));
+	#ifdef HDR_ENABLED
+		return invReinhard(result);
+	#else
+		return result;
+	#endif
 }
 
 #include "/lib/universal/TextRenderer.glsl"
@@ -109,8 +114,8 @@ void main() {
 		finalOut = texelFetch(colortex4, texelPos, 0).rgb;
 	#else
 		#ifdef HDR_ENABLED
-			// sRGB encode after CAS 
-			finalOut = linearToSRGBSafe(FFXCasFilter(texelPos, CAS_STRENGTH) * Rec2020_2_sRGB * HdrGamePeakBrightness * HdrGamePaperWhiteBrightness / HdrUIBrightness);
+			// sRGB encode after CAS
+			finalOut = linearToSRGBSafe(FFXCasFilter(texelPos, CAS_STRENGTH) * Rec2020_2_sRGB * HdrGamePaperWhiteBrightness / HdrUIBrightness);
 		#else
 			finalOut = FFXCasFilter(texelPos, CAS_STRENGTH);
 		#endif
