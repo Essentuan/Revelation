@@ -436,8 +436,6 @@ void applyToneMapping(inout vec3 rgb, GT7ToneMapping tm)
 }
 
 vec3 GT7(vec3 color) {
-    color *= 1.2; // Scale to match the reference mid gray
-
     GT7ToneMapping tm;
     #ifdef HDR_ENABLED
         initializeAsHDR(HdrGamePeakBrightness, tm);
