@@ -544,7 +544,7 @@ vec3 bt1886_r(vec3 L, const float gamma, const float Lw, const float Lb) {
     return pow(max(L / a, 0.0), vec3(rGamma)) - b;
 }
 
-vec3 ODT_Rec2020_P3D65limited_100nits_dim(vec3 rgbPre) {
+vec3 ODT_Rec2020_P3D65limited_100nits_dim_notrc(vec3 rgbPre) {
     SegmentedSplineParams_c9 params = ODT_48nits;
 
     params.minPoint.x = segmented_spline_c5_fwd(params.minPoint.x, RRT_PARAMS);
@@ -577,18 +577,11 @@ vec3 ODT_Rec2020_P3D65limited_100nits_dim(vec3 rgbPre) {
     XYZ *= D60ToD65_CAT;
 
     // CIE XYZ to display primaries
-    linearCV = XYZ * XYZ_2_sRGB;
+    linearCV = XYZ * XYZ_2_Rec2020;
 
     // Handle out-of-gamut values
     // Clip values < 0 or > 1 (i.e. projecting outside the display primaries)
-    linearCV = saturate(linearCV);
-
-	const float dispGamma = 2.4;
-	const float lW = 1.0;
-	const float lB = 0.0;
-
-    // Encode linear code values with transfer function
-	return bt1886_r(linearCV, dispGamma, lW, lB);
+	return saturate(linearCV);
 }
 
 vec3 AcademyFull(vec3 rgb) {
@@ -598,7 +591,7 @@ vec3 AcademyFull(vec3 rgb) {
 	rgb = RRT(rgb);
 
 	// Apply ODT
-	rgb = ODT_Rec2020_P3D65limited_100nits_dim(rgb);
+	rgb = ODT_Rec2020_P3D65limited_100nits_dim_notrc(rgb);
 
-	return sRGBToLinear(rgb);
+	return rgb;
 }
