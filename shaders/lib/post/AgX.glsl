@@ -344,7 +344,7 @@ vec3 AgX_AllenWp(vec3 color) {
     #endif
 
     // Apply inset matrix.
-	color = agx_inset_matrix * color * 2.0;
+	color = agx_inset_matrix * color;
 
 	// Use the allenwp tonemapping curve to match the Blender AgX curve while
 	// providing stability across all variable dyanimc range (SDR, HDR, EDR).
