@@ -119,12 +119,17 @@ void main() {
 
 		if (dot(transmittance, vec3(1.0)) > EPS) {
 			vec3 celestial = RenderSun(worldDir, worldSunDir);
-			vec3 vanillaMoon = albedo;
+
+			#ifdef RENDER_MOON
+				vec4 moon = RenderMoon(worldDir, -worldSunDir);
+			#else
+				vec4 moon = vec4(albedo, step(0.06, albedo.g));
+			#endif
 
 			#ifdef GALAXY
-				celestial += mix(RenderGalaxy(worldDir), vanillaMoon, step(0.06, vanillaMoon.g));
+				celestial += mix(RenderGalaxy(worldDir), moon.rgb, moon.a);
 			#else
-				celestial += mix(RenderStars(worldDir), vanillaMoon, step(0.06, vanillaMoon.g));
+				celestial += mix(RenderStars(worldDir), moon.rgb, moon.a);
 			#endif
 
 			sceneOut += celestial * transmittance;

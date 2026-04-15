@@ -79,7 +79,9 @@ option.ATMOSPHERE_SKY_SAMPLES=天空采样数
 option.ATMOSPHERE_TLUT_SAMPLES=透射率LUT采样数
 option.ATMOSPHERE_MSLUT_SAMPLES=多重散射LUT采样数
 
+option.RENDER_MOON=渲染月球
 option.SUN_RADIUS_MULT=太阳半径乘数
+option.MOON_RADIUS_MULT=月球半径乘数
 
 option.STARS_COVERAGE=星星覆盖率
 option.STARS_INTENSITY=星星亮度
