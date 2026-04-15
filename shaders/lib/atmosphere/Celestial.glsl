@@ -14,11 +14,11 @@ vec3 RenderSun(vec3 worldDir, vec3 sunDir) {
     const float cosRadius = cos(sunAngularRadius);
     const vec3 sunRadiance = sunIrradiance / (TAU * oms(cosRadius));
 
-    float cosTheta = dot(worldDir, sunDir);
-    if (cosTheta >= cosRadius) {
+    float LdotV = dot(worldDir, sunDir);
+    if (LdotV >= cosRadius) {
         const vec3 alpha = vec3(0.397, 0.503, 0.652);
 
-        float centerToEdge = saturate(oms(cosTheta) / oms(cosRadius));
+        float centerToEdge = saturate(oms(LdotV) / oms(cosRadius));
         vec3 factor = pow(vec3(1.0 - centerToEdge * centerToEdge), alpha * 0.5);
         vec3 finalLuminance = sunRadiance * factor;
 
@@ -30,8 +30,10 @@ vec3 RenderSun(vec3 worldDir, vec3 sunDir) {
 vec4 RenderMoon(vec3 worldDir, vec3 moonDir) {
     const vec3 moonAlbedo = vec3(0.136);
     const vec3 moonRadiance = moonAlbedo * sunIrradiance;
+    const float cosRadius = cos(moonAngularRadius);
 
-    if (dot(worldDir, moonDir) >= cos(moonAngularRadius)) {
+    float LdotV = dot(worldDir, moonDir);
+    if (LdotV >= cosRadius) {
         float moonT = RaySphereIntersection(-moonDir, worldDir, moonAngularRadius).x;
         vec3 moonNormal = normalize(worldDir * moonT - moonDir);
 
@@ -41,8 +43,11 @@ vec4 RenderMoon(vec3 worldDir, vec3 moonDir) {
         vec3 lightDir = cross(vec3(0.0, 1.0, 0.0), worldDir);
         lightDir = sinTheta * lightDir - cosTheta * worldDir;
 
+        float centerToEdge = saturate(oms(LdotV) / oms(cosRadius));
+        float factor = sqrt(1.0 - centerToEdge * centerToEdge);
+
         float diffuse = saturate(dot(moonNormal, lightDir)) * rPI;
-        return vec4(diffuse * moonRadiance, 1.0);
+        return vec4(diffuse * moonRadiance * factor, 1.0);
     }
     return vec4(0.0);
 }
