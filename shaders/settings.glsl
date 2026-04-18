@@ -196,7 +196,7 @@ const float moonAngularRadius = MOON_RADIUS_MULT * atan(moonRadius / moonDistanc
 
 /* Reflections */
 	#define ROUGH_REFLECTIONS // Enables rough reflections
-	#define ROUGH_REFLECTIONS_THRESHOLD 0.005 // Threshold for rough reflections. [0.0001 0.0002 0.0005 0.0007 0.001 0.002 0.005 0.007 0.01 0.02 0.05 0.07 0.1 0.2 0.5]
+	#define ROUGH_REFLECTIONS_THRESHOLD 0.001 // Threshold for rough reflections. [0.0001 0.0002 0.0005 0.0007 0.001 0.002 0.005 0.007 0.01 0.02 0.05 0.07 0.1 0.2 0.5]
 
 	#define REFLECTION_FILTER // Enables reflection filter
 
