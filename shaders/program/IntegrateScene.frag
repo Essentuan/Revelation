@@ -126,8 +126,10 @@ void main() {
 
     vec3 sceneColor = loadSceneMain(refractedTexel);
 
+	float viewDist = length(viewPos);
 	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
-	vec3 worldDir = normalize(worldPos);
+	vec3 worldDir = worldPos / viewDist;
+	worldPos += gbufferModelViewInverse[3].xyz;
 
 	if (depth < 1.0) {
 		vec4 translucent = ExtractSpecularTex(materialPack);
@@ -178,7 +180,6 @@ void main() {
 		}
 	#endif
 
-	float viewDistance = length(viewPos);
 	float LdotV = dot(worldLightDir, worldDir);
 
 	// Underwater fog
@@ -186,14 +187,14 @@ void main() {
 		#ifdef UW_VOLUMETRIC_FOG
 			mat2x3 waterFog = UpscaleVolumetricFog(texelPos, -viewPos.z);
 		#else
-			mat2x3 waterFog = AnalyticWaterFog(eyeSkylightSmooth, viewDistance, LdotV);
+			mat2x3 waterFog = AnalyticWaterFog(eyeSkylightSmooth, viewDist, LdotV);
 		#endif
 		sceneColor = ApplyFog(sceneColor, waterFog);
 		fogMask = mean(waterFog[1]);
 	}
 
 	// Vanilla fog
-	RenderVanillaFog(sceneColor, fogMask, viewDistance);
+	RenderVanillaFog(sceneColor, fogMask, viewDist);
 
 	// Convert to YCoCg for TAA clipping
 	#if defined TAA_ENABLED && RENDER_MODE == 1
