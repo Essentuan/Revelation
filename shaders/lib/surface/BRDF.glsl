@@ -367,7 +367,7 @@ vec3 SphericalAreaGGX(float LdotH, float NdotV, float NdotL, float LdotV, float 
 
 float SpecularThroughputGGX(float NdotV, float NdotL, float alpha) {
     float alpha2 = alpha * alpha;
-	float G1 = VisSmithGGX(NdotV, alpha2);
-	float G2 = VisSmithGGX(NdotL, NdotV, alpha2);
+	float G1 = G1SmithGGX(NdotV, alpha2);
+	float G2 = G2SmithGGX(NdotL, NdotV, alpha2);
 	return G2 / G1;
 }
