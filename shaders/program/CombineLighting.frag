@@ -6,13 +6,12 @@
 	Copyright (C) 2026 HaringPro
 	Apache License 2.0
 
-	Pass: Deferred lighting and sky combination
-		  Compute specular reflections
+	Pass: Compute direct lighting, combine with indirect lighting and atmosphere
 
 --------------------------------------------------------------------------------
 */
 
-#define PASS_DEFERRED_LIGHTING
+#define PASS_COMBINE_LIGHTING
 
 //======// Utility //=============================================================================//
 
@@ -166,6 +165,12 @@ void main() {
 
 		Material material = GetMaterialData(specularTex);
 
+		#if defined MC_SPECULAR_MAP
+			vec3 f0 = GetMaterialF0(material.metalness, albedo);
+		#else
+			const vec3 f0 = vec3(DEFAULT_DIELECTRIC_F0);
+		#endif
+
 		float sssAmount = 0.0;
 		#if SUBSURFACE_SCATTERING_MODE < 2
 			// Hard-coded sss amount for certain materials
@@ -214,6 +219,7 @@ void main() {
 		#endif
 
 		float NdotL = saturate(dot(worldNormal, worldLightDir));
+		float NdotV = abs(dot(worldNormal, worldDir));
 
 		// Shadows and SSS
         if (NdotL + sssAmount > EPS) {
@@ -255,23 +261,15 @@ void main() {
 				// Apply parallax shadows
 				#ifdef PARALLAX_SHADOW
 					#if defined PARALLAX && !defined PARALLAX_DEPTH_WRITE
-						shadow *= oms(loadSceneMain(texelPos).x);
+						shadow *= oms(texelFetch(colortex12, texelPos, 0).x);
 					#endif
 				#endif
 
 				vec3 halfway = normalize(worldLightDir - worldDir);
-				float NdotV = abs(dot(worldNormal, worldDir));
 				float NdotH = dot(worldNormal, halfway);
 				float LdotH = dot(worldLightDir, halfway);
 
 				sceneOut += shadow * DiffuseBurley(LdotH, NdotV, NdotL, material.roughness);
-
-				#if defined MC_SPECULAR_MAP
-					vec3 f0 = GetMaterialF0(material.metalness, albedo);
-				#else
-					const vec3 f0 = vec3(DEFAULT_DIELECTRIC_F0);
-				#endif
-
 				specularDirect = shadow * SpecularGGX(LdotH, NdotV, NdotL, NdotH, material.roughness, f0);
 			}
 		}
@@ -340,7 +338,6 @@ void main() {
 		// Indirect diffuse lighting
 		#ifdef SSILVB_ENABLED
 			#ifdef SVGF_ENABLED
-				float NdotV = abs(dot(worldNormal, worldDir));
 				vec3 radiance = UpscaleDiffuseIndirect(texelPos, worldNormal, length(viewPos), NdotV);
 			#else
 				vec3 radiance = texelFetch(colortex3, texelPos >> 1, 0).rgb;
@@ -358,7 +355,15 @@ void main() {
 		material.metalness *= 0.2 * lightmap.y + 0.8;
 		sceneOut *= oms(material.metalness);
 
-		// Direct specular lighting
+		// Direct specular
 		sceneOut += specularDirect;
+
+		// Indirect specular
+		#if defined MC_SPECULAR_MAP
+			vec2 brdf = texture(brdfLutTex, vec2(material.roughness, NdotV)).xy;
+
+			vec3 specular = f0 * brdf.x + brdf.y;
+			sceneOut += loadSceneMain(texelPos) * specular;
+		#endif
 	}
 }

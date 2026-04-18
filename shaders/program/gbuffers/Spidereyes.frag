@@ -20,7 +20,7 @@ layout (location = 0) out vec4 albedoOut;
 layout (location = 1) out uvec2 materialOut;
 
 #if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
-/* RENDERTARGETS: 6,7,0 */
+/* RENDERTARGETS: 6,7,12 */
 layout (location = 2) out float parallaxShadowOut;
 #endif
 

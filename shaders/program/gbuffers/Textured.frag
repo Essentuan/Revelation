@@ -21,7 +21,7 @@ layout (location = 1) out uvec4 materialOut;
 layout (location = 2) out vec4 normalOut;
 
 #if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
-/* RENDERTARGETS: 6,7,8,0 */
+/* RENDERTARGETS: 6,7,8,12 */
 layout (location = 3) out float parallaxShadowOut;
 #endif
 
