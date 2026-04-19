@@ -185,38 +185,21 @@ float NDFAnisotropicGGX(float ax, float ay, float NdotH, float XdotH, float Ydot
 //================================================================================================//
 
 // Smith 1967, "Geometrical shadowing of a random rough surface"
-float G1SmithGGX(float cosTheta, float alpha2) {
-    return 2.0 * cosTheta * rcp(sqrt(alpha2 + oms(alpha2) * cosTheta * cosTheta) + cosTheta);
-}
-
-float G2SmithGGX(float NdotL, float NdotV, float alpha2) {
-    return G1SmithGGX(NdotL, alpha2) * G1SmithGGX(NdotV, alpha2);
-}
-
-// Schlick 1994, "An Inexpensive BRDF Model for Physically-Based Rendering"
-float G1Schlick(float cosTheta, float k) {
-    return cosTheta / (cosTheta * oms(k) + k);
-}
-
-float G2Schlick(float NdotL, float NdotV, float alpha) {
-    float k = alpha * 0.5; // sqr(alpha + 1.0) * 0.125;
-    return G1Schlick(NdotL, k) * G1Schlick(NdotV, k);
-}
-
-float G2SchlickBeckman(float NdotL, float NdotV, float alpha2) {
-    float k = alpha2 * 0.797884560802865;
-    return G1Schlick(NdotL, k) * G1Schlick(NdotV, k);
-}
-
-//================================================================================================//
-
-// Smith 1967, "Geometrical shadowing of a random rough surface"
 float VisSmithGGX(float cosTheta, float alpha2) {
-    return rcp(sqrt(alpha2 + oms(alpha2) * cosTheta * cosTheta) + cosTheta);
+    return rcp(sqrt((cosTheta - cosTheta * alpha2) * cosTheta + alpha2) + cosTheta);
 }
 
 float VisSmithGGX(float NdotL, float NdotV, float alpha2) {
-    return VisSmithGGX(NdotL, alpha2) * VisSmithGGX(NdotV, alpha2);
+    float visL = NdotL + sqrt((NdotL - NdotL * alpha2) * NdotL + alpha2);
+    float visV = NdotV + sqrt((NdotV - NdotV * alpha2) * NdotV + alpha2);
+    return rcp(visL * visV);
+}
+
+// Heitz 2014, "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs"
+float VisSmithJoint(float NdotL, float NdotV, float alpha2) {
+	float visL = NdotV * sqrt((NdotL - NdotL * alpha2) * NdotL + alpha2);
+	float visV = NdotL * sqrt((NdotV - NdotV * alpha2) * NdotV + alpha2);
+	return 0.5 * rcp(visL + visV);
 }
 
 // Schlick 1994, "An Inexpensive BRDF Model for Physically-Based Rendering"
@@ -247,7 +230,7 @@ vec3 SpecularGGX(float LdotH, float NdotV, float NdotL, float NdotH, float rough
 	float D = NDFTrowbridgeReitz(NdotH * NdotH, alpha2);
 
     // Visibility term (= G / (4 * NdotV * NdotL))
-    float Vis = VisSmithGGX(NdotL, NdotV, alpha2);
+    float Vis = VisSmithJoint(NdotL, NdotV, alpha2);
 
 	return F * D * Vis * NdotL;
 }
@@ -355,7 +338,7 @@ vec3 SphericalAreaGGX(float LdotH, float NdotV, float NdotL, float LdotV, float 
 	float D = NDFTrowbridgeReitz(NdotH2, alpha2);
 
     // Visibility term (= G / (4 * NdotV * NdotL))
-    float Vis = VisSmithGGX(NdotL, NdotV, alpha2);
+    float Vis = VisSmithJoint(NdotL, NdotV, alpha2);
 
     // Both Karis’ approach and our approach are not truely energy conserving as their normalization is only approximate.
     // We’re experimenting with different formulas for the normalization to try to improve its accuracy, of which this is one:
@@ -365,9 +348,7 @@ vec3 SphericalAreaGGX(float LdotH, float NdotV, float NdotL, float LdotV, float 
 	return F * D * Vis * normalization * NdotL;
 }
 
-float SpecularThroughputGGX(float NdotV, float NdotL, float alpha) {
-    float alpha2 = alpha * alpha;
-	float G1 = G1SmithGGX(NdotV, alpha2);
-	float G2 = G2SmithGGX(NdotL, NdotV, alpha2);
-	return G2 / G1;
+float SpecularThroughputGGX(float NdotV, float NdotL, float roughness) {
+    float alpha2 = roughness * roughness;
+	return VisSmithJoint(NdotL, NdotV, alpha2) / VisSmithGGX(NdotV, alpha2);
 }
