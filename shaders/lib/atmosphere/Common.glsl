@@ -85,7 +85,7 @@ const float moonRadius   = 1.7374e6;
 const float moonDistance = 3.8440e8;
 const float moonAngularRadius = MOON_RADIUS_MULT * atan(moonRadius / moonDistance);
 
-const vec3 moonAlbedo = vec3(0.136) * exp2(NIGHT_BRIGHTNESS * 4.0);
+const vec3 moonAlbedo = vec3(0.136) * exp2(NIGHT_BRIGHTNESS);
 const vec3 moonRadiance = moonAlbedo * sunIrradiance;
 const vec3 moonIrradiance = moonRadiance * (TAU * (1.0 - cos(moonAngularRadius)));
 
