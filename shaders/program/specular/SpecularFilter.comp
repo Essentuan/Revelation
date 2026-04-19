@@ -22,11 +22,7 @@ const vec2 workGroupsRender = vec2(1.0, 1.0);
 
 //======// Uniform //=============================================================================//
 
-#if SPECULAR_FILTER_PASS == 2
-    writeonly uniform image2D colorimg0;
-#else
-    writeonly uniform image2D colorimg3;
-#endif
+writeonly uniform image2D colorimg0;
 
 #include "/lib/universal/Uniform.glsl"
 
@@ -84,7 +80,7 @@ void SpecularFilter(inout vec4 specularData, ivec2 texel, float roughness, vec3 
         ivec2 sampleTexel = texel + ivec2(tangent * offset.x + bitangent * offset.y);
 
         if (clamp(sampleTexel, ivec2(1), texelEnd) == sampleTexel) {
-            vec4 sampleData = texelFetch(colortex3, sampleTexel, 0);
+            vec4 sampleData = texelFetch(colortex0, sampleTexel, 0);
 
             float sampleLinearDepth = ScreenToViewDepth(loadDepth0(sampleTexel));
             vec3 sampleWorldNormal = FetchSurfaceNormal(sampleTexel);
@@ -122,7 +118,7 @@ void main() {
         vec3 worldDir = mat3(gbufferModelViewInverse) * viewDir;
         vec3 worldNormal = FetchSurfaceNormal(texelPos);
 
-        vec4 specularData = texelFetch(colortex3, texelPos, 0);
+        vec4 specularData = texelFetch(colortex0, texelPos, 0);
     #ifdef REFLECTION_FILTER
         if (material.isRough) {
             const float filterSize = float(32 >> SPECULAR_FILTER_PASS);
@@ -136,20 +132,6 @@ void main() {
         }
     #endif
 
-    #if SPECULAR_FILTER_PASS == 2
-        vec3 sceneOut = loadSceneMain(texelPos);
-        vec3 albedo = FetchBaseColor(texelPos);
-
-        float NdotV = abs(dot(worldNormal, worldDir));
-        vec2 brdf = texture(brdfLutTex, vec2(material.roughness, NdotV)).xy;
-
-        vec3 f0 = GetMaterialF0(material.metalness, albedo);
-        vec3 specular = f0 * brdf.x + brdf.y;
-        sceneOut += specularData.rgb * specular;
-
-        imageStore(colorimg0, texelPos, vec4(sceneOut, 1.0));
-    #else
-        imageStore(colorimg3, texelPos, specularData);
-    #endif
+        imageStore(colorimg0, texelPos, specularData);
     }
 }

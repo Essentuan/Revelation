@@ -48,7 +48,7 @@ vec3 RaymarchSunTransmittance(vec3 rayPos, vec3 rayDir) {
     vec3 od = vec3(0.0);
     for (uint i = 0u; i < ATMOSPHERE_TLUT_SAMPLES; ++i, rayPos += rayStep) {
         vec3 density = AtmosphereDensity(rayPos);
-        od += atmosphereExtinction * density;
+        od += atmosphereExtinctionCoeff * density;
     }
     return exp(-stepSize * od);
 }

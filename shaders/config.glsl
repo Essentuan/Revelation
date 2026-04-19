@@ -68,10 +68,10 @@
 
 	|   Buffer		|   Format          |   Resolution	|   Usage
 	|———————————————|———————————————————|———————————————|———————————————————————————
-	|	colortex0	|   rgba16f  		|	Full res  	|	Scene data
+	|	colortex0	|   rgba16f  		|	Full res  	|	Indirect specular -> Scene data
 	|	colortex1	|   rgba16f		    |	Full res  	|	Scene history
-	|	colortex2	|   rgba16f         |	Half res	|	Indirect diffuse lighting history
-	|	colortex3	|   rgba16f         |	Full res  	|	Indirect diffuse lighting -> Indirect specular lighting -> Motion vector
+	|	colortex2	|   rgba16f         |	Half res	|	Indirect diffuse history
+	|	colortex3	|   rgba16f         |	Full res  	|	Indirect diffuse -> Motion vector
 	|	colortex4	|   r11f_g11f_b10f  |	Full res  	|	Reprojected scene history -> Bloom tiles
 	|	colortex5	|   		  		|			   	|	Unused
 	|	colortex6	|   rgba8           |	Full res  	|	Solid albedo, rain alpha

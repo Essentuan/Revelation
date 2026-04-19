@@ -76,7 +76,9 @@ option.ATMOSPHERE_SKY_SAMPLES=Atmosphere Sky Samples
 option.ATMOSPHERE_TLUT_SAMPLES=Transmittance LUT Samples
 option.ATMOSPHERE_MSLUT_SAMPLES=Multi-Scatter LUT Samples
 
+option.RENDER_MOON=Render Moon
 option.SUN_RADIUS_MULT=Sun Radius Multiplier
+option.MOON_RADIUS_MULT=Moon Radius Multiplier
 
 option.STARS_COVERAGE=Stars Coverage
 option.STARS_INTENSITY=Stars Intensity

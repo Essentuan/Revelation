@@ -1,29 +1,52 @@
+#define RENDER_MOON
 
 #define STARS_INTENSITY 0.2 // [0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
 #define STARS_COVERAGE  0.1 // [0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
 
 #define GALAXY // Enables the rendering of the galaxy
 #define GALAXY_SOLAR_POS 0.5 // 0.0 = spring equinox, 0.25 = summer solstice, 0.5 = autumn equinox, 0.75 = winter solstice. [0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0]
-#define GALAXY_INTENSITY 0.05 // [0.0 0.001 0.002 0.003 0.004 0.005 0.006 0.007 0.008 0.009 0.01 0.015 0.02 0.025 0.03 0.035 0.04 0.045 0.05 0.055 0.06 0.065 0.07 0.075 0.08 0.085 0.09 0.095 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0]
+#define GALAXY_INTENSITY 0.02 // [0.0 0.001 0.002 0.003 0.004 0.005 0.006 0.007 0.008 0.009 0.01 0.015 0.02 0.025 0.03 0.035 0.04 0.045 0.05 0.055 0.06 0.065 0.07 0.075 0.08 0.085 0.09 0.095 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0]
 
 //================================================================================================//
 
-vec3 RenderSun(vec3 worldDir, vec3 sunVector) {
+// Physical sun model from http://www.physics.hmc.edu/faculty/esin/a101/limbdarkening.pdf
+vec3 RenderSun(vec3 worldDir, vec3 sunDir) {
     const float cosRadius = cos(sunAngularRadius);
-    const vec3 sunRadiance = sunIrradiance / (TAU * oms(cosRadius));
 
-    float cosTheta = dot(worldDir, sunVector);
-    if (cosTheta >= cosRadius) {
-        // Physical sun model from http://www.physics.hmc.edu/faculty/esin/a101/limbdarkening.pdf
+    float LdotV = dot(worldDir, sunDir);
+    if (LdotV >= cosRadius) {
         const vec3 alpha = vec3(0.397, 0.503, 0.652);
 
-        float centerToEdge = saturate(oms(cosTheta) / oms(cosRadius));
+        float centerToEdge = saturate(oms(LdotV) / oms(cosRadius));
         vec3 factor = pow(vec3(1.0 - centerToEdge * centerToEdge), alpha * 0.5);
         vec3 finalLuminance = sunRadiance * factor;
 
         return finalLuminance;
     }
     return vec3(0.0);
+}
+
+vec4 RenderMoon(vec3 worldDir, vec3 moonDir) {
+    const float cosRadius = cos(moonAngularRadius);
+
+    float LdotV = dot(worldDir, moonDir);
+    if (LdotV >= cosRadius) {
+        float moonT = RaySphereIntersection(-moonDir, worldDir, moonAngularRadius).x;
+        vec3 moonNormal = normalize(worldDir * moonT - moonDir);
+
+        float cosTheta = cos(0.125 * TAU * float(moonPhase));
+        float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+        vec3 lightDir = cross(vec3(0.0, 1.0, 0.0), worldDir);
+        lightDir = sinTheta * lightDir - cosTheta * worldDir;
+
+        float centerToEdge = saturate(oms(LdotV) / oms(cosRadius));
+        float factor = sqrt(1.0 - centerToEdge * centerToEdge);
+
+        float diffuse = saturate(dot(moonNormal, lightDir)) * rPI;
+        return vec4(diffuse * moonRadiance * factor, 1.0);
+    }
+    return vec4(0.0);
 }
 
 //================================================================================================//

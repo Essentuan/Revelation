@@ -6,13 +6,12 @@
 	Copyright (C) 2026 HaringPro
 	Apache License 2.0
 
-	Pass: Deferred lighting and sky combination
-		  Compute specular reflections
+	Pass: Compute direct lighting, combine with indirect lighting and atmosphere
 
 --------------------------------------------------------------------------------
 */
 
-#define PASS_DEFERRED_LIGHTING
+#define PASS_COMBINE_LIGHTING
 
 //======// Utility //=============================================================================//
 
@@ -85,9 +84,11 @@ void main() {
 	}
 
 	vec3 viewPos = ScreenToViewPos(screenPos);
+	float viewDist = length(viewPos);
 
 	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
-	vec3 worldDir = normalize(worldPos);
+	vec3 worldDir = worldPos / viewDist;
+	worldPos += gbufferModelViewInverse[3].xyz;
 
 	uvec4 materialPack = loadMaterialPack(texelPos);
 	uint materialID = materialPack.y;
@@ -119,12 +120,17 @@ void main() {
 
 		if (dot(transmittance, vec3(1.0)) > EPS) {
 			vec3 celestial = RenderSun(worldDir, worldSunDir);
-			vec3 vanillaMoon = albedo;
+
+			#ifdef RENDER_MOON
+				vec4 moon = RenderMoon(worldDir, -worldSunDir);
+			#else
+				vec4 moon = vec4(albedo, step(0.06, albedo.g));
+			#endif
 
 			#ifdef GALAXY
-				celestial += mix(RenderGalaxy(worldDir), vanillaMoon, step(0.06, vanillaMoon.g));
+				celestial += mix(RenderGalaxy(worldDir), moon.rgb, moon.a);
 			#else
-				celestial += mix(RenderStars(worldDir), vanillaMoon, step(0.06, vanillaMoon.g));
+				celestial += mix(RenderStars(worldDir), moon.rgb, moon.a);
 			#endif
 
 			sceneOut += celestial * transmittance;
@@ -132,8 +138,6 @@ void main() {
 
 		imageStore(colorimg7, texelPos, uvec4(0));
 	} else {
-		worldPos += gbufferModelViewInverse[3].xyz;
-
 		vec3 geoNormal, worldNormal;
 		FetchNormalData(texelPos, geoNormal, worldNormal);
 		vec3 viewNormal = mat3(gbufferModelView) * worldNormal;
@@ -160,6 +164,12 @@ void main() {
 		#endif
 
 		Material material = GetMaterialData(specularTex);
+
+		#if defined MC_SPECULAR_MAP
+			vec3 f0 = GetMaterialF0(material.metalness, albedo);
+		#else
+			const vec3 f0 = vec3(DEFAULT_DIELECTRIC_F0);
+		#endif
 
 		float sssAmount = 0.0;
 		#if SUBSURFACE_SCATTERING_MODE < 2
@@ -189,6 +199,9 @@ void main() {
 		// Remap sss amount to [0, 1] range
 		sssAmount = linearstep(64.0 * rcp255, 1.0, sssAmount) * eyeSkylightSmooth * SUBSURFACE_SCATTERING_STRENGTH;
 
+		vec3 diffuseRadiance = vec3(0.0);
+		vec3 specularRadiance = vec3(0.0);
+
 		// Cloud shadows
 		#ifdef CLOUD_SHADOWS
 			// float cloudShadow = CalculateCloudShadows(worldPos);
@@ -200,22 +213,21 @@ void main() {
 
 		// Sunlight
 		vec3 sunlightBase = cloudShadow * saturate(lightmap.y * 1e6 + float(isEyeInWater)) * global.directIlluminance;
-		vec3 specularDirect = vec3(0.0);
 
-		float worldDistSquared = sdot(worldPos);
-		float distanceFade = linearstep(shadowDistance - 8.0, shadowDistance, length(worldPos.xz));
+		float distanceFade = linearstep(shadowDistance - 8.0, shadowDistance, length(viewPos.xz));
 		#if defined LOD_MOD
 			distanceFade = saturate(distanceFade + float(lodMask));
 		#endif
 
 		float NdotL = saturate(dot(worldNormal, worldLightDir));
+		float NdotV = abs(dot(worldNormal, worldDir));
 
 		// Shadows and SSS
         if (NdotL + sssAmount > EPS) {
 			vec3 shadow = vec3(saturate(NdotL * FLT_MAX));
 			float surfaceDepth = 0.0;
 
-			float normalOffsetBase = (approxSqrt(worldDistSquared) * 2e-3 + 2e-2) * (2.0 - NdotL);
+			float normalOffsetBase = (viewDist * 2e-3 + 2e-2) * (2.0 - NdotL);
 
 			// PCSS
         	if (distanceFade < EPS) {
@@ -242,7 +254,7 @@ void main() {
 				float cutout = float(clamp(materialID, 1000u, 1003u) == materialID || clamp(materialID, 27u, 28u) == materialID);
 				sss *= mix(1.0, contactShadow, saturate(distanceFade + cutout * 0.5));
 
-				sceneOut += sunlightBase * sss * SUBSURFACE_SCATTERING_BRIGHTNESS;
+				diffuseRadiance += sunlightBase * sss * SUBSURFACE_SCATTERING_BRIGHTNESS;
 			}
 			if (dot(shadow, vec3(1.0)) > EPS) {
 				shadow *= contactShadow * sunlightBase;
@@ -250,24 +262,16 @@ void main() {
 				// Apply parallax shadows
 				#ifdef PARALLAX_SHADOW
 					#if defined PARALLAX && !defined PARALLAX_DEPTH_WRITE
-						shadow *= oms(loadSceneMain(texelPos).x);
+						shadow *= oms(texelFetch(colortex12, texelPos, 0).x);
 					#endif
 				#endif
 
 				vec3 halfway = normalize(worldLightDir - worldDir);
-				float NdotV = abs(dot(worldNormal, worldDir));
 				float NdotH = dot(worldNormal, halfway);
 				float LdotH = dot(worldLightDir, halfway);
 
-				sceneOut += shadow * DiffuseBurley(LdotH, NdotV, NdotL, material.roughness);
-
-				#if defined MC_SPECULAR_MAP
-					vec3 f0 = GetMaterialF0(material.metalness, albedo);
-				#else
-					const vec3 f0 = vec3(DEFAULT_DIELECTRIC_F0);
-				#endif
-
-				specularDirect = shadow * SpecularGGX(LdotH, NdotV, NdotL, NdotH, material.roughness, f0);
+				diffuseRadiance += shadow * DiffuseBurley(LdotH, NdotV, NdotL, material.roughness);
+				specularRadiance += shadow * SpecularGGX(LdotH, NdotV, NdotL, NdotH, material.roughness, f0);
 			}
 		}
 
@@ -289,71 +293,72 @@ void main() {
 			const float ao = 1.0;
 		#endif
 
-		// Skylight and bounced sunlight
+		// Skylight & Blocklight
 		#ifndef SSILVB_ENABLED
 			if (lightmap.y > EPS) {
 				// Spherical harmonics skylight
 				vec3 skylight = ConvolvedReconstructSH3(global.skySH, worldNormal);
-				sceneOut += skylight * cube(lightmap.y) * ao;
+				diffuseRadiance += skylight * cube(lightmap.y) * ao;
 
 				// Fake bounced light
 				float bounce = CalculateFakeBouncedLight(worldNormal);
-				sceneOut += bounce * pow5(lightmap.y) * sunlightBase * ao;
+				diffuseRadiance += bounce * pow5(lightmap.y) * sunlightBase * ao;
+			}
+
+			if (lightmap.x > EPS) {
+				lightmap.x = CalculateBlocklightFalloff(lightmap.x);
+				diffuseRadiance += lightmap.x * (ao * oms(lightmap.x) + lightmap.x) * blocklightColor;
 			}
 		#endif
 
-		// Emissive & Blocklight
+		// Emissive
 		#if EMISSIVE_MODE > 0 && defined MC_SPECULAR_MAP
-			sceneOut += material.emissiveness * 4.0 * sdot(albedo);
+			diffuseRadiance += material.emissiveness * 4.0 * sdot(albedo);
 		#endif
 		#if EMISSIVE_MODE < 2
 			// Hard-coded emissive
-			sceneOut += HardCodeEmissive(materialID, albedo, worldPos) * EMISSIVE_BRIGHTNESS;
-		#endif
-
-		#ifndef SSILVB_ENABLED
-			if (lightmap.x > EPS) {
-				lightmap.x = CalculateBlocklightFalloff(lightmap.x);
-				sceneOut += lightmap.x * (ao * oms(lightmap.x) + lightmap.x) * blocklightColor;
-			}
+			diffuseRadiance += HardCodeEmissive(materialID, albedo, worldPos) * EMISSIVE_BRIGHTNESS;
 		#endif
 
 		// Handheld light
 		#ifdef HANDHELD_LIGHTING
 			if (heldBlockLightValue + heldBlockLightValue2 > EPS) {
 				float NdotL = saturate(dot(worldNormal, -worldDir));
-				float attenuation = rcp(1.0 + worldDistSquared) * NdotL;
+				float attenuation = rcp(1.0 + viewDist * viewDist) * NdotL;
 				float irradiance = max(heldBlockLightValue, heldBlockLightValue2) * HELD_LIGHT_BRIGHTNESS;
 
-				sceneOut += irradiance * attenuation * blocklightColor;
+				diffuseRadiance += irradiance * attenuation * blocklightColor;
 			}
 		#endif
 
 		// Lightning
-		sceneOut += LightningContribution(worldPos, worldNormal);
+		diffuseRadiance += LightningContribution(worldPos, worldNormal);
 
 		// Indirect diffuse lighting
 		#ifdef SSILVB_ENABLED
 			#ifdef SVGF_ENABLED
-				float NdotV = abs(dot(worldNormal, worldDir));
 				vec3 radiance = UpscaleDiffuseIndirect(texelPos, worldNormal, length(viewPos), NdotV);
 			#else
 				vec3 radiance = texelFetch(colortex3, texelPos >> 1, 0).rgb;
 			#endif
-			sceneOut += YCoCgToRGB(radiance);
+			diffuseRadiance += YCoCgToRGB(radiance);
 		#endif
 
 		// Minimal ambient light
-		sceneOut += (worldNormal.y * 0.4 + 0.6) * max(MINIMUM_AMBIENT_BRIGHTNESS, 5e-3 * nightVision) * ao;
+		diffuseRadiance += (worldNormal.y * 0.4 + 0.6) * max(MINIMUM_AMBIENT_BRIGHTNESS, 5e-3 * nightVision) * ao;
 
-		// Apply albedo (for diffuse)
-		sceneOut *= albedo;
-
-		// Metallic diffuse elimination
+		// Apply diffuse color (baseColor * (1 - metallic))
 		material.metalness *= 0.2 * lightmap.y + 0.8;
-		sceneOut *= oms(material.metalness);
+		diffuseRadiance *= albedo * oms(material.metalness);
 
-		// Direct specular lighting
-		sceneOut += specularDirect;
+		// Indirect specular
+		#if defined MC_SPECULAR_MAP
+			vec2 brdf = texture(brdfLutTex, vec2(material.roughness, NdotV)).xy;
+
+			vec3 specular = f0 * brdf.x + brdf.y;
+			specularRadiance += loadSceneMain(texelPos) * specular;
+		#endif
+
+		sceneOut = diffuseRadiance + specularRadiance;
 	}
 }

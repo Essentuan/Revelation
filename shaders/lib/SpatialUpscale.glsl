@@ -1,4 +1,4 @@
-#if defined PASS_DEFERRED_LIGHTING
+#if defined PASS_COMBINE_LIGHTING
 #if defined SSILVB_ENABLED && defined SVGF_ENABLED
 	vec3 UpscaleDiffuseIndirect(ivec2 texelPos, vec3 worldNormal, float viewDistance, float NdotV) {
 		// ivec2 randTexel = ivec2(vec2(texelPos >> 1) + BlueNoise(texelPos, frameCounter + 3));
