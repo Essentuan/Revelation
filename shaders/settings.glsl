@@ -29,16 +29,6 @@ const float realShadowMapRes = float(shadowMapResolution) * MC_SHADOW_QUALITY;
 #define SUN_RADIUS_MULT 2.0 // Multiplier of the sun radius (1.0 = real sun radius). [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0]
 #define MOON_RADIUS_MULT 3.0 // Multiplier of the moon radius (1.0 = real moon radius). [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0]
 
-const vec3 sunIrradiance = vec3(1.0, 0.949, 0.937) * 126.0; // kW/m^2
-
-const float sunRadius   = 6.9634e8;
-const float sunDistance = 1.496e11;
-const float sunAngularRadius = SUN_RADIUS_MULT * atan(sunRadius / sunDistance);
-
-const float moonRadius   = 1.7374e6;
-const float moonDistance = 3.8440e8;
-const float moonAngularRadius = MOON_RADIUS_MULT * atan(moonRadius / moonDistance);
-
 /* Clouds */
 	#define CLOUDS
 	#define CLOUD_SHADOWS

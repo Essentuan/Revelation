@@ -48,14 +48,14 @@ mat2x3 RaymarchMultiScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
     vec3 lum = vec3(0.0), fms = vec3(0.0), transmittance = vec3(1.0);
     for (uint i = 0u; i < ATMOSPHERE_MSLUT_SAMPLES; ++i, rayPos += rayStep) {
         vec3 density = AtmosphereDensity(rayPos);
-        vec3 extinction = atmosphereExtinction * density;
+        vec3 extinction = atmosphereExtinctionCoeff * density;
 
         vec3 sampleTransmittance = exp(-stepSize * extinction);
 
         float tEarth = RaySphereIntersectNearest(rayPos, sunDir, atmosphere.bottomRadius);
         float earthShadow = step(tEarth, 0.0);
 
-        vec3 inScattering = atmosphereScattering * density.xy;
+        vec3 inScattering = atmosphereScatteringCoeff * density.xy;
         vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / extinction;
         fms += scatteringIntegral * transmittance * earthShadow;
 

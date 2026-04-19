@@ -59,19 +59,35 @@ const AtmosphereParameters atmosphere = AtmosphereParameters(
     vec3(0.2, 0.25, 0.45) * sRGB_2_Rec2020
 );
 
-const mat3 atmosphereExtinction = mat3(
+const mat3 atmosphereExtinctionCoeff = mat3(
 	atmosphere.rayleighScattering,
 	atmosphere.mieExtinction,
 	atmosphere.ozoneExtinction
 );
 
-const mat2x3 atmosphereScattering = mat2x3(
+const mat2x3 atmosphereScatteringCoeff = mat2x3(
 	atmosphere.rayleighScattering,
 	atmosphere.mieScattering
 );
 
 float atmosphereViewHeight = planetRadius + VIEWER_BASE_ALTITUDE + eyeAltitude;
 vec3 atmosphereViewPos = vec3(0.0, atmosphereViewHeight, 0.0);
+
+// Celestial bodies
+const float sunRadius   = 6.9634e8;
+const float sunDistance = 1.496e11;
+const float sunAngularRadius = SUN_RADIUS_MULT * atan(sunRadius / sunDistance);
+
+const vec3 sunIrradiance = vec3(1.0, 0.949, 0.937) * 126.0; // kW/m^2
+const vec3 sunRadiance = sunIrradiance / (TAU * (1.0 - cos(sunAngularRadius)));
+
+const float moonRadius   = 1.7374e6;
+const float moonDistance = 3.8440e8;
+const float moonAngularRadius = MOON_RADIUS_MULT * atan(moonRadius / moonDistance);
+
+const vec3 moonAlbedo = vec3(0.136) * exp2(NIGHT_BRIGHTNESS * 4.0);
+const vec3 moonRadiance = moonAlbedo * sunIrradiance;
+const vec3 moonIrradiance = moonRadiance * (TAU * (1.0 - cos(moonAngularRadius)));
 
 //================================================================================================//
 
@@ -405,7 +421,7 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
     vec3 transmittance = vec3(1.0);
     for (uint i = 0u; i < uint(sampleCount); ++i, rayPos += rayStep) {
         vec3 density = AtmosphereDensity(rayPos);
-        vec3 extinction = atmosphereExtinction * density;
+        vec3 extinction = atmosphereExtinctionCoeff * density;
 
         float r = length(rayPos);
         float mu = dot(sunDir, rayPos) / r;
@@ -413,8 +429,8 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
         vec3 sunTransmittance = AtmosphereTransmittanceToSun(r, mu);
         vec3 psiMs = AtmosphereMultiScattering(r, mu);
 
-        vec3 inScattering = atmosphereScattering * (density.xy * phaseValue) * sunTransmittance;
-        inScattering += atmosphereScattering * density.xy * psiMs;
+        vec3 inScattering = atmosphereScatteringCoeff * (density.xy * phaseValue) * sunTransmittance;
+        inScattering += atmosphereScatteringCoeff * density.xy * psiMs;
 
         vec3 sampleTransmittance = exp(-stepSize * extinction);
 
@@ -435,5 +451,5 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
         lum += atmosphere.groundAlbedo * rPI * saturate(sunZenithCos) * transmittance * transmittanceToSun;
     }
 
-    return lum * sunIrradiance;
+    return lum;
 }

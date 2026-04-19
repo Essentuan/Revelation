@@ -12,7 +12,6 @@
 // Physical sun model from http://www.physics.hmc.edu/faculty/esin/a101/limbdarkening.pdf
 vec3 RenderSun(vec3 worldDir, vec3 sunDir) {
     const float cosRadius = cos(sunAngularRadius);
-    const vec3 sunRadiance = sunIrradiance / (TAU * oms(cosRadius));
 
     float LdotV = dot(worldDir, sunDir);
     if (LdotV >= cosRadius) {
@@ -28,8 +27,6 @@ vec3 RenderSun(vec3 worldDir, vec3 sunDir) {
 }
 
 vec4 RenderMoon(vec3 worldDir, vec3 moonDir) {
-    const vec3 moonAlbedo = vec3(0.136);
-    const vec3 moonRadiance = moonAlbedo * sunIrradiance * (16.0 * NIGHT_BRIGHTNESS);
     const float cosRadius = cos(moonAngularRadius);
 
     float LdotV = dot(worldDir, moonDir);

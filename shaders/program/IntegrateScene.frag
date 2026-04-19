@@ -43,7 +43,7 @@ layout (location = 0) out vec4 sceneOut;
 #include "/lib/atmosphere/Common.glsl"
 
 #include "/lib/atmosphere/Rainbow.glsl"
-#include "/lib/atmosphere/CommonFog.glsl"
+#include "/lib/atmosphere/VanillaFog.glsl"
 
 #include "/lib/SpatialUpscale.glsl"
 
