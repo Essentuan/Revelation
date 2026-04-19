@@ -86,16 +86,6 @@ float mean(vec2 v)       { return dot(v, vec2(1.0 / 3.0)); }
 float mean(vec3 v)       { return dot(v, vec3(1.0 / 3.0)); }
 float mean(vec4 v)       { return dot(v, vec4(1.0 / 3.0)); }
 
-    float lift (float x, float a)
-    {
-        return x / (a * abs(x) + 1.0 - a);
-    }
-
-	float liftInverse (float x, float a)
-    {
-        return x * (1.0 - a) / (1.0 - abs(x) * a);
-    }
-
 //================================================================================================//
 
 float linearstep(float a, float b, float x) {
