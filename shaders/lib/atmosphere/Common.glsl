@@ -192,20 +192,8 @@ float AirPhase(float mu) {
 	return uniformPhase * 0.7629 * (1.0 + 0.932 * mu * mu);
 }
 
-// HG-Draine for aerosols
-float AerosolPhase(float mu) {
-    const float ld = log(aerosol_d);
-
-    const float gHG = 0.0604931 * log(ld) + 0.940256;
-    const float gD 	= 0.500411 - 0.081287 / (-2.0 * ld + tan(ld) + 1.27551);
-    const float a 	= 7.30354 * ld + 6.31675;
-    const float wD 	= 0.026914 * (ld - cos(5.68947 * (log(ld) - 0.0292149))) + 0.376475;
-
-	return mix(HenyeyGreensteinPhase(mu, gHG), DrainePhase(mu, gD, a), wD);
-}
-
 vec2 AtmospherePhase(float mu) {
-	return vec2(RayleighPhase(mu), AerosolPhase(mu));
+	return vec2(RayleighPhase(mu), KleinNishinaPhase(mu, 2500.0));
 }
 
 vec3 LightningContribution(vec3 pos) {
