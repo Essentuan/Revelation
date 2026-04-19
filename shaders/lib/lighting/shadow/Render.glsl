@@ -64,40 +64,53 @@ vec3 CalculateWaterCaustics(vec3 worldPos, float waterDepth, float dither) {
 	return -smin(-caustics, -0.1, 0.15) * saturate(exp2(-rLOG2 * waterExtinction * waterDepth));
 }
 
-vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, float blockerDepth) {
-	const float rSteps = 1.0 / float(PCSS_FILTER_SAMPLES);
+vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, float blockerDepth, float distortionFactor) {
+	blockerDepth *= mix(sunAngularRadius, moonAngularRadius, step(0.5, sunAngle)) * 2.0;
 
-	vec2 penumbraRadius = min(blockerDepth, 0.25) * diagonal2(shadowProjection);
+	const float minRadius = 0.015;
+	float sharpenFactor = saturate(blockerDepth * rcp(minRadius));
 
-	vec3 result = vec3(0.0);
-	vec2 waterData = vec2(0.0);
-    // float sssDepth = 0.0;
+	blockerDepth = clamp(blockerDepth, minRadius, 0.25);
+	vec2 penumbraRadius = blockerDepth * distortionFactor * diagonal2(shadowProjection);
+
+    float shadow = 0.0;
+	vec3 color = vec3(0.0);
+	vec2 waterData = vec2(0.0); // (depth, count)
 
 	for (uint i = 0u; i < PCSS_FILTER_SAMPLES; ++i) {
 		vec2 offset = sampleVogelDisk(i, PCSS_FILTER_SAMPLES, dither) * penumbraRadius;
 		vec2 sampleCoord = shadowScreenPos.xy + offset;
 
-		float sampleDepth1 = textureLod(shadowtex1, vec3(sampleCoord, shadowScreenPos.z), 0).x;
+		float sampleDepth1 = texture(shadowtex1, vec3(sampleCoord, shadowScreenPos.z)).x;
+		shadow += sampleDepth1;
 
 	#ifdef COLORED_SHADOWS
 		ivec2 sampleTexel = ivec2(sampleCoord * realShadowMapRes);
 		float sampleDepth0 = texelFetch(shadowtex0, sampleTexel, 0).x;
-        // sssDepth += saturate(shadowScreenPos.z - sampleDepth0);
 
 		if (step(shadowScreenPos.z, sampleDepth0) != sampleDepth1) {
 			float waterMask = texelFetch(shadowcolor1, sampleTexel, 0).w;
 			if (waterMask > EPS) {
 				waterData += vec2(sampleDepth0 - shadowScreenPos.z, 1.0);
 			} else {
-				result += cube(texelFetch(shadowcolor0, sampleTexel, 0).rgb) * sampleDepth1;
+				color += cube(texelFetch(shadowcolor0, sampleTexel, 0).rgb);
 			}
-		} else
+		} else {
+			color += 1.0;
+		}
 	#endif
-		result += sampleDepth1;
 	}
 
-	result *= rSteps;
-	// sssDepth *= rSteps;
+	// Early out if shadowed
+	if (shadow < EPS) return vec3(0.0);
+
+	const float rSteps = 1.0 / float(PCSS_FILTER_SAMPLES);
+	shadow *= rSteps;
+	color *= rSteps;
+
+	#ifndef COLORED_SHADOWS
+		color = vec3(1.0);
+	#endif
 
 	#ifdef WATER_CAUSTICS
 		if (waterData.y > EPS) {
@@ -105,13 +118,13 @@ vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, f
 
 			float waterDepth = waterData.x * shadowProjectionInverse[2].z * 5.0;
 			vec3 caustics = CalculateWaterCaustics(worldPos, waterDepth, dither);
-			result = mix(result, caustics, waterData.y * rSteps);
+			color = mix(color, caustics, waterData.y * rSteps);
 		}
 	#endif
 
-	// result += exp2(32.0 * shadowProjectionInverse[2].z * sssDepth) * sssAmount;
-
-	return result;
+	// Sharpen the near shadow
+	shadow = mix(smoothstep(0.3, 0.7, shadow), shadow, sharpenFactor);
+	return shadow * color;
 }
 
 vec3 CalculatePCSS(vec3 worldPos, vec3 normalOffset, float dither, out float blockerDepth) {
@@ -121,19 +134,14 @@ vec3 CalculatePCSS(vec3 worldPos, vec3 normalOffset, float dither, out float blo
 	vec3 shadowScreenPos = WorldToShadowScreenSpace(worldPos + normalOffset, distortionFactor);
 	shadowScreenPos.z -= 3e-8 * (1.0 + dither) * shadowProjectionInverse[1].y * distortionFactor;
 
-	vec3 pcss = vec3(1.0);
+	vec3 result = vec3(1.0);
 	if (saturate(shadowScreenPos) == shadowScreenPos) {
 		blockerDepth = BlockerSearch(shadowScreenPos, dither * TAU, 0.15 * distortionFactor);
-		blockerDepth *= mix(sunAngularRadius, moonAngularRadius, step(0.5, sunAngle)) * 2.0;
 
-		const float minRadius = 0.015;
-		float sharpenFactor = saturate(blockerDepth * rcp(minRadius));
-
-		pcss = PercentageCloserFilter(shadowScreenPos, worldPos, dither * TAU, max(blockerDepth, minRadius) * distortionFactor);
-		pcss = mix(smoothstep(0.3, 0.7, pcss), pcss, sharpenFactor); // Sharpen the edges of the shadow
+		result = PercentageCloserFilter(shadowScreenPos, worldPos, dither * TAU, blockerDepth, distortionFactor);
 	}
 
-	return pcss;
+	return result;
 }
 
 //================================================================================================//
@@ -144,7 +152,7 @@ float ScreenSpaceShadow(vec3 rayPos, vec3 viewPos, float dither, float sssAmount
 	rayDir *= inversesqrt(sdot(rayDir.xy));
 
 	vec3 rayStep = rayDir * (0.05 / float(SCREEN_SPACE_SHADOWS_SAMPLES));
-	rayPos += (dither + 0.5) * rayStep;
+	rayPos += dither * rayStep;
 
 	float viewDistInv = inversesqrt(sdot(viewPos));
 	float diffTolerance = 5e-4 * viewDistInv;
