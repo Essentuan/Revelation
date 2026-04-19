@@ -67,7 +67,7 @@ vec3 CalculateWaterCaustics(vec3 worldPos, float waterDepth, float dither) {
 vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, float blockerDepth) {
 	const float rSteps = 1.0 / float(PCSS_FILTER_SAMPLES);
 
-	vec2 penumbraRadius = min(sunAngularRadius * 2.0 * blockerDepth, 0.25) * diagonal2(shadowProjection);
+	vec2 penumbraRadius = min(blockerDepth, 0.25) * diagonal2(shadowProjection);
 
 	vec3 result = vec3(0.0);
 	vec2 waterData = vec2(0.0);
@@ -124,8 +124,9 @@ vec3 CalculatePCSS(vec3 worldPos, vec3 normalOffset, float dither, out float blo
 	vec3 pcss = vec3(1.0);
 	if (saturate(shadowScreenPos) == shadowScreenPos) {
 		blockerDepth = BlockerSearch(shadowScreenPos, dither * TAU, 0.15 * distortionFactor);
+		blockerDepth *= mix(sunAngularRadius, moonAngularRadius, step(0.5, sunAngle)) * 2.0;
 
-		const float minRadius = 0.008 / sunAngularRadius;
+		const float minRadius = 0.015;
 		float sharpenFactor = saturate(blockerDepth * rcp(minRadius));
 
 		pcss = PercentageCloserFilter(shadowScreenPos, worldPos, dither * TAU, max(blockerDepth, minRadius) * distortionFactor);
