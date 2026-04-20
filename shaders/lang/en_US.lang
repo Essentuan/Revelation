@@ -397,16 +397,23 @@ option.VIGNETTE_ROUNDNESS=Vignette Roundness
 
 option.TONE_MAPPER=Tone-Mapper
 option.TONE_MAPPER.comment=Only applied when HDR is disabled.
-value.TONE_MAPPER.AcademyFit=ACES Fit
-value.TONE_MAPPER.AcademyFull=ACES Full
-value.TONE_MAPPER.AgX_Minimal=AgX Fit
-value.TONE_MAPPER.AgX_AllenWp=AgX AllenWp
-value.TONE_MAPPER.AgX_Full=AgX Full
+value.TONE_MAPPER.0=None
+value.TONE_MAPPER.1=AgX Fit
+value.TONE_MAPPER.2=AgX Full
+value.TONE_MAPPER.3=AgX AllenWp
+value.TONE_MAPPER.16=ACES Fit
+value.TONE_MAPPER.17=ACES Full
+value.TONE_MAPPER.32=GT
+value.TONE_MAPPER.33=GT7
+value.TONE_MAPPER.48=Lottes
 
 option.HDR_TONE_MAPPER=HDR Tone-Mapper
 option.HDR_TONE_MAPPER.comment=Only applied when HDR is enabled.
-value.HDR_TONE_MAPPER.AcademyFit=ACES Fit
-value.HDR_TONE_MAPPER.AgX_AllenWp=AgX AllenWp
+value.HDR_TONE_MAPPER.0=None
+value.HDR_TONE_MAPPER.3=AgX AllenWp
+value.HDR_TONE_MAPPER.16=ACES Fit
+value.HDR_TONE_MAPPER.32=GT
+value.HDR_TONE_MAPPER.33=GT7
 
 option.AGX_LOOK=AGX Look
 value.AGX_LOOK.0=Default

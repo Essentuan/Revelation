@@ -401,16 +401,23 @@ option.VIGNETTE_ROUNDNESS=暗角圆度
 
 option.TONE_MAPPER=色调映射
 option.TONE_MAPPER.comment=仅当 HDR 禁用时生效。
-value.TONE_MAPPER.AcademyFit=ACES 拟合
-value.TONE_MAPPER.AcademyFull=ACES 完整
-value.TONE_MAPPER.AgX_Minimal=AgX 拟合
-value.TONE_MAPPER.AgX_AllenWp=AgX AllenWp
-value.TONE_MAPPER.AgX_Full=AgX 完整
+value.TONE_MAPPER.0=无
+value.TONE_MAPPER.1=AgX 拟合
+value.TONE_MAPPER.2=AgX 完整
+value.TONE_MAPPER.3=AgX AllenWp
+value.TONE_MAPPER.16=ACES 拟合
+value.TONE_MAPPER.17=ACES 完整
+value.TONE_MAPPER.32=GT
+value.TONE_MAPPER.33=GT7
+value.TONE_MAPPER.48=Lottes
 
 option.HDR_TONE_MAPPER=HDR 色调映射
 option.HDR_TONE_MAPPER.comment=仅当 HDR 启用时生效。
-value.HDR_TONE_MAPPER.AcademyFit=ACES 拟合
-value.HDR_TONE_MAPPER.AgX_AllenWp=AgX AllenWp
+value.HDR_TONE_MAPPER.0=无
+value.HDR_TONE_MAPPER.3=AgX AllenWp
+value.HDR_TONE_MAPPER.16=ACES 拟合
+value.HDR_TONE_MAPPER.32=GT
+value.HDR_TONE_MAPPER.33=GT7
 
 option.AGX_LOOK=AGX预设
 value.AGX_LOOK.0=默认
