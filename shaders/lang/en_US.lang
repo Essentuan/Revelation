@@ -395,10 +395,14 @@ option.VIGNETTE_STRENGTH=Vignette Strength
 option.VIGNETTE_ROUNDNESS=Vignette Roundness
 
 option.TONE_MAPPER=Tone-Mapper
-value.TONE_MAPPER.AcademyFit=ACES Fit
-value.TONE_MAPPER.AcademyFull=ACES Full
-value.TONE_MAPPER.AgX_Minimal=AgX Fit
-value.TONE_MAPPER.AgX_Full=AgX Full
+value.TONE_MAPPER.0=None
+value.TONE_MAPPER.1=AgX Fit
+value.TONE_MAPPER.2=AgX Full
+value.TONE_MAPPER.16=ACES Fit
+value.TONE_MAPPER.17=ACES Full
+value.TONE_MAPPER.32=GT
+value.TONE_MAPPER.33=GT7
+value.TONE_MAPPER.48=Lottes
 
 option.AGX_LOOK=AGX Look
 value.AGX_LOOK.0=Default

@@ -1,3 +1,11 @@
+#define TONEMAPPER_AgX_Minimal 1
+#define TONEMAPPER_AgX_Full 2
+#define TONEMAPPER_ACES_Fit 16
+#define TONEMAPPER_ACES_Full 17
+#define TONEMAPPER_GT 32
+#define TONEMAPPER_GT7 33
+#define TONEMAPPER_Lottes 48
+#define TONEMAPPER_None 0
 
 const mat3 Rec2020_2_sRGB = mat3(
      1.6603034854, -0.5875701425, -0.0728900602,

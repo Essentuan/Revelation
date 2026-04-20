@@ -15,7 +15,7 @@
 
 #include "/lib/Utility.glsl"
 
-#define TONE_MAPPER AgX_Minimal // [None AcademyFit AcademyFull AgX_Minimal AgX_Full Lottes GT GT7]
+#define TONE_MAPPER 1 // [0 1 2 16 17 32 33 48]
 
 #define GAMMA_CORRECTION 2.2 // [1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 3.1 3.2 3.3 3.4 3.5 3.6 3.7 3.8 3.9 4.0 4.1 4.2 4.3 4.4 4.5 4.6 4.7 4.8 4.9 5.0]
 
@@ -152,6 +152,24 @@ vec3 Lottes(vec3 x) {
 #include "/lib/post/AgX.glsl"
 #include "/lib/post/GT.glsl"
 
+#if TONE_MAPPER == TONEMAPPER_AgX_Minimal
+	#define TONEMAPPING_FN AgX_Minimal
+#elif TONE_MAPPER == TONEMAPPER_AgX_Full
+	#define TONEMAPPING_FN AgX_Full
+#elif TONE_MAPPER == TONEMAPPER_ACES_Fit
+	#define TONEMAPPING_FN AcademyFit
+#elif TONE_MAPPER == TONEMAPPER_ACES_Full
+	#define TONEMAPPING_FN AcademyFull
+#elif TONE_MAPPER == TONEMAPPER_GT
+	#define TONEMAPPING_FN GT
+#elif TONE_MAPPER == TONEMAPPER_GT7
+	#define TONEMAPPING_FN GT7
+#elif TONE_MAPPER == TONEMAPPER_Lottes
+	#define TONEMAPPING_FN Lottes
+#else
+	#define TONEMAPPING_FN None
+#endif
+
 //======// Main //================================================================================//
 void main() {
     ivec2 texelPos = ivec2(gl_FragCoord.xy);
@@ -216,7 +234,7 @@ void main() {
 		// color *= sRGB_2_Rec2020;
 
 		// Tone mapping
-		color = TONE_MAPPER(color);
+		color = TONEMAPPING_FN(color);
 
 		// DRT to working space
 		// color *= Rec2020_2_sRGB;
@@ -231,7 +249,7 @@ void main() {
 		const float scale = 1.5;
 
 		vec2 uv = texelToUv(texelPos) * vec2(aspectRatio, 1.0) * scale;
-		float plot = smoothstep(0.0, scale * viewPixelSize.y, abs(uv.y - TONE_MAPPER(vec3(uv.x)).x));
+		float plot = smoothstep(0.0, scale * viewPixelSize.y, abs(uv.y - TONEMAPPING_FN(vec3(uv.x)).x));
 
 		// Show LDR range
 		color = vec3(0.25) * step(uv.x, 1.0);
