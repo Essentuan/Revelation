@@ -1,4 +1,4 @@
-// https://github.com/ampas/aces-dev/blob/dev
+// https://github.com/aces-aswf/aces-core
 
 /*
 --------------------------------------------------------------------------------
@@ -235,32 +235,7 @@ float CenterHue(float hue, float centerH) {
 	return hueCentered;
 }
 
-//======// ACES Fit //============================================================================//
 
-vec3 RRTSweeteners(vec3 aces) {
-	// --- Glow module --- //
-	float saturation = rgbToSaturation(aces);
-	float ycIn = rgbToYc(aces);
-	float s = SigmoidShaper(saturation * 5.0 - 2.0);
-	float addedGlow = 1.0 + GlowFwd(ycIn, rrtGlowGain * s, rrtGlowMid);
-
-	aces *= addedGlow;
-
-	// --- Red modifier --- //
-	float hue = rgbToHue(aces);
-	float centeredHue = CenterHue(hue, rrtRedHue);
-	float hueWeight = CubicBasisShaperFit(centeredHue, rrtRedWidth);
-
-	aces.r += hueWeight * saturation * (rrtRedPivot - aces.r) * oms(rrtRedScale);
-
-    // --- ACES to RGB rendering space --- //
-	vec3 rgbPre = max0(aces * AP0_2_AP1);
-
-	// --- Global desaturation --- //
-	rgbPre = mix(vec3(dot(rgbPre, AP1_RGB2Y)), rgbPre, rrtSatFactor);
-
-	return rgbPre;
-}
 
 #define log10(x) (log2(x) * rcp(log2(10.0)))
 
@@ -387,6 +362,32 @@ float segmented_spline_c9_fwd(float x, SegmentedSplineParams_c9 params) { // par
     return pow(10.0, logy);
 }
 
+vec3 RRTSweeteners(vec3 aces) {
+	// --- Glow module --- //
+	float saturation = rgbToSaturation(aces);
+	float ycIn = rgbToYc(aces);
+	float s = SigmoidShaper(saturation * 5.0 - 2.0);
+	float addedGlow = 1.0 + GlowFwd(ycIn, rrtGlowGain * s, rrtGlowMid);
+
+	aces *= addedGlow;
+
+	// --- Red modifier --- //
+	float hue = rgbToHue(aces);
+	float centeredHue = CenterHue(hue, rrtRedHue);
+	float hueWeight = CubicBasisShaperFit(centeredHue, rrtRedWidth);
+
+	aces.r += hueWeight * saturation * (rrtRedPivot - aces.r) * oms(rrtRedScale);
+
+    // --- ACES to RGB rendering space --- //
+	vec3 rgbPre = max0(aces * AP0_2_AP1);
+
+	// --- Global desaturation --- //
+	rgbPre = mix(vec3(dot(rgbPre, AP1_RGB2Y)), rgbPre, rrtSatFactor);
+
+	return rgbPre;
+}
+
+//======// ACES Fit //============================================================================//
 // https://github.com/TheRealMJP/BakingLab/blob/master/BakingLab/ACES.hlsl
 vec3 RRTAndODTFit(vec3 rgb) {
 	vec3 a = rgb * (rgb + 0.0245786) - 0.000090537;
@@ -483,58 +484,6 @@ float moncurve_r(float y, const float gamma, const float offs) {
     const float yb = pow(offs * gamma / ((gamma - 1.0) * (1.0 + offs)), gamma);
     const float rs = pow((gamma - 1.0) / offs, gamma - 1.0) * pow((1.0 + offs) / gamma, gamma);
     return y >= yb ? (1.0 + offs) * pow(y, 1.0 / gamma) - offs : y * rs;
-}
-
-vec3 ODT_sRGB_100nits_dim(vec3 rgbPre) {
-    SegmentedSplineParams_c9 params = ODT_48nits;
-
-    params.minPoint.x = segmented_spline_c5_fwd(params.minPoint.x, RRT_PARAMS);
-    params.midPoint.x = segmented_spline_c5_fwd(params.midPoint.x, RRT_PARAMS);
-    params.maxPoint.x = segmented_spline_c5_fwd(params.maxPoint.x, RRT_PARAMS);
-
-	// Apply the tonescale independently in rendering-space RGB
-	vec3 rgbPost;
-	rgbPost.r = segmented_spline_c9_fwd(rgbPre.r, params);
-	rgbPost.g = segmented_spline_c9_fwd(rgbPre.g, params);
-	rgbPost.b = segmented_spline_c9_fwd(rgbPre.b, params);
-
-	const float cinemaWhite = 48.0;
-	const float cinemaBlack = 0.02;
-
-	// Scale luminance to linear code value
-	vec3 linearCV = Y_to_linCV(rgbPost, cinemaWhite, cinemaBlack);
-
-	// Apply gamma adjustment to compensate for dim surround
-	linearCV = dark_surround_to_dim_surround(linearCV);
-
-	// Apply desaturation to compensate for luminance difference
-	linearCV = mix(vec3(dot(linearCV, AP1_RGB2Y)), linearCV, odtSatFactor);
-
-    // Convert to display primary encoding
-    // Rendering space RGB to XYZ
-    vec3 XYZ = linearCV * AP1_2_XYZ;
-
-    // Apply CAT from ACES white point to assumed observer adapted white point
-    XYZ *= D60ToD65_CAT;
-
-    // CIE XYZ to display primaries
-    linearCV = XYZ * XYZ_2_Rec2020;
-
-    // Handle out-of-gamut values
-    // Clip values < 0 or > 1 (i.e. projecting outside the display primaries)
-    linearCV = saturate(linearCV);
-
-	const float dispGamma = 2.4;
-	const float offset = 0.055;
-
-    // Encode linear code values with transfer function
-    vec3 outputCV;
-    // moncurve_r with gamma of 2.4 and offset of 0.055 matches the EOTF found in IEC 61966-2-1:1999 (sRGB)
-    outputCV.r = moncurve_r(linearCV.r, dispGamma, offset);
-    outputCV.g = moncurve_r(linearCV.g, dispGamma, offset);
-    outputCV.b = moncurve_r(linearCV.b, dispGamma, offset);
-
-	return outputCV;
 }
 
 vec3 bt1886_r(vec3 L, const float gamma, const float Lw, const float Lb) {
