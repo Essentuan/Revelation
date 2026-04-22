@@ -433,7 +433,7 @@ vec3 SampleCosineHemisphere(vec3 vector, vec2 xy) {
 }
 
 // PDF = 1 / (2 * PI * (1 - cosThetaMax));
-vec3 SampleConeVector(vec3 vector, vec2 xy, float cosThetaMax) {
+vec3 SampleUniformCone(vec2 xy, float cosThetaMax) {
     float phi = TAU * xy.x;
     float cosTheta = mix(cosThetaMax, 1.0, xy.y);
     float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
@@ -441,5 +441,5 @@ vec3 SampleConeVector(vec3 vector, vec2 xy, float cosThetaMax) {
     float x = sinTheta * cos(phi);
     float y = sinTheta * sin(phi);
     float z = cosTheta;
-    return BuildOrthonormalBasis(vector) * vec3(x, y, z);
+    return vec3(x, y, z);
 }
