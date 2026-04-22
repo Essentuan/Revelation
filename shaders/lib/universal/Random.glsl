@@ -426,6 +426,22 @@ vec3 SampleCosineHemisphere(vec2 xy) {
 }
 
 // PDF = NoL / PI
+vec3 SampleCosineHemisphereConcentric(vec2 xy) {
+	// Rescale input from [0,1) to (-1,1). This ensures the output radius is in [0,1)
+	vec2 p = 2.0 * xy - 0.99999994;
+	vec2 a = abs(p);
+	float Lo = min(a.x, a.y);
+	float Hi = max(a.x, a.y);
+	float epsilon = 5.42101086243e-20; // 2^-64 (this avoids 0/0 without changing the rest of the mapping)
+	float phi = (PI / 4.0) * (Lo / (Hi + epsilon) + 2.0 * step(a.x, a.y));
+	float radius = Hi;
+
+	// Copy sign bits from p
+	vec2 disk = signMul(cossin(phi), p);
+    return vec3(disk * radius, sqrt(1.0 - radius * radius));
+}
+
+// PDF = NoL / PI
 vec3 SampleCosineHemisphere(vec3 vector, vec2 xy) {
     vec3 hemisphere = SampleUniformSphere(xy);
 	hemisphere = normalize(vector + hemisphere);
