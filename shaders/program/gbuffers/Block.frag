@@ -46,9 +46,7 @@ uniform sampler2D tex;
     uniform sampler2D specular;
 #endif
 
-uniform mat4 gbufferModelViewInverse;
-
-uniform float frameTimeCounter;
+#include "/lib/universal/Uniform.glsl"
 
 //======// Function //============================================================================//
 
@@ -74,17 +72,17 @@ const vec3[] COLORS = vec3[](
     vec3(0.080955, 0.314821, 0.661491)
 );
 
-mat2 mat2RotateZ(float radian) {
-	return mat2(cos(radian), -sin(radian), sin(radian), cos(radian));
-}
-
 vec2 endPortalLayer(vec2 coord, float layer) {
 	vec2 offset = vec2(8.5 / layer, (1.0 + layer / 3.0) * (frameTimeCounter * 0.0015)) + 0.25;
 
-	mat2 rotate = mat2RotateZ(radians(layer * layer * 8642.0 + layer * 18.0));
+	mat2 rotate = rotateMat(radians(layer * layer * 8642.0 + layer * 18.0));
 
 	return (4.5 - layer * 0.25) * (rotate * coord) + offset;
 }
+
+#ifdef RAIN_PUDDLES
+	#include "/lib/surface/RainPuddle.glsl"
+#endif
 
 //======// Main //================================================================================//
 void main() {
@@ -139,14 +137,6 @@ void main() {
 	materialOut.x = PackupDithered2x8U(lightmap, bayer4(gl_FragCoord.xy));
 	materialOut.y = materialID;
 
-	#if defined MC_SPECULAR_MAP
-		vec4 specularTex = texture(specular, texCoord);
-		materialOut.z = Packup2x8U(specularTex.xy);
-		materialOut.w = Packup2x8U(specularTex.zw);
-	#else
-		materialOut.zw = uvec2(0);
-	#endif
-
 	normalOut.xy = OctEncodeSnorm(geoNormal);
 
 	#if defined MC_NORMAL_MAP
@@ -160,4 +150,20 @@ void main() {
 	#if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
 		parallaxShadowOut = 0.0;
 	#endif
+
+	#if defined MC_SPECULAR_MAP
+		vec4 specularTex = ReadTexture(specular);
+	#else
+		vec4 specularTex = vec4(0.0);
+	#endif
+
+	// Compute rain puddles
+	#ifdef RAIN_PUDDLES
+		if (wetnessCustom > EPS) {
+			CalculateRainPuddles(albedoOut.rgb, specularTex.rgb, worldPos, geoNormal, lightmap.y);
+		}
+	#endif
+
+	materialOut.z = Packup2x8U(specularTex.xy);
+	materialOut.w = Packup2x8U(specularTex.zw);
 }

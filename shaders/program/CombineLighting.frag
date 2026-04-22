@@ -24,8 +24,6 @@ out vec3 sceneOut;
 
 //======// Uniform //=============================================================================//
 
-writeonly uniform uimage2D colorimg7;
-
 uniform sampler2D cloudOriginTex;
 
 #include "/lib/universal/Uniform.glsl"
@@ -59,10 +57,6 @@ uniform sampler2D cloudOriginTex;
 #endif
 
 #include "/lib/SpatialUpscale.glsl"
-
-#ifdef RAIN_PUDDLES
-	#include "/lib/surface/RainPuddle.glsl"
-#endif
 
 //======// Main //================================================================================//
 void main() {
@@ -135,33 +129,13 @@ void main() {
 
 			sceneOut += celestial * transmittance;
 		}
-
-		imageStore(colorimg7, texelPos, uvec4(0));
 	} else {
 		vec3 geoNormal, worldNormal;
 		FetchNormalData(texelPos, geoNormal, worldNormal);
 		vec3 viewNormal = mat3(gbufferModelView) * worldNormal;
 
 		vec2 lightmap = Unpack2x8U(materialPack.x);
-
-		#if defined MC_SPECULAR_MAP
-			vec4 specularTex = ExtractSpecularTex(materialPack);
-		#else
-			vec4 specularTex = vec4(0.0);
-		#endif
-
-		// Compute rain puddles
-		#ifdef RAIN_PUDDLES
-			if (wetnessCustom > EPS) {
-				// Skip foliage
-				if (clamp(materialID, 1000u, 1002u) != materialID) {
-					CalculateRainPuddles(albedo, worldNormal, specularTex.rgb, worldPos, geoNormal, lightmap.y);
-
-					materialPack.z = Packup2x8U(specularTex.xy);
-					imageStore(colorimg7, texelPos, materialPack);
-				}
-			}
-		#endif
+		vec4 specularTex = ExtractSpecularTex(materialPack);
 
 		Material material = GetMaterialData(specularTex);
 
@@ -352,12 +326,12 @@ void main() {
 		diffuseRadiance *= albedo * oms(material.metalness);
 
 		// Indirect specular
-		#if defined MC_SPECULAR_MAP
+		if (material.specularMask) {
 			vec2 brdf = texture(brdfLutTex, vec2(material.roughness, NdotV)).xy;
 
 			vec3 specular = f0 * brdf.x + brdf.y;
 			specularRadiance += loadSceneMain(texelPos) * specular;
-		#endif
+		}
 
 		sceneOut = diffuseRadiance + specularRadiance;
 	}
