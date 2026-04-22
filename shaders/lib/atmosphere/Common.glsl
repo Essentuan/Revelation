@@ -56,7 +56,7 @@ const AtmosphereParameters atmosphere = AtmosphereParameters(
     mieCoeffBase * 0.9,
     mieCoeffBase,
     vec3(8.304280072e-7, 1.314911970e-6, 5.440679729e-8) * sRGB_2_Rec2020,
-    vec3(0.2, 0.25, 0.45) * sRGB_2_Rec2020
+    vec3(0.1, 0.2, 0.5) * sRGB_2_Rec2020
 );
 
 const mat3 atmosphereExtinctionCoeff = mat3(
