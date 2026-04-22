@@ -63,27 +63,6 @@ void main() {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
     vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
 
-	vec3 screenPos = vec3(screenCoord, loadDepth0(texelPos));
-
-	#if defined LOD_MOD
-		bool lodMask = screenPos.z > 1.0 - EPS;
-		if (lodMask) {
-			screenPos.z = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth0Lod(texelPos)));
-		}
-	#endif
-
-	// Hand-depth correction
-	if (screenPos.z < 0.56) {
-		screenPos.z = screenPos.z * rcp(MC_HAND_DEPTH) + (0.5 - 0.5 / MC_HAND_DEPTH);
-	}
-
-	vec3 viewPos = ScreenToViewPos(screenPos);
-	float viewDist = length(viewPos);
-
-	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
-	vec3 worldDir = worldPos / viewDist;
-	worldPos += gbufferModelViewInverse[3].xyz;
-
 	uvec4 materialPack = loadMaterialPack(texelPos);
 	uint materialID = materialPack.y;
 
@@ -94,11 +73,15 @@ void main() {
 	sceneOut = vec3(0.0);
 
 	if (materialID == 0u) { // Sky
+		vec3 viewDir  = ScreenToViewDir(screenCoord);
+		vec3 worldDir = mat3(gbufferModelViewInverse) * viewDir;
+
 		vec3 transmittance = AtmosphereTransmittance(atmosphereViewPos, worldDir);
 		vec3 skyRadiance = AtmosphereSkyView(atmosphereViewPos, worldDir, worldSunDir);
 
 		sceneOut = skyRadiance;
 
+		// Clouds
 		#ifdef CLOUDS
 			#ifdef CLOUD_TAAU_ENABLED
 				vec4 cloudData = texture(cloudReconstructTex, screenCoord);
@@ -112,6 +95,7 @@ void main() {
 			transmittance *= cloudData.w;
 		#endif
 
+		// Celestial objects
 		if (dot(transmittance, vec3(1.0)) > EPS) {
 			vec3 celestial = RenderSun(worldDir, worldSunDir);
 
@@ -130,6 +114,27 @@ void main() {
 			sceneOut += celestial * transmittance;
 		}
 	} else {
+		vec3 screenPos = vec3(screenCoord, loadDepth0(texelPos));
+
+		#if defined LOD_MOD
+			bool lodMask = screenPos.z > 1.0 - EPS;
+			if (lodMask) {
+				screenPos.z = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth0Lod(texelPos)));
+			}
+		#endif
+
+		// Hand-depth correction
+		if (screenPos.z < 0.56) {
+			screenPos.z = screenPos.z * rcp(MC_HAND_DEPTH) + (0.5 - 0.5 / MC_HAND_DEPTH);
+		}
+
+		vec3 viewPos = ScreenToViewPos(screenPos);
+		float viewDist = length(viewPos);
+
+		vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
+		vec3 worldDir = worldPos / viewDist;
+		worldPos += gbufferModelViewInverse[3].xyz;
+
 		vec3 geoNormal, worldNormal;
 		FetchNormalData(texelPos, geoNormal, worldNormal);
 		vec3 viewNormal = mat3(gbufferModelView) * worldNormal;
