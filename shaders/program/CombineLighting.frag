@@ -270,8 +270,8 @@ void main() {
 				float NdotH = dot(worldNormal, halfway);
 				float LdotH = dot(worldLightDir, halfway);
 
-				diffuseRadiance += shadow * DiffuseBurley(LdotH, NdotV, NdotL, material.roughness);
-				specularRadiance += shadow * SpecularGGX(LdotH, NdotV, NdotL, NdotH, material.roughness, f0);
+				diffuseRadiance += shadow * DiffuseBurley(LdotH, NdotV, NdotL, material.roughness) * NdotL;
+				specularRadiance += shadow * SpecularGGX(LdotH, NdotV, NdotL, NdotH, material.roughness, f0) * NdotL;
 			}
 		}
 
