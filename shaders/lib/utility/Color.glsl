@@ -108,6 +108,83 @@ vec3 InverseTonemapRadiance(vec3 v, float e) {
     return v * pow(luminance(v) + EPS, rcp(e) - 1.0);
 }
 
+//======// ACES 2.0 //===========================================================================//
+const float aces_limit_J_max = 100.0;
+const int aces_tableSize = 360;
+const int aces_baseIndex = 1;
+const int aces_totalTableSize = 363;
+const int aces_lowerWrapIndex = 0;
+const int aces_lastNominalIndex = 360;
+const int aces_upperWrapIndex = 361;
+const int aces_upperWrapPlusOneIndex = 362;
+const int aces_cuspCornerCount = 6;
+const int aces_totalCornerCount = aces_cuspCornerCount + 2;
+const float aces_hue_limit = 360.0;
+const float aces_display_cusp_tolerance = 1e-7;
+const float aces_smooth_cusps = 0.12;
+const float aces_smooth_m = 0.27;
+const float aces_gamma_minimum = 0.0;
+const float aces_gamma_maximum = 5.0;
+const float aces_gamma_search_step = 0.4;
+const float aces_gamma_accuracy = 1e-5;
+const float aces_gamma_bottom_inv = 0.877192974;
+const float aces_focus_dist_scaled = 135.0;
+const float aces_mid_J = 34.096539;
+const float aces_focus_gain_blend = 0.3;
+
+// JMh to output RGB (sRGB here)
+vec3 JMh_to_RGB(vec3 JMh)
+{
+	float h_rad = JMh.b * 0.0174532924;
+    float cos_hr = cos(h_rad);
+    float sin_hr = sin(h_rad);
+	vec3 outColor;
+    vec3 Aab;
+    {
+      Aab.r = pow(JMh.r * 0.00999999978, 0.879464149);
+      Aab.g = JMh.g * cos_hr;
+      Aab.b = JMh.g * sin_hr;
+    }
+    {
+      vec3 rgb_a = mat3(0.0323680267, 0.0323680267, 0.0323680267, 2.07657631e-05, -4.10250432e-05, -1.01296409e-05, 1.3260621e-05, -1.20174373e-05, -0.000290076074) * Aab.rgb;
+      vec3 rgb_a_lim = min( abs(rgb_a), vec3(0.99000001, 0.99000001, 0.99000001) );
+      vec3 lms = sign(rgb_a) * pow( 27.1299992 * rgb_a_lim / (1.0f - rgb_a_lim), vec3(2.38095236, 2.38095236, 2.38095236));
+      outColor = mat3(7.45048571, -1.4750675, 0.0106288502, -6.1301837, 3.11835742, -0.31857267, -0.0603808537, -0.383369029, 1.56786489) * lms;
+    }
+    return outColor;
+}
+
+// AP1 to JMh
+vec3 RGB_to_JMh(vec3 RGB) {
+    vec3 lms = mat3(
+        0.445181042, 0.123734146, 0.0117007261,
+        0.34964928, 0.613643706, 0.0280607939,
+        -0.00112973212, 0.0563228019, 0.753939033
+    ) * RGB;
+
+    vec3 F_L_v = pow(abs(lms), vec3(0.419999987));
+    vec3 rgb_a = (sign(lms) * F_L_v) / (27.1299992 + F_L_v);
+    vec3 Aab = mat3(
+        20.25881, 15480.0, 1720.0,
+        10.129405, -16887.2734, 1720.0,
+        0.506470263, 1407.27271, -3440.0
+    ) * rgb_a;
+
+    if (Aab.r <= 0.0) {
+        return vec3(0.0);
+    }
+
+    float J = 100.0 * pow(Aab.r, 1.13705599);
+    float M = sqrt(Aab.g * Aab.g + Aab.b * Aab.b);
+    float h = atan(Aab.b, Aab.g) * 57.29577951308232;
+    h = h - floor(h / 360.0) * 360.0;
+    if (h < 0.0) {
+        h += 360.0;
+    }
+
+    return vec3(J, M, h);
+}
+
 //================================================================================================//
 
 // Adapted from https://github.com/zubetto/BlackBodyRadiation

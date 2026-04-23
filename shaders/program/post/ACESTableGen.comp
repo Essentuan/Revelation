@@ -1,0 +1,364 @@
+/*
+--------------------------------------------------------------------------------
+
+	Revelation Shaders
+
+	Copyright (C) 2026 Mo Yongxin "qwertyuiop"
+	Apache License 2.0
+
+	References:
+        https://github.com/aces-aswf/aces-core/blob/main/lib/Lib.Academy.OutputTransform.ctl
+
+--------------------------------------------------------------------------------
+*/
+
+// Adapted from aces-aswf/aces-core/lib/Lib.Academy.OutputTransform.ctl licensed under Apache License 2.0
+// Copyright Contributors to the ACES Project.
+
+//======// Input //===============================================================================//
+
+layout (local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
+const ivec3 workGroups = ivec3(2, 1, 1);
+
+//======// Utility //=============================================================================//
+
+#include "/lib/Utility.glsl"
+
+//======// Uniform //=============================================================================//
+
+writeonly uniform image1D acesReachMTable;
+writeonly uniform image1D acesGamutCuspTable;
+
+//======// Functions //===========================================================================//
+
+const int aces_test_count = 5;
+const float aces_test_positions[aces_test_count] = float[aces_test_count](0.01, 0.1, 0.5, 0.8, 0.99);
+
+shared vec3 aces_sharedRGBCorners[aces_totalCornerCount];
+shared vec3 aces_sharedJMhCorners[aces_totalCornerCount];
+
+const float aces_gamut_cusp_table_hues_array[363] = float[363](-1.01858521, 0., 0.999435902, 1.9988718, 2.9983077, 3.99774361, 4.99717951, 5.99661541, 6.99605131, 7.99548721, 8.99492264, 9.99435902, 10.9937954, 11.9932308, 12.9926662, 13.9921026, 14.991539, 15.9909744, 16.9904099, 17.9898453, 18.9892826, 19.988718, 20.9881535, 21.9875908, 22.9870262, 23.9864616, 24.9858971, 26.2510033, 27.2489777, 28.2469521, 29.2449265, 30.2429008, 31.2408752, 32.2388496, 33.236824, 34.2347984, 35.2327728, 36.2307434, 37.2287216, 38.2266922, 39.2246704, 40.222641, 41.2206154, 42.2185898, 43.2165642, 44.2145386, 45.212513, 46.2104874, 47.2084618, 48.2064362, 49.2044106, 50.2023849, 51.2003593, 52.1983337, 53.1963043, 54.1942825, 55.1922531, 56.1902313, 57.1882019, 58.1861801, 59.1841507, 60.1821251, 61.1800995, 62.1780739, 63.1760483, 64.1740265, 65.1719971, 66.1699677, 67.1679459, 68.1659241, 69.1638947, 70.1618652, 71.1598434, 72.1578217, 73.1557922, 74.1537628, 75.151741, 76.1497192, 77.1476898, 78.1456604, 79.1436386, 80.1416092, 81.1395874, 82.137558, 83.1355286, 84.1335068, 85.131485, 86.1294556, 87.1274261, 88.1254044, 89.1233826, 90.1213531, 91.1193237, 92.1172943, 93.1152802, 94.1132507, 95.1112213, 96.1091919, 97.1071777, 98.1051483, 99.1031189, 100.101089, 101.099075, 102.097046, 103.095016, 104.092987, 105.090973, 106.088936, 106.548775, 107.571564, 108.594353, 109.617142, 110.639931, 111.66272, 112.685509, 113.708298, 114.731087, 115.753876, 116.776665, 117.799454, 118.822243, 119.845032, 120.867821, 121.89061, 122.913399, 123.936188, 124.958977, 125.981766, 127.004555, 128.027344, 129.05014, 130.072922, 131.095703, 132.1185, 133.141296, 134.164078, 135.186859, 136.209656, 137.232452, 138.255234, 139.278015, 140.300812, 141.287491, 142.27417, 143.260849, 144.247528, 145.234207, 146.220886, 147.207565, 148.207993, 149.20842, 150.208847, 151.209274, 152.209702, 153.210129, 154.210556, 155.210983, 156.211411, 157.211853, 158.21228, 159.212708, 160.213135, 161.213562, 162.213989, 163.214417, 164.214844, 165.215271, 166.215698, 167.216125, 168.216553, 169.21698, 170.217407, 171.217834, 172.218262, 173.218689, 174.219116, 175.219543, 176.219971, 177.220398, 178.220825, 179.221252, 180.22168, 181.222107, 182.222549, 183.222977, 184.223404, 185.223831, 186.224258, 187.224686, 188.225113, 189.22554, 190.225967, 191.226395, 192.226822, 193.12616, 194.025482, 194.92482, 195.824158, 196.830383, 197.836609, 198.842819, 199.849045, 200.85527, 201.861496, 202.867706, 203.873932, 204.880157, 205.886383, 206.892609, 207.898819, 208.905045, 209.91127, 210.917496, 211.923706, 212.929932, 213.936157, 214.942383, 215.948608, 216.954819, 217.961044, 218.96727, 219.973495, 220.979706, 221.985931, 222.992157, 223.998383, 225.004608, 226.010834, 227.017044, 228.02327, 229.029495, 230.035706, 231.041931, 232.048157, 233.054382, 234.060608, 235.066833, 236.073044, 237.079269, 238.085495, 239.091705, 240.097931, 241.104156, 242.110382, 243.116608, 244.122833, 245.129044, 246.135269, 247.141495, 248.147705, 249.153931, 250.160156, 251.166382, 252.172607, 253.178833, 254.185043, 255.191269, 256.19751, 257.203705, 258.20993, 259.216156, 260.222382, 261.228607, 262.234833, 263.241058, 264.247253, 265.253479, 266.259705, 267.26593, 268.272156, 269.270721, 270.269287, 271.267853, 272.266418, 273.264984, 274.26355, 275.262115, 276.260681, 277.249512, 278.238342, 279.227203, 280.216034, 281.204865, 282.193695, 283.182556, 284.171387, 285.160217, 286.149048, 287.137878, 288.12674, 289.11557, 290.104401, 291.093231, 292.082092, 293.070923, 294.059753, 295.048584, 296.037445, 297.026276, 298.015106, 299.003937, 299.992798, 300.981628, 301.970459, 302.95929, 303.94812, 304.936981, 305.925812, 306.914642, 307.903473, 308.892334, 309.881165, 310.869995, 311.858826, 312.847656, 313.836517, 314.825348, 315.814178, 316.803009, 317.79187, 318.780701, 319.769531, 320.758362, 321.747192, 322.736053, 323.724884, 324.713715, 325.702545, 326.691406, 327.680237, 328.669067, 329.657898, 330.646759, 331.63559, 332.62442, 333.628967, 334.633514, 335.638062, 336.642609, 337.647186, 338.651733, 339.656281, 340.660828, 341.665375, 342.68396, 343.702545, 344.72113, 345.739746, 346.758331, 347.776917, 348.795502, 349.814087, 350.832703, 351.851288, 352.869873, 353.888458, 354.907043, 355.925629, 356.944244, 357.96283, 358.981415, 360., 360.999451);
+
+float aces_midpoint(float low, float high) {
+    return 0.5 * (low + high);
+}
+
+float aces_wrap_to_360(float hue) {
+    float y = mod(hue, 360.0);
+    return (y < 0.0) ? (y + 360.0) : y;
+}
+
+vec3 generateUnitCubeCuspCorner(int corner) {
+    vec3 result;
+    result.r = (((corner + 1) % aces_cuspCornerCount) < 3) ? 1.0 : 0.0;
+    result.g = (((corner + 5) % aces_cuspCornerCount) < 3) ? 1.0 : 0.0;
+    result.b = (((corner + 3) % aces_cuspCornerCount) < 3) ? 1.0 : 0.0;
+    return result;
+}
+
+void buildLimitingCuspCornersTables(out vec3 RGB_corners[aces_totalCornerCount],
+                                    out vec3 JMh_corners[aces_totalCornerCount]) {
+    vec3 temp_RGB_corners[aces_cuspCornerCount];
+    vec3 temp_JMh_corners[aces_cuspCornerCount];
+
+    int min_index = 0;
+    for (int i = 0; i < aces_cuspCornerCount; ++i) {
+        temp_RGB_corners[i] = generateUnitCubeCuspCorner(i);
+        temp_JMh_corners[i] = RGB_to_JMh(temp_RGB_corners[i]);
+        if (temp_JMh_corners[i].b < temp_JMh_corners[min_index].b) {
+            min_index = i;
+        }
+    }
+
+    for (int i = 0; i < aces_cuspCornerCount; ++i) {
+        int src = (i + min_index) % aces_cuspCornerCount;
+        RGB_corners[i + 1] = temp_RGB_corners[src];
+        JMh_corners[i + 1] = temp_JMh_corners[src];
+    }
+
+    RGB_corners[0] = RGB_corners[aces_cuspCornerCount];
+    RGB_corners[aces_cuspCornerCount + 1] = RGB_corners[1];
+
+    JMh_corners[0] = JMh_corners[aces_cuspCornerCount];
+    JMh_corners[aces_cuspCornerCount + 1] = JMh_corners[1];
+
+    JMh_corners[0].b -= aces_hue_limit;
+    JMh_corners[aces_cuspCornerCount + 1].b += aces_hue_limit;
+}
+
+vec2 findDisplayCuspForHue(float hue,
+                           vec3 RGB_corners[aces_totalCornerCount],
+                           vec3 JMh_corners[aces_totalCornerCount],
+                           inout vec2 previous) {
+    int upper_corner = 1;
+    for (int i = upper_corner; i < aces_totalCornerCount; ++i) {
+        if (JMh_corners[i].b > hue) {
+            upper_corner = i;
+            break;
+        }
+    }
+
+    int lower_corner = upper_corner - 1;
+
+    if (JMh_corners[lower_corner].b == hue) {
+        return JMh_corners[lower_corner].rg;
+    }
+
+    vec3 cusp_lower = RGB_corners[lower_corner];
+    vec3 cusp_upper = RGB_corners[upper_corner];
+
+    float lower_t = (upper_corner == int(previous.x)) ? previous.y : 0.0;
+    float upper_t = 1.0;
+
+    while ((upper_t - lower_t) > aces_display_cusp_tolerance) {
+        float sample_t = aces_midpoint(lower_t, upper_t);
+        vec3 sample_ = mix(cusp_lower, cusp_upper, sample_t);
+        vec3 JMh = RGB_to_JMh(sample_);
+
+        if (JMh.b < JMh_corners[lower_corner].b) {
+            upper_t = sample_t;
+        } else if (JMh.b >= JMh_corners[upper_corner].b) {
+            lower_t = sample_t;
+        } else if (JMh.b > hue) {
+            upper_t = sample_t;
+        } else {
+            lower_t = sample_t;
+        }
+    }
+
+    float sample_t = aces_midpoint(lower_t, upper_t);
+    vec3 sample_ = mix(cusp_lower, cusp_upper, sample_t);
+    vec3 JMh = RGB_to_JMh(sample_);
+
+    previous.x = float(upper_corner);
+    previous.y = sample_t;
+    return JMh.rg;
+}
+
+float aces_get_focus_gain(float J, float cuspJ) {
+    float thr = mix(cuspJ, aces_limit_J_max, aces_focus_gain_blend);
+    if (J > thr) {
+        float gain = (aces_limit_J_max - thr) / max(0.0001, aces_limit_J_max - J);
+        gain = log(gain) / log(10.0);
+        return gain * gain + 1.0;
+    }
+    return 1.0;
+}
+
+float aces_solve_J_intersect(float J, float M, float focusJ, float slope_gain) {
+    float M_scaled = M / slope_gain;
+    float a = M_scaled / focusJ;
+    if (J < focusJ) {
+        float b = 1.0 - M_scaled;
+        float c = -J;
+        float det = b * b - 4.0 * a * c;
+        float root = sqrt(det);
+        return -2.0 * c / (b + root);
+    } else {
+        float b = -(1.0 + M_scaled + aces_limit_J_max * a);
+        float c = aces_limit_J_max * M_scaled + J;
+        float det = b * b - 4.0 * a * c;
+        float root = sqrt(det);
+        return -2.0 * c / (b - root);
+    }
+}
+
+float aces_find_gamut_boundary_intersection(vec2 JM_cusp,
+                                            float gamma_top_inv,
+                                            float gamma_bottom_inv,
+                                            float J_intersect_source,
+                                            float J_intersect_cusp,
+                                            float slope) {
+    float M_boundary_lower = J_intersect_cusp
+        * pow(abs(J_intersect_source / J_intersect_cusp), gamma_bottom_inv)
+        / (JM_cusp.r / JM_cusp.g - slope);
+
+    float M_boundary_upper = JM_cusp.g
+        * (aces_limit_J_max - J_intersect_cusp)
+        * pow(abs((aces_limit_J_max - J_intersect_source) / (aces_limit_J_max - J_intersect_cusp)), gamma_top_inv)
+        / (slope * JM_cusp.g + aces_limit_J_max - JM_cusp.r);
+
+    float a = M_boundary_lower > 0.0 ? M_boundary_lower : 10000.0;
+    float b = M_boundary_upper > 0.0 ? M_boundary_upper : 10000.0;
+
+    float s = aces_smooth_cusps * JM_cusp.g;
+    float h = max(s - abs(a - b), 0.0) / s;
+    return min(a, b) - h * h * h * s * (1.0 / 6.0);
+}
+
+bool aces_outside_hull(vec3 rgb, float maxRGBtestVal) {
+    return rgb.r > maxRGBtestVal || rgb.g > maxRGBtestVal || rgb.b > maxRGBtestVal;
+}
+
+bool aces_evaluate_gamma_fit(vec2 JMcusp, float hue, float top_gamma_inv) {
+    float focusJ = mix(JMcusp.r, aces_mid_J, min(1.0, 1.3 - (JMcusp.r / aces_limit_J_max)));
+    float luminance_limit = 1.0;
+
+    for (int testIndex = 0; testIndex < aces_test_count; ++testIndex) {
+        float test_J = mix(JMcusp.r, aces_limit_J_max, aces_test_positions[testIndex]);
+        float slope_gain = aces_focus_dist_scaled * aces_get_focus_gain(test_J, JMcusp.r);
+
+        float J_intersect_source = aces_solve_J_intersect(test_J, JMcusp.g, focusJ, slope_gain);
+        float slope = (J_intersect_source < focusJ) ? J_intersect_source : (aces_limit_J_max - J_intersect_source);
+        slope = slope * (J_intersect_source - focusJ) / (focusJ * slope_gain);
+
+        float J_intersect_cusp = aces_solve_J_intersect(JMcusp.r, JMcusp.g, focusJ, slope_gain);
+        float approxLimit_M = aces_find_gamut_boundary_intersection(
+            JMcusp,
+            top_gamma_inv,
+            aces_gamma_bottom_inv,
+            J_intersect_source,
+            J_intersect_cusp,
+            slope
+        );
+        float approxLimit_J = J_intersect_source + slope * approxLimit_M;
+
+        vec3 approximate_JMh = vec3(approxLimit_J, approxLimit_M, hue);
+        vec3 newLimitRGB = JMh_to_RGB(approximate_JMh);
+        if (!aces_outside_hull(newLimitRGB, luminance_limit)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+float computeUpperHullGammaInv(vec2 JMcusp, float hue) {
+    float low = aces_gamma_minimum;
+    float high = low + aces_gamma_search_step;
+    bool outside = false;
+
+    while (!outside && high < aces_gamma_maximum) {
+        bool gammaFound = aces_evaluate_gamma_fit(JMcusp, hue, 1.0 / high);
+        if (!gammaFound) {
+            low = high;
+            high += aces_gamma_search_step;
+        } else {
+            outside = true;
+        }
+    }
+
+    while ((high - low) > aces_gamma_accuracy) {
+        float testGamma = aces_midpoint(high, low);
+        bool gammaFound = aces_evaluate_gamma_fit(JMcusp, hue, 1.0 / testGamma);
+        if (gammaFound) {
+            high = testGamma;
+        } else {
+            low = testGamma;
+        }
+    }
+
+    return 1.0 / high;
+}
+
+float hueFromTableIndex(int idx) {
+    int clamped = clamp(idx, 0, aces_totalTableSize - 1);
+    return aces_gamut_cusp_table_hues_array[clamped];
+}
+
+vec3 computeCuspTableValue(int idx,
+                           vec3 RGB_corners[aces_totalCornerCount],
+                           vec3 JMh_corners[aces_totalCornerCount],
+                           inout vec2 previous) {
+    float searchHue = 0.0;
+    float outputHue = hueFromTableIndex(idx);
+    vec2 JM;
+
+    searchHue = outputHue;
+    JM = findDisplayCuspForHue(searchHue, RGB_corners, JMh_corners, previous);
+
+    float smoothedM = JM.y * (1.0 + aces_smooth_m * aces_smooth_cusps);
+    float gammaTopInv = computeUpperHullGammaInv(vec2(JM.x, smoothedM), aces_wrap_to_360(searchHue));
+    return vec3(JM.x, smoothedM, gammaTopInv);
+}
+
+float computeReachMValue(int idx) {
+    float i_float = float(idx);
+    float hue = i_float;
+
+    const float search_range = 50.;
+    const float search_maximum = 1300.;
+    float low = 0.;
+    float high = low + search_range;
+    bool outside = false;
+
+    while ((outside != true) && (high < search_maximum)) {
+        vec3 searchJMh = vec3(aces_limit_J_max, high, hue);
+        vec3 newLimitRGB = JMh_to_RGB(searchJMh);
+        outside = any(lessThan(newLimitRGB, vec3(0.0)));
+        if (outside == false) {
+            low = high;
+            high = high + search_range;
+        }
+    }
+
+    while (high - low > 1e-2) {
+        float sampleM = (high + low) / 2.;
+        vec3 searchJMh = vec3(aces_limit_J_max, sampleM, hue);
+        vec3 newLimitRGB = JMh_to_RGB(searchJMh);
+        outside = any(lessThan(newLimitRGB, vec3(0.0)));
+        if (outside) {
+            high = sampleM;
+        } else {
+            low = sampleM;
+        }
+    }
+
+    return high;
+}
+
+//======// Main //================================================================================//
+void main() {
+    if (gl_WorkGroupID.x == 0) {
+        // Generate reach M table
+        int idx = int(gl_LocalInvocationID.x);
+        if (idx < 360) {
+            float reachMValue = computeReachMValue(idx);
+            imageStore(acesReachMTable, idx + 1, vec4(reachMValue, vec3(0.0)));
+            // Wrap the hues
+            if (idx == 0) {
+                imageStore(acesReachMTable, 361, vec4(reachMValue, vec3(0.0)));
+            }
+            if (idx == 1) {
+                imageStore(acesReachMTable, 362, vec4(reachMValue, vec3(0.0)));
+            }
+            if (idx == 359) {
+                imageStore(acesReachMTable, 0, vec4(reachMValue, vec3(0.0)));
+            }
+        }
+
+    } else {
+        // Generate gamut cusp table
+        int idx = int(gl_LocalInvocationID.x);
+
+        if (idx == 0) {
+            buildLimitingCuspCornersTables(aces_sharedRGBCorners, aces_sharedJMhCorners);
+        }
+        barrier();
+
+        if (idx == 0) {
+            vec2 previous = vec2(0.0);
+            vec3 firstNominalCusp = vec3(0.0);
+            vec3 secondNominalCusp = vec3(0.0);
+            vec3 lastNominalCusp = vec3(0.0);
+
+            for (int i = aces_baseIndex; i <= aces_lastNominalIndex; ++i) {
+                vec3 cusp = computeCuspTableValue(i, aces_sharedRGBCorners, aces_sharedJMhCorners, previous);
+                imageStore(acesGamutCuspTable, i, vec4(cusp, 0.0));
+
+                if (i == aces_baseIndex) {
+                    firstNominalCusp = cusp;
+                } else if (i == aces_baseIndex + 1) {
+                    secondNominalCusp = cusp;
+                } else if (i == aces_lastNominalIndex) {
+                    lastNominalCusp = cusp;
+                }
+            }
+
+            // Copy wrap entries from nominal entries to preserve continuity.
+            imageStore(acesGamutCuspTable, aces_lowerWrapIndex, vec4(lastNominalCusp, 0.0));
+            imageStore(acesGamutCuspTable, aces_upperWrapIndex, vec4(firstNominalCusp, 0.0));
+            imageStore(acesGamutCuspTable, aces_upperWrapPlusOneIndex, vec4(secondNominalCusp, 0.0));
+        }
+    }
+}
