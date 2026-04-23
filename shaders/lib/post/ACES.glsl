@@ -475,7 +475,6 @@ vec3 aces_gamut_compress0(vec3 JMh, float Jx, vec3 JMGcusp, float reachMaxM) {
 }
 
 vec3 ACES2(vec3 inPixel) {
-  inPixel *= 2.0; // Workaround to match other tonemappers' exposure
   vec3 outColor = inPixel * Rec2020_2_AP1;
 
   {
