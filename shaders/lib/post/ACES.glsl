@@ -1,6 +1,7 @@
-// https://github.com/ampas/aces-dev/blob/dev
+// https://github.com/aces-aswf/aces-core
 
 /*
+The following are the license terms for ACES 1
 --------------------------------------------------------------------------------
 	# License Terms for Academy Color Encoding System Components #
 
@@ -148,6 +149,7 @@ const mat3 D60ToD65_CAT = mat3(
 
 const vec3 AP1_RGB2Y = vec3(0.2722287168, 0.6740817658, 0.0536895174);
 
+//======// ACES 1 Fit //============================================================================//
 // "Glow" module constants
 const float rrtGlowGain  = 0.05;   	// Default: 0.05
 const float rrtGlowMid   = 0.08;   	// Default: 0.08
@@ -235,7 +237,14 @@ float CenterHue(float hue, float centerH) {
 	return hueCentered;
 }
 
-//======// ACES Fit //============================================================================//
+#define log10(x) (log2(x) * rcp(log2(10.0)))
+
+// Textbook monomial to basis-function conversion matrix
+const mat3 M = mat3(
+	 0.5, -1.0,  0.5,
+	-1.0,  1.0,  0.5,
+	 0.5,  0.0,  0.0
+);
 
 vec3 RRTSweeteners(vec3 aces) {
 	// --- Glow module --- //
@@ -260,131 +269,6 @@ vec3 RRTSweeteners(vec3 aces) {
 	rgbPre = mix(vec3(dot(rgbPre, AP1_RGB2Y)), rgbPre, rrtSatFactor);
 
 	return rgbPre;
-}
-
-#define log10(x) (log2(x) * rcp(log2(10.0)))
-
-// Textbook monomial to basis-function conversion matrix
-const mat3 M = mat3(
-	 0.5, -1.0,  0.5,
-	-1.0,  1.0,  0.5,
-	 0.5,  0.0,  0.0
-);
-
-struct SegmentedSplineParams_c5 {
-    float coeffsLow[6];     // Coeffs for B-spline between minPoint and midPoint (units of log luminance)
-    float coeffsHigh[6];    // Coeffs for B-spline between midPoint and maxPoint (units of log luminance)
-    vec2 minPoint;          // {luminance, luminance} Linear extension below this
-    vec2 midPoint;          // {luminance, luminance} Linear
-    vec2 maxPoint;          // {luminance, luminance} Linear extension above this
-    float slopeLow;         // Log-log slope of low linear extension
-    float slopeHigh;        // Log-log slope of high linear extension
-};
-
-struct SegmentedSplineParams_c9 {
-    float coeffsLow[10];    // Coeffs for B-spline between minPoint and midPoint (units of log luminance)
-    float coeffsHigh[10];   // Coeffs for B-spline between midPoint and maxPoint (units of log luminance)
-    vec2 minPoint;          // {luminance, luminance} Linear extension below this
-    vec2 midPoint;          // {luminance, luminance} Linear
-    vec2 maxPoint;          // {luminance, luminance} Linear extension above this
-    float slopeLow;         // Log-log slope of low linear extension
-    float slopeHigh;        // Log-log slope of high linear extension
-};
-
-const SegmentedSplineParams_c5 RRT_PARAMS = SegmentedSplineParams_c5(
-    float[6] ( -4.0000000000, -4.0000000000, -3.1573765773, -0.4852499958, 1.8477324706, 1.8477324706 ),    // coeffsLow
-    float[6] ( -0.7185482425, 2.0810307172, 3.6681241237, 4.0000000000, 4.0000000000, 4.0000000000 ),       // coeffsHigh
-    vec2(0.18 * exp2(-15.0), 0.0001),   // minPoint
-    vec2(0.18, 4.8),                    // midPoint
-    vec2(0.18 * exp2( 18.0), 10000.0),  // maxPoint
-    0.0,    // slopeLow
-    0.0     // slopeHigh
-);
-
-float segmented_spline_c5_fwd(float x, SegmentedSplineParams_c5 params) { // params should default to RRT_PARAMS
-    const int N_KNOTS_LOW  = 4;
-    const int N_KNOTS_HIGH = 4;
-
-    float logMinPoint = log10(params.minPoint.x);
-    float logMidPoint = log10(params.midPoint.x);
-    float logMaxPoint = log10(params.maxPoint.x);
-
-    float logx = log10(max(x, 1e-6));
-    float logy;
-
-    if(logx <= logMinPoint) {
-        logy = logx * params.slopeLow + (log10(params.minPoint.y) - params.slopeLow * logMinPoint);
-    } else if((logx > logMinPoint) && (logx < logMidPoint)) {
-        float knot_coord = (N_KNOTS_LOW - 1) * (logx - logMinPoint) / (logMidPoint - logMinPoint);
-        int j = int(knot_coord);
-        float t = knot_coord - j;
-
-        vec3 cf = vec3(params.coeffsLow[j], params.coeffsLow[j + 1], params.coeffsLow[j + 2]);
-
-        vec3 monomials = vec3(t * t, t, 1.0);
-        logy = dot(monomials, M * cf);
-    } else if((logx >= logMidPoint) && (logx < logMaxPoint)) {
-        float knot_coord = (N_KNOTS_HIGH - 1) * (logx - logMidPoint) / (logMaxPoint - logMidPoint);
-        int j = int(knot_coord);
-        float t = knot_coord - j;
-
-        vec3 cf = vec3(params.coeffsHigh[j], params.coeffsHigh[j + 1], params.coeffsHigh[j + 2]);
-
-        vec3 monomials = vec3(t * t, t, 1.0);
-        logy = dot(monomials, M * cf);
-    } else {
-        logy = logx * params.slopeHigh + (log10(params.maxPoint.y) - params.slopeHigh * logMaxPoint);
-    }
-
-    return pow(10.0, logy);
-}
-
-const SegmentedSplineParams_c9 ODT_48nits = SegmentedSplineParams_c9(
-    float[10] ( -1.6989700043, -1.6989700043, -1.4779000000, -1.2291000000, -0.8648000000, -0.4480000000, 0.0051800000, 0.4511080334, 0.9113744414, 0.9113744414 ),
-    float[10] ( 0.5154386965, 0.8470437783, 1.1358000000, 1.3802000000, 1.5197000000, 1.5985000000, 1.6467000000, 1.6746091357, 1.6878733390, 1.6878733390 ),
-    vec2(0.18 * exp2(-6.5), 0.02),  // minPoint
-    vec2(0.18, 4.8),                // midPoint
-    vec2(0.18 * exp2( 6.5), 48.0),  // maxPoint
-    0.0,  // slopeLow
-    0.04  // slopeHigh
-);
-
-float segmented_spline_c9_fwd(float x, SegmentedSplineParams_c9 params) { // params should default to ODT_48nits
-    const int N_KNOTS_LOW  = 8;
-    const int N_KNOTS_HIGH = 8;
-
-    float logMinPoint = log10(params.minPoint.x);
-    float logMidPoint = log10(params.midPoint.x);
-    float logMaxPoint = log10(params.maxPoint.x);
-
-    float logx = log10(maxEps(x));
-    float logy;
-
-    if ( logx <= logMinPoint ) {
-        logy = logx * params.slopeLow + (log10(params.minPoint.y) - params.slopeLow * logMinPoint);
-    } else if (( logx > logMinPoint ) && ( logx < logMidPoint )) {
-        float knot_coord = (N_KNOTS_LOW - 1) * (logx - logMinPoint) / (logMidPoint - logMinPoint);
-        int j = int(knot_coord);
-        float t = knot_coord - j;
-
-        vec3 cf = vec3(params.coeffsLow[j], params.coeffsLow[j + 1], params.coeffsLow[j + 2]);
-
-        vec3 monomials = vec3(t * t, t, 1.0);
-        logy = dot(monomials, M * cf);
-    } else if (( logx >= logMidPoint ) && ( logx < logMaxPoint )) {
-        float knot_coord = (N_KNOTS_HIGH - 1) * (logx - logMidPoint) / (logMaxPoint - logMidPoint);
-        int j = int(knot_coord);
-        float t = knot_coord - j;
-
-        vec3 cf = vec3(params.coeffsHigh[j], params.coeffsHigh[j + 1], params.coeffsHigh[j + 2]);
-
-        vec3 monomials = vec3(t * t, t, 1.0);
-        logy = dot(monomials, M * cf);
-    } else { //if ( logIn >= logMaxPoint ) {
-        logy = logx * params.slopeHigh + (log10(params.maxPoint.y) - params.slopeHigh * logMaxPoint);
-    }
-
-    return pow(10.0, logy);
 }
 
 // https://github.com/TheRealMJP/BakingLab/blob/master/BakingLab/ACES.hlsl
@@ -422,188 +306,240 @@ vec3 RRTAndODTFit(vec3 rgb) {
 		return ( x * ( a * x + b ) ) / ( x * ( c * x + d ) + e );
 	}
 #endif
-//======// ACES Full //===========================================================================//
+//======// ACES 2.0 //===========================================================================//
+// This implementation is based on the shaders emitted by OCIO's ACES 2.0 implementation and [the reference implementation](https://github.com/aces-aswf/aces-core)
+// ACES 2.0 is licensed under Apache License 2.0. You can find a copy in the root of this repository(/LICENSE).
+// Copyright Contributors to the ACES Project.
+/*
+Copyright Contributors to the OpenColorIO Project.
 
-vec3 RRT(vec3 aces) {
-	// --- Glow module --- //
-	float saturation = rgbToSaturation(aces);
-	float ycIn = rgbToYc(aces);
-	float s = SigmoidShaper(saturation * 5.0 - 2.0);
-	float addedGlow = 1.0 + GlowFwd(ycIn, rrtGlowGain * s, rrtGlowMid);
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
 
-	aces *= addedGlow;
+* Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
 
-	// --- Red modifier --- //
-	float hue = rgbToHue(aces);
-	float centeredHue = CenterHue(hue, rrtRedHue);
-	float hueWeight = CubicBasisShaperFit(centeredHue, rrtRedWidth);
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
-	aces.r += hueWeight * saturation * (rrtRedPivot - aces.r) * oms(rrtRedScale);
+uniform sampler1D acesReachMTableTex;
+uniform sampler1D acesGamutCuspTableTex;
 
-    // --- ACES to RGB rendering space --- //
-	vec3 rgbPre = max0(aces * AP0_2_AP1);
-
-	// --- Global desaturation --- //
-	rgbPre = mix(vec3(dot(rgbPre, AP1_RGB2Y)), rgbPre, rrtSatFactor);
-
-    // --- Apply the tonescale independently in rendering-space RGB --- //
-    vec3 rgbPost;
-    rgbPost.r = segmented_spline_c5_fwd(rgbPre.r, RRT_PARAMS);
-    rgbPost.g = segmented_spline_c5_fwd(rgbPre.g, RRT_PARAMS);
-    rgbPost.b = segmented_spline_c5_fwd(rgbPre.b, RRT_PARAMS);
-
-	return rgbPost;
+float aces_reach_m_table_sample(float h) {
+  float i_base = floor(h);
+  float i_lo = i_base + 1;
+  float i_hi = i_lo + 1;
+  float lo = texelFetch(acesReachMTableTex, int(i_lo), 0).r;
+  float hi = texelFetch(acesReachMTableTex, int(i_hi), 0).r;
+  float t = h - i_base;
+  return mix(lo, hi, t);
+}
+float aces_tonescale_fwd0(float J) {
+  float A = 0.0323680267 * pow(abs(J) * 0.00999999978, 0.879464149);
+  float Y = pow(( 27.1299992 * A) / (1.0f - A), 2.3809523809523809);
+  #ifndef HDR_ENABLED
+    float f = 1.04710376 * pow(Y / (Y + 0.73009213709383403), 1.14999998);
+  #else
+    float f = 41.1687241 * pow(Y / (Y + 14.433662900070772), 1.14999998);
+  #endif
+  float Y_ts = max(0.0, f * f / (f + 0.0399999991));
+  float F_L_Y = pow(0.79370057210326195 * Y_ts, 0.42);
+  float J_ts = 100. * pow((F_L_Y / ( 27.1299992 + F_L_Y)) * 30.8946857, 1.13705599);
+  return sign(J) * J_ts;
+}
+float aces_toe_fwd0(float x, float limit, float k1_in, float k2_in) {
+  float k2 = max(k2_in, 0.001);
+  float k1 = sqrt(k1_in * k1_in + k2 * k2);
+  float k3 = (limit + k1) / (limit + k2);
+  return (x > limit) ? x : 0.5 * (k3 * x - k1 + sqrt((k3 * x - k1) * (k3 * x - k1) + 4.0 * k2 * k3 * x));
+}
+vec3 aces_gamut_cusp_table_sample(float h) {
+  int i = int(h) + 1;
+  int i_lo = int(max(float(0), float(i + 0)));
+  int i_hi = int(min(float(361), float(i + 2)));
+  while (i_lo + 1 < i_hi) {
+    float hcur = aces_gamut_cusp_table_hues_array[i];
+    if (h > hcur) {
+      i_lo = i;
+    } else {
+      i_hi = i;
+    }
+    i = (i_lo + i_hi) / 2;
+  }
+  vec3 lo = texelFetch(acesGamutCuspTableTex, i_hi - 1, 0).rgb;
+  vec3 hi = texelFetch(acesGamutCuspTableTex, i_hi, 0).rgb;
+  float t = (h - aces_gamut_cusp_table_hues_array[i_hi - 1]) / (aces_gamut_cusp_table_hues_array[i_hi] - aces_gamut_cusp_table_hues_array[i_hi - 1]);
+  return mix(lo, hi, t);
+}
+float aces_get_focus_gain0(float J, float cuspJ)
+{
+  float thr = mix(cuspJ, aces_limit_J_max, 0.300000);
+  if (J > thr) {
+    float gain = (aces_limit_J_max - thr) / max(0.0001, aces_limit_J_max - J);
+    gain = log(gain)/log(10.0);
+    return gain * gain + 1.0;
+  } else {
+    return 1.0;
+  }
+}
+float aces_solve_J_intersect0(float J, float M, float focusJ, float slope_gain)
+{
+  float M_scaled = M / slope_gain;
+  float a = M_scaled / focusJ;
+  if (J < focusJ) {
+    float b = 1.0 - M_scaled;
+    float c = -J;
+    float det =  b * b - 4.f * a * c;
+    float root =  sqrt(det);
+    return -2.0 * c / (b + root);
+  } else {
+    float b = - (1.0 + M_scaled + aces_limit_J_max * a);
+    float c = aces_limit_J_max * M_scaled + J;
+    float det =  b * b - 4.f * a * c;
+    float root =  sqrt(det);
+    return -2.0 * c / (b - root);
+  }
+}
+float aces_find_gamut_boundary_intersection0(vec2 JM_cusp, float gamma_top_inv, float gamma_bottom_inv, float J_intersect_source, float J_intersect_cusp, float slope)
+{
+  float M_boundary_lower = J_intersect_cusp * pow(J_intersect_source / J_intersect_cusp, gamma_bottom_inv) / (JM_cusp.r / JM_cusp.g - slope);
+  float M_boundary_upper = JM_cusp.g * (aces_limit_J_max - J_intersect_cusp) * pow((aces_limit_J_max - J_intersect_source) / (aces_limit_J_max - J_intersect_cusp), gamma_top_inv) / (slope * JM_cusp.g + aces_limit_J_max - JM_cusp.r);
+  float smin = 0.0;
+  {
+    float a = M_boundary_lower > 0.0 ? M_boundary_lower : 10000.0;
+    float b = M_boundary_upper > 0.0 ? M_boundary_upper : 10000.0;
+    float s = 0.119999997 * JM_cusp.g;
+    float h = max(s - abs(a - b), 0.0) / s;
+    smin = min(a, b) - h * h * h * s * 0.16666666666666666;
+  }
+  return smin;
+}
+float aces_remap_M_fwd0(float M, float gamut_boundary_M, float reach_boundary_M)
+{
+  float boundary_ratio = gamut_boundary_M / reach_boundary_M;
+  float proportion = max(boundary_ratio, 0.75);
+  float threshold = proportion * gamut_boundary_M;
+  if (proportion >= 1.0f || M <= threshold) {
+    return M;
+  }
+  float m_offset = M - threshold;
+  float gamut_offset = gamut_boundary_M - threshold;
+  float reach_offset = reach_boundary_M - threshold;
+  float scale = reach_offset / ((reach_offset / gamut_offset) - 1.0f);
+  float nd = m_offset / scale;
+  return threshold + scale * nd / (1.0f + nd);
+}
+vec3 aces_gamut_compress0(vec3 JMh, float Jx, vec3 JMGcusp, float reachMaxM) {
+  float J = JMh.r;
+  float M = JMh.g;
+  float h = JMh.b;
+  if (M <= 0.0 || J > aces_limit_J_max) {
+    return vec3(J, 0.0, h);
+  } else {
+    vec2 JMcusp = JMGcusp.rg;
+    float focusJ = mix(JMcusp.r, aces_mid_J, min(1.0, 1.300000 - (JMcusp.r / aces_limit_J_max)));
+    float slope_gain = aces_focus_dist_scaled * aces_get_focus_gain0(Jx, JMcusp.r);
+    float J_intersect_source = aces_solve_J_intersect0(JMh.r, JMh.g, focusJ, slope_gain);
+    float gamut_slope = (J_intersect_source < focusJ) ? J_intersect_source : (aces_limit_J_max - J_intersect_source);
+    gamut_slope = gamut_slope * (J_intersect_source - focusJ) / (focusJ * slope_gain);
+    float gamma_top_inv = JMGcusp.b;
+    float gamma_bottom_inv = aces_gamma_bottom_inv;
+    float J_intersect_cusp = aces_solve_J_intersect0(JMcusp.r, JMcusp.g, focusJ, slope_gain);
+    float gamutBoundaryM = aces_find_gamut_boundary_intersection0(JMcusp, gamma_top_inv, gamma_bottom_inv, J_intersect_source, J_intersect_cusp, gamut_slope);
+    if (gamutBoundaryM <= 0.0) {
+      return vec3(J, 0.0, h);
+    }
+    float reachBoundaryM = aces_limit_J_max * pow(J_intersect_source / aces_limit_J_max,  0.879464149);
+    reachBoundaryM = reachBoundaryM / ((aces_limit_J_max / reachMaxM) - gamut_slope);
+    float remapped_M = aces_remap_M_fwd0(M, gamutBoundaryM, reachBoundaryM);
+    float remapped_J = J_intersect_source + remapped_M * gamut_slope;
+    return vec3(remapped_J, remapped_M, h);
+  }
 }
 
-vec3 XYZ_to_xyY(vec3 XYZ) {
-	float mul = 1.0 / max(XYZ.x + XYZ.y + XYZ.z, 1e-10);
+vec3 ACES2(vec3 inPixel) {
+  inPixel *= 2.0; // Workaround to match other tonemappers' exposure
+  vec3 outColor = inPixel * Rec2020_2_AP1;
 
-	return vec3(
-		XYZ.x * mul,
-		XYZ.y * mul,
-		XYZ.y
-	);
-}
-vec3 xyY_to_XYZ(vec3 xyY) {
-	float mul = xyY.z / max(xyY.y, 1e-10);
+  {
+    outColor = RGB_to_JMh(outColor);
+    float h_rad = outColor.b * 0.0174532924;
+    float cos_hr = cos(h_rad);
+    float sin_hr = sin(h_rad);
 
-	return vec3(
-		xyY.x * mul,
-		xyY.z,
-		(1.0 - xyY.x - xyY.y) * mul
-	);
-}
+    // ToneScale and ChromaCompress (fwd)
 
-vec3 dark_surround_to_dim_surround(vec3 linearCV) {
-	const float dimSurroundGamma = 0.9811;
+    float J_ts = aces_tonescale_fwd0(outColor.r);
+    // Sample tables (fwd)
+    float reachMaxM = aces_reach_m_table_sample(outColor.b);
 
-	vec3 XYZ = linearCV * AP1_2_XYZ;
-	vec3 xyY = XYZ_to_xyY(XYZ);
+    {
+      float J = outColor.r;
+      float M = outColor.g;
+      float h = outColor.b;
+      float M_cp = M;
+      if (M != 0.0) {
+        float nJ = J_ts / aces_limit_J_max;
+        float snJ = max(0.0, 1.0 - nJ);
+        float Mnorm;
+        {
+          float cos_hr2 = 2.0 * cos_hr * cos_hr - 1.0;
+          float sin_hr2 = 2.0 * cos_hr * sin_hr;
+          float cos_hr3 = 4.0 * cos_hr * cos_hr * cos_hr - 3.0 * cos_hr;
+          float sin_hr3 = 3.0 * sin_hr - 4.0 * sin_hr * sin_hr * sin_hr;
+          vec3 cosines = vec3(cos_hr, cos_hr2, cos_hr3);
+          vec3 cosine_weights = vec3(11.341321604032515, 16.469863649185896, 7.8842182208776475);
+          vec3 sines = vec3(sin_hr, sin_hr2, sin_hr3);
+          vec3 sine_weights = vec3(14.665187919584513, -6.3725780354404442, 9.1941277054452897);
+          Mnorm = dot(cosines, cosine_weights) + dot(sines, sine_weights) + 77.133051547393805;
+        }
+        float limit = pow(nJ, 0.879464149) * reachMaxM / Mnorm;
+        M_cp = M * pow(J_ts / J, 0.879464149);
+        M_cp = M_cp / Mnorm;
+        M_cp = limit - aces_toe_fwd0(limit - M_cp, limit - 0.001, snJ * 1.29999995, sqrt(nJ * nJ + 0.00499999989));
+        M_cp = aces_toe_fwd0(M_cp, limit, nJ * 2.4000001, snJ);
+        M_cp = M_cp * Mnorm;
+      }
+      outColor.rgb = vec3(J_ts, M_cp, h);
+    }
 
-	xyY.z = max0(xyY.z);
-	xyY.z = pow(xyY.z, dimSurroundGamma);
+    // GamutCompress (fwd)
 
-	return xyY_to_XYZ(xyY) * XYZ_2_AP1;
-}
+    #if defined(HDR_ENABLED) && ACES_HDR_TARGET_GAMUT != 0
+    {
+      vec3 JMGcusp = aces_gamut_cusp_table_sample(outColor.b);
+      outColor.rgb = aces_gamut_compress0(outColor.rgb, outColor.r, JMGcusp, reachMaxM);
+    }
+    #endif
+
+    outColor = JMh_to_RGB(outColor);
+  }
 
 
-vec3 Y_to_linCV(vec3 Y, const float Ymax, const float Ymin) {
-    return (Y - Ymin) / (Ymax - Ymin);
-}
+  #ifndef HDR_ENABLED
+    outColor = clamp(outColor, vec3(0.0), vec3(1.0));
+    outColor *= sRGB_2_Rec2020;
+  #elif ACES_HDR_TARGET_GAMUT == 2
+    // P3-D65 to Rec.2020
+    outColor = mat4(0.75383303436172167, 0.045743848965358269, -0.0012103403545183939, 0.1985973690526166, 0.94177721981169349, 0.01760171730109, 0.047569596585661789, 0.012478931222948141, 0.98360862305342855) * outColor;
+  #endif
 
-float moncurve_r(float y, const float gamma, const float offs) {
-    const float yb = pow(offs * gamma / ((gamma - 1.0) * (1.0 + offs)), gamma);
-    const float rs = pow((gamma - 1.0) / offs, gamma - 1.0) * pow((1.0 + offs) / gamma, gamma);
-    return y >= yb ? (1.0 + offs) * pow(y, 1.0 / gamma) - offs : y * rs;
-}
-
-vec3 ODT_sRGB_100nits_dim(vec3 rgbPre) {
-    SegmentedSplineParams_c9 params = ODT_48nits;
-
-    params.minPoint.x = segmented_spline_c5_fwd(params.minPoint.x, RRT_PARAMS);
-    params.midPoint.x = segmented_spline_c5_fwd(params.midPoint.x, RRT_PARAMS);
-    params.maxPoint.x = segmented_spline_c5_fwd(params.maxPoint.x, RRT_PARAMS);
-
-	// Apply the tonescale independently in rendering-space RGB
-	vec3 rgbPost;
-	rgbPost.r = segmented_spline_c9_fwd(rgbPre.r, params);
-	rgbPost.g = segmented_spline_c9_fwd(rgbPre.g, params);
-	rgbPost.b = segmented_spline_c9_fwd(rgbPre.b, params);
-
-	const float cinemaWhite = 48.0;
-	const float cinemaBlack = 0.02;
-
-	// Scale luminance to linear code value
-	vec3 linearCV = Y_to_linCV(rgbPost, cinemaWhite, cinemaBlack);
-
-	// Apply gamma adjustment to compensate for dim surround
-	linearCV = dark_surround_to_dim_surround(linearCV);
-
-	// Apply desaturation to compensate for luminance difference
-	linearCV = mix(vec3(dot(linearCV, AP1_RGB2Y)), linearCV, odtSatFactor);
-
-    // Convert to display primary encoding
-    // Rendering space RGB to XYZ
-    vec3 XYZ = linearCV * AP1_2_XYZ;
-
-    // Apply CAT from ACES white point to assumed observer adapted white point
-    XYZ *= D60ToD65_CAT;
-
-    // CIE XYZ to display primaries
-    linearCV = XYZ * XYZ_2_Rec2020;
-
-    // Handle out-of-gamut values
-    // Clip values < 0 or > 1 (i.e. projecting outside the display primaries)
-    linearCV = saturate(linearCV);
-
-	const float dispGamma = 2.4;
-	const float offset = 0.055;
-
-    // Encode linear code values with transfer function
-    vec3 outputCV;
-    // moncurve_r with gamma of 2.4 and offset of 0.055 matches the EOTF found in IEC 61966-2-1:1999 (sRGB)
-    outputCV.r = moncurve_r(linearCV.r, dispGamma, offset);
-    outputCV.g = moncurve_r(linearCV.g, dispGamma, offset);
-    outputCV.b = moncurve_r(linearCV.b, dispGamma, offset);
-
-	return outputCV;
-}
-
-vec3 bt1886_r(vec3 L, const float gamma, const float Lw, const float Lb) {
-    float rGamma = 1.0 / gamma;
-    float a = pow(pow(Lw, rGamma) - pow(Lb, rGamma), gamma);
-    float b = pow(Lb, rGamma) / (pow(Lw, rGamma) - pow(Lb, rGamma));
-    return pow(max(L / a, 0.0), vec3(rGamma)) - b;
-}
-
-vec3 ODT_Rec2020_P3D65limited_100nits_dim_notrc(vec3 rgbPre) {
-    SegmentedSplineParams_c9 params = ODT_48nits;
-
-    params.minPoint.x = segmented_spline_c5_fwd(params.minPoint.x, RRT_PARAMS);
-    params.midPoint.x = segmented_spline_c5_fwd(params.midPoint.x, RRT_PARAMS);
-    params.maxPoint.x = segmented_spline_c5_fwd(params.maxPoint.x, RRT_PARAMS);
-
-	// Apply the tonescale independently in rendering-space RGB
-	vec3 rgbPost;
-	rgbPost.r = segmented_spline_c9_fwd(rgbPre.r, params);
-	rgbPost.g = segmented_spline_c9_fwd(rgbPre.g, params);
-	rgbPost.b = segmented_spline_c9_fwd(rgbPre.b, params);
-
-	const float cinemaWhite = 48.0;
-	const float cinemaBlack = 0.02;
-
-	// Scale luminance to linear code value
-	vec3 linearCV = Y_to_linCV(rgbPost, cinemaWhite, cinemaBlack);
-
-	// Apply gamma adjustment to compensate for dim surround
-	linearCV = dark_surround_to_dim_surround(linearCV);
-
-	// Apply desaturation to compensate for luminance difference
-	linearCV = mix(vec3(dot(linearCV, AP1_RGB2Y)), linearCV, odtSatFactor);
-
-    // Convert to display primary encoding
-    // Rendering space RGB to XYZ
-    vec3 XYZ = linearCV * AP1_2_XYZ;
-
-    // Apply CAT from ACES white point to assumed observer adapted white point
-    XYZ *= D60ToD65_CAT;
-
-    // CIE XYZ to display primaries
-    linearCV = XYZ * XYZ_2_Rec2020;
-
-    // Handle out-of-gamut values
-    // Clip values < 0 or > 1 (i.e. projecting outside the display primaries)
-	return saturate(linearCV);
-}
-
-vec3 AcademyFull(vec3 rgb) {
-	rgb *= Rec2020_2_AP0;
-
-	// Apply RRT
-	rgb = RRT(rgb);
-
-	// Apply ODT
-	rgb = ODT_Rec2020_P3D65limited_100nits_dim_notrc(rgb);
-
-	return rgb;
+  return outColor;
 }
