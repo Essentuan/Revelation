@@ -39,10 +39,10 @@ vec4 RenderMoon(vec3 worldDir, vec3 moonDir) {
         float cosTheta = cos(0.125 * TAU * float(moonPhase));
         float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
 
-        vec3 lightDir = normalize(cross(worldDir, vec3(0.0, 1.0, 0.0)));
-        lightDir = sinTheta * lightDir + cosTheta * worldDir;
+        vec3 lightDir = normalize(cross(vec3(sincos(PI * 0.75), 0.0), worldDir));
+        lightDir = sinTheta * lightDir - cosTheta * worldDir;
 
-        float diffuse = saturate(-dot(moonNormal, lightDir)) * rPI;
+        float diffuse = saturate(dot(moonNormal, lightDir)) * rPI;
 
         vec3 tangent = normalize(cross(moonDir, vec3(0.0, 1.0, 0.0)));
         vec3 bitangent = cross(tangent, moonDir);
