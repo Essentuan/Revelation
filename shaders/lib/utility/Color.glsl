@@ -109,6 +109,7 @@ vec3 InverseTonemapRadiance(vec3 v, float e) {
 }
 
 //======// ACES 2.0 //===========================================================================//
+
 const float aces_limit_J_max = 100.0;
 const int aces_tableSize = 360;
 const int aces_baseIndex = 1;
@@ -133,8 +134,7 @@ const float aces_mid_J = 34.096539;
 const float aces_focus_gain_blend = 0.3;
 
 // JMh to output RGB (sRGB here)
-vec3 JMh_to_RGB(vec3 JMh)
-{
+vec3 JMh_to_RGB(vec3 JMh) {
 	float h_rad = JMh.b * 0.0174532924;
     float cos_hr = cos(h_rad);
     float sin_hr = sin(h_rad);
@@ -170,7 +170,7 @@ vec3 RGB_to_JMh(vec3 RGB) {
         0.506470263, 1407.27271, -3440.0
     ) * rgb_a;
 
-    if (Aab.r <= 0.0) {
+    if (Aab.r < EPS) {
         return vec3(0.0);
     }
 
