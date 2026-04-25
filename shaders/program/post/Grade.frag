@@ -230,17 +230,13 @@ void main() {
 
 	// Apply DRT
 	{
-		// Working to DRT space
-		// color *= sRGB_2_Rec2020;
-
 		// Tone mapping
 		color = TONEMAPPING_FN(color);
 
-		// DRT to working space
-		// color *= Rec2020_2_sRGB;
-
 		// Working to display space
-		color *= Rec2020_2_sRGB;
+        #if TONE_MAPPER != TONEMAPPER_ACES_Full
+            color *= Rec2020_2_sRGB;
+        #endif
 		color = saturate(pow(color, vec3(1.0 / GAMMA_CORRECTION)));
 	}
 
