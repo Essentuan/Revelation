@@ -145,6 +145,7 @@ uniform vec2 taaJitterPrev;
 
 uniform vec3 cameraMovement;
 uniform vec3 worldSunDir;
+uniform vec3 worldMoonDir;
 uniform vec3 worldLightDir;
 uniform vec3 viewLightDir;
 

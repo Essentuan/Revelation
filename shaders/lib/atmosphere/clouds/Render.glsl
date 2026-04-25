@@ -340,7 +340,7 @@ void CompositeClouds(inout vec3 skyRadiance, vec4 cloudData, vec3 rayDir) {
 
 		// Compute illumination to clouds
         vec3 sunIlluminance = sunIrradiance * AtmosphereTransmittanceToSun(cloudPos, worldSunDir);
-        vec3 moonIlluminance = moonIrradiance * AtmosphereTransmittanceToSun(cloudPos, -worldSunDir);
+        vec3 moonIlluminance = moonIrradiance * AtmosphereTransmittanceToSun(cloudPos, worldMoonDir);
 		vec3 directIlluminance = sunIlluminance + moonIlluminance;
 
 		// Normalized height in clouds
@@ -356,7 +356,7 @@ void CompositeClouds(inout vec3 skyRadiance, vec4 cloudData, vec3 rayDir) {
 		vec3 aerialT = AtmosphereTransmittanceToPoint(atmosphereViewPos, rayDir, cloudData.z);
 		#if 0
 			vec3 aerialSL = sunIrradiance * RaymarchScattering(cloudPos, rayDir, worldSunDir);
-				aerialSL += moonIrradiance * RaymarchScattering(cloudPos, rayDir, -worldSunDir);
+				aerialSL += moonIrradiance * RaymarchScattering(cloudPos, rayDir, worldMoonDir);
 
 			skyRadiance += aerialSL * aerialT * (cloudData.w - 1.0);
 			skyRadiance += scattering * aerialT;

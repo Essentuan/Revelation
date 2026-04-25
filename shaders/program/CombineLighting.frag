@@ -100,7 +100,7 @@ void main() {
 			vec3 celestial = RenderSun(worldDir, worldSunDir);
 
 			#ifdef RENDER_MOON
-				vec4 moon = RenderMoon(worldDir, -worldSunDir);
+				vec4 moon = RenderMoon(worldDir, worldMoonDir);
 			#else
 				vec4 moon = vec4(albedo, step(0.06, albedo.g));
 			#endif
