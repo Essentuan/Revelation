@@ -34,7 +34,8 @@ float BlockerSearch(vec3 shadowScreenPos, float dither, float searchScale) {
 	vec2 searchRadius = searchScale * diagonal2(shadowProjection);
 
 	for (uint i = 0u; i < PCSS_SEARCH_SAMPLES; ++i) {
-		vec2 sampleCoord = shadowScreenPos.xy + sampleVogelDisk(i, PCSS_SEARCH_SAMPLES, dither) * searchRadius;
+		vec2 offset = sampleVogelDisk(i, PCSS_SEARCH_SAMPLES, dither);
+		vec2 sampleCoord = fma(offset, searchRadius, shadowScreenPos.xy);
 
 		float sampleDepth = texelFetch(shadowtex0, ivec2(sampleCoord * realShadowMapRes), 0).x;
 		blockerDepth += saturate(shadowScreenPos.z - sampleDepth);
@@ -58,7 +59,7 @@ vec3 CalculateWaterCaustics(vec3 worldPos, float waterDepth, float dither) {
 		vec3 refractDir = refract(vec3(0.0, 1.0, 0.0), waveNormal, 1.0 / WATER_IOR);
 		vec3 refractedPos = samplePos + refractDir * abs(1.0 / refractDir.y);
 
-		caustics += saturate(1.0 - 20.0 * distance(surfacePos, refractedPos));
+		caustics += saturate(fma(distance(surfacePos, refractedPos), -20.0, 1.0));
 	}
 
 	return -smin(-caustics, -0.1, 0.15) * saturate(exp2(-rLOG2 * waterExtinction * waterDepth));
@@ -78,26 +79,28 @@ vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, f
 	vec2 waterData = vec2(0.0); // (depth, count)
 
 	for (uint i = 0u; i < PCSS_FILTER_SAMPLES; ++i) {
-		vec2 offset = sampleVogelDisk(i, PCSS_FILTER_SAMPLES, dither) * penumbraRadius;
-		vec2 sampleCoord = shadowScreenPos.xy + offset;
+		vec2 offset = sampleVogelDisk(i, PCSS_FILTER_SAMPLES, dither);
+		vec2 sampleCoord = fma(offset, penumbraRadius, shadowScreenPos.xy);
 
 		float sampleDepth1 = texture(shadowtex1, vec3(sampleCoord, shadowScreenPos.z)).x;
 		shadow += sampleDepth1;
 
 	#ifdef COLORED_SHADOWS
-		ivec2 sampleTexel = ivec2(sampleCoord * realShadowMapRes);
-		float sampleDepth0 = texelFetch(shadowtex0, sampleTexel, 0).x;
+        if (floatBitsToUint(sampleDepth1) > 0u) {
+            ivec2 sampleTexel = ivec2(sampleCoord * realShadowMapRes);
+            float sampleDepth0 = texelFetch(shadowtex0, sampleTexel, 0).x;
 
-		if (step(shadowScreenPos.z, sampleDepth0) != sampleDepth1) {
-			float waterMask = texelFetch(shadowcolor1, sampleTexel, 0).w;
-			if (waterMask > EPS) {
-				waterData += vec2(sampleDepth0 - shadowScreenPos.z, 1.0);
-			} else {
-				color += cube(texelFetch(shadowcolor0, sampleTexel, 0).rgb);
-			}
-		} else {
-			color += 1.0;
-		}
+            if (shadowScreenPos.z > sampleDepth0) {
+                float waterMask = texelFetch(shadowcolor1, sampleTexel, 0).w;
+                if (waterMask > 0.5) {
+                    waterData += vec2(sampleDepth0 - shadowScreenPos.z, 1.0);
+                } else {
+                    color += cube(texelFetch(shadowcolor0, sampleTexel, 0).rgb);
+                }
+            } else {
+                color += 1.0;
+            }
+        }
 	#endif
 	}
 
@@ -186,7 +189,7 @@ float ScreenSpaceShadow(vec3 rayPos, vec3 viewPos, float dither, float sssAmount
 			hit = abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance;
 		}
 
-		result *= saturate(absorption + 1.0 - float(hit));
+		result *= saturate(absorption + float(!hit));
 	}
 
 	return result;
