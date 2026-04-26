@@ -35,6 +35,7 @@ writeonly uniform image2D msLutImg;
 #include "/lib/atmosphere/Common.glsl"
 
 #include "/lib/universal/Random.glsl"
+#include "/lib/universal/MonteCarlo.glsl"
 
 mat2x3 RaymarchMultiScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
     float tMax;

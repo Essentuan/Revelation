@@ -46,6 +46,7 @@ const ivec3 workGroups = ivec3(1, 1, 1);
 //======// Function //============================================================================//
 
 #include "/lib/universal/Random.glsl"
+#include "/lib/universal/MonteCarlo.glsl"
 #include "/lib/atmosphere/Common.glsl"
 
 void ParallelReduceSum(uint index, uint samples) {
