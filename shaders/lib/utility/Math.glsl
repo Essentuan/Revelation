@@ -29,6 +29,8 @@ const float FP16_MAX        = 65504.0;
 #define saturate(x) 	 clamp(x, 0.0, 1.0)
 #define satSnorm(x) 	 clamp(x, -1.0, 1.0)
 
+#define hermite(x)      smoothstep(0.0, 1.0, x)
+
 #define transMAD(m, v)	 (mat3(m) * (v) + (m)[3].xyz)
 #define diagonal2(m)	 vec2((m)[0].x, (m)[1].y)
 #define diagonal3(m)	 vec3((m)[0].x, (m)[1].y, m[2].z)
@@ -70,10 +72,6 @@ float pow8(float x)   	 { x *= x; x *= x; return x * x; }
 float pow16(float x)	 { x *= x; x *= x; x *= x; return x * x; }
 
 float pow32(float x)	 { x *= x; x *= x; x *= x; x *= x; return x * x; }
-
-float curve(float x)  	 { return x * x * (3.0 - 2.0 * x); }
-vec2  curve(vec2 x)	  	 { return x * x * (3.0 - 2.0 * x); }
-vec3  curve(vec3 x)	  	 { return x * x * (3.0 - 2.0 * x); }
 
 float sdot(vec2 x) 	 	 { return dot(x, x); }
 float sdot(vec3 x) 	 	 { return dot(x, x); }
@@ -201,7 +199,11 @@ float quarticLength(vec2 v) {
 
 //================================================================================================//
 
-vec3 ProjectDivide(vec3 v, mat4 m) {
+vec4 project(mat4 m, vec3 v) {
+    return diagonal4(m) * v.xyzz + m[3];
+}
+
+vec3 projectAndDivide(mat4 m, vec3 v) {
 	return projMAD(m, v) * rcp(m[2].w * v.z + m[3].w);
 }
 

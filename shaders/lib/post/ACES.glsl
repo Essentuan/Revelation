@@ -227,7 +227,7 @@ float CubicBasisShaper(float x, float w) {
 // https://github.com/sixthsurge/photon/blob/main/shaders/include/aces/aces.glsl
 float CubicBasisShaperFit(float x, const float width) {
 	float radius = 0.5 * width;
-	return abs(x) < radius ? sqr(curve(1.0 - abs(x) / radius)) : 0.0;
+	return abs(x) < radius ? sqr(hermite(1.0 - abs(x) / radius)) : 0.0;
 }
 
 float CenterHue(float hue, float centerH) {

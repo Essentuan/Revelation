@@ -6,7 +6,7 @@
 //================================================================================================//
 
 vec3 RainbowPhase(float angle, vec3 angleDev) {
-	return curve(saturate(1.0 - abs((angleDev - angle) / (angleDev.b - angleDev.r))));
+	return hermite(saturate(1.0 - abs((angleDev - angle) / (angleDev.b - angleDev.r))));
 }
 
 vec3 RenderRainbows(float mu) {

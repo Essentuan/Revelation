@@ -51,7 +51,7 @@ float Hash13(vec3 x) {
 float GradientNoise(vec3 x, float freq) {
     // grid
     vec3 p = floor(x);
-    vec3 w = curve(x - p);
+    vec3 w = hermite(x - p);
 
     // quintic interpolant
     vec3 u = w * w * w * (w * (w * 6. - 15.) + 10.);
@@ -91,7 +91,7 @@ float GradientNoise(vec3 x, float freq) {
 /// Source: <https://www.shadertoy.com/view/3dVXDc>
 float WorleyNoise(vec3 uv, float freq) {
     vec3 id = floor(uv);
-    vec3 p = curve(uv - id);
+    vec3 p = hermite(uv - id);
 
     float minDist = 1.0;
     for (int x = -1; x <= 1; ++x) {
@@ -147,7 +147,7 @@ float AlligatorNoise(vec3 p, uint gridsize, uvec3 seed) {
                 // performance. See: https://www.shadertoy.com/view/MflGWM
 
                 // Get random density scaled by the distance to the random point
-                float density = Hash13(cell) * curve(saturate(1.0 - dist));
+                float density = Hash13(cell) * hermite(saturate(1.0 - dist));
 
                 // find largest values
                 if (densest < density) {

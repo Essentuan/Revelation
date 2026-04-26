@@ -3,7 +3,7 @@ const float noiseTexturePixelSize = 1.0 / noiseTextureResolution;
 
 float Pseudo3DNoise(vec3 pos) {
     vec3 p = floor(pos);
-	vec3 b = curve(pos - p);
+	vec3 b = hermite(pos - p);
 
 	vec2 uv = p.xy + b.xy + 97.0 * p.z;
     vec2 rg = texture(noisetex, (uv + 0.5) * noiseTexturePixelSize).xy;

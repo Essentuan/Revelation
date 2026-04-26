@@ -118,7 +118,8 @@ void main() {
 		tileOffset = min(texCoord, mc_midTexCoord - minMidCoord);
 	#endif
 
-	gl_Position = diagonal4(gl_ProjectionMatrix) * transMAD(gbufferModelView, worldPos).xyzz + gl_ProjectionMatrix[3];
+	vec3 viewPos = transMAD(gbufferModelView, worldPos);
+    gl_Position = project(gl_ProjectionMatrix, viewPos);
 
 	#ifdef TAA_ENABLED
 		gl_Position.xy += taaJitter * gl_Position.w;

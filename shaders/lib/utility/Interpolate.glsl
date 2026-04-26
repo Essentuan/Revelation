@@ -283,10 +283,10 @@ vec3 textureRGBE8(sampler2D tex, vec2 coord) {
 vec4 textureTiling(sampler2D tex, vec2 coord) {
 	vec2 p = coord - 0.5;
 
-    vec2 weight0 = curve(abs(fract(p) * 2.0 - 1.0));
-    vec2 weight1 = curve(abs(fract(p + vec2(0.5, 0.5)) * 2.0 - 1.0));
-    vec2 weight2 = curve(abs(fract(p + vec2(1.0, 0.5)) * 2.0 - 1.0));
-    vec2 weight3 = curve(abs(fract(p + vec2(0.5, 1.0)) * 2.0 - 1.0));
+    vec2 weight0 = hermite(abs(fract(p) * 2.0 - 1.0));
+    vec2 weight1 = hermite(abs(fract(p + vec2(0.5, 0.5)) * 2.0 - 1.0));
+    vec2 weight2 = hermite(abs(fract(p + vec2(1.0, 0.5)) * 2.0 - 1.0));
+    vec2 weight3 = hermite(abs(fract(p + vec2(0.5, 1.0)) * 2.0 - 1.0));
 
     vec4 sample0 = texture(tex, coord) * weight0.x * weight0.y;
     vec4 sample1 = texture(tex, coord + vec2(0.5, 0.5)) * weight1.x * weight1.y;

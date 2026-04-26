@@ -39,7 +39,7 @@ void main() {
 	vertColor = gl_Color;
 
 	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
-	gl_Position = diagonal4(gl_ProjectionMatrix) * viewPos.xyzz + gl_ProjectionMatrix[3];
+    gl_Position = project(gl_ProjectionMatrix, viewPos);
 	worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
 	#ifdef TAA_ENABLED

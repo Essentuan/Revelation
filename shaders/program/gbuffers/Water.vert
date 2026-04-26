@@ -79,7 +79,7 @@ void main() {
 	#endif
 	worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
-	gl_Position = diagonal4(gl_ProjectionMatrix) * viewPos.xyzz + gl_ProjectionMatrix[3];
+    gl_Position = project(gl_ProjectionMatrix, viewPos);
 	#ifdef TAA_ENABLED
 		gl_Position.xy += taaJitter * gl_Position.w;
 	#endif

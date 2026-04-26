@@ -1,6 +1,6 @@
 vec3 ScreenToViewPosRaw(vec3 screenPos) {
 	vec3 ndcPos = screenPos * 2.0 - 1.0;
-	return ProjectDivide(ndcPos, gbufferProjectionInverse);
+	return projectAndDivide(gbufferProjectionInverse, ndcPos);
 }
 
 vec3 ScreenToViewPos(vec3 screenPos) {
@@ -8,7 +8,7 @@ vec3 ScreenToViewPos(vec3 screenPos) {
 	#ifdef TAA_ENABLED
 		ndcPos.xy -= taaJitter;
 	#endif
-	return ProjectDivide(ndcPos, gbufferProjectionInverse);
+	return projectAndDivide(gbufferProjectionInverse, ndcPos);
 }
 
 vec3 ScreenToViewPosRaw(vec2 screenPos, float viewDepth) {
@@ -29,7 +29,7 @@ vec3 ScreenToViewPos(vec2 screenPos) {
 	#ifdef TAA_ENABLED
 		ndcPos.xy -= taaJitter;
 	#endif
-	return ProjectDivide(ndcPos, gbufferProjectionInverse);
+	return projectAndDivide(gbufferProjectionInverse, ndcPos);
 }
 
 vec3 ViewToScreenPosRaw(vec3 viewPos) {
@@ -83,7 +83,7 @@ float ViewToScreenDepth(float depth) {
 #if defined LOD_MOD
 	vec3 ScreenToViewPosRawLod(vec3 screenPos) {
 		vec3 ndcPos = screenPos * 2.0 - 1.0;
-		return ProjectDivide(ndcPos, lodProjectionInv);
+		return projectAndDivide(lodProjectionInv, ndcPos);
 	}
 
 	vec3 ScreenToViewPosLod(vec3 screenPos) {
@@ -91,7 +91,7 @@ float ViewToScreenDepth(float depth) {
 		#ifdef TAA_ENABLED
 			ndcPos.xy -= taaJitter;
 		#endif
-		return ProjectDivide(ndcPos, lodProjectionInv);
+		return projectAndDivide(lodProjectionInv, ndcPos);
 	}
 
 	vec3 ScreenToViewPosLod(vec2 screenPos) {
@@ -99,7 +99,7 @@ float ViewToScreenDepth(float depth) {
 		#ifdef TAA_ENABLED
 			ndcPos.xy -= taaJitter;
 		#endif
-		return ProjectDivide(ndcPos, lodProjectionInv);
+		return projectAndDivide(lodProjectionInv, ndcPos);
 	}
 
 	vec3 ViewToScreenPosRawLod(vec3 viewPos) {
