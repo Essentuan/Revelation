@@ -5,8 +5,9 @@ const float TAU 		    = 6.28318530718;
 const float rTAU 		    = 0.15915494310;
 const float rLOG2 		    = 1.44269504089;
 const float PHI 		    = 0.61803398875;
-const float EPS 	        = 0.000001;
 const float goldenAngle     = 2.39996322973;
+
+const float EPS 	        = 0.000001;
 
 const float rcp255 		    = 0.00392156863;
 
@@ -20,25 +21,25 @@ const float FP16_MAX        = 65504.0;
 
 //================================================================================================//
 
-#define rcp(x) 			 (1.0 / (x))
-#define oms(x) 	 		 (1.0 - (x))
-#define max0(x) 		 max(x, 0.0)
-#define min1(x) 		 min(x, 1.0)
-#define maxEps(x) 		 max(x, EPS)
+#define rcp(x) 			    (1.0 / (x))
+#define oms(x) 	 		    (1.0 - (x))
+#define max0(x) 		    max(x, 0.0)
+#define min1(x) 		    min(x, 1.0)
+#define maxEps(x) 		    max(x, EPS)
 
-#define saturate(x) 	 clamp(x, 0.0, 1.0)
-#define satSnorm(x) 	 clamp(x, -1.0, 1.0)
+#define saturate(x) 	    clamp(x, 0.0, 1.0)
+#define satSnorm(x) 	    clamp(x, -1.0, 1.0)
 
-#define hermite(x)      smoothstep(0.0, 1.0, x)
+#define hermite(x)          smoothstep(0.0, 1.0, x)
 
-#define transMAD(m, v)	 (mat3(m) * (v) + (m)[3].xyz)
-#define diagonal2(m)	 vec2((m)[0].x, (m)[1].y)
-#define diagonal3(m)	 vec3((m)[0].x, (m)[1].y, m[2].z)
-#define diagonal4(m)	 vec4(diagonal3(m), (m)[2].w)
-#define projMAD(m, v)	 (diagonal3(m) * (v) + (m)[3].xyz)
+#define transMAD(m, v)	    (mat3(m) * (v) + (m)[3].xyz)
+#define diagonal2(m)	    vec2((m)[0].x, (m)[1].y)
+#define diagonal3(m)	    vec3((m)[0].x, (m)[1].y, m[2].z)
+#define diagonal4(m)	    vec4(diagonal3(m), (m)[2].w)
+#define projMAD(m, v)	    (diagonal3(m) * (v) + (m)[3].xyz)
 
-#define uvToTexel(coord) ivec2((coord) * viewSize)
-#define texelToUv(texel) ((vec2(texel) + 0.5) * viewPixelSize)
+#define uvToTexel(coord)    ivec2((coord) * viewSize)
+#define texelToUv(texel)    ((vec2(texel) + 0.5) * viewPixelSize)
 
 //================================================================================================//
 

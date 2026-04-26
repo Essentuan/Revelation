@@ -75,7 +75,7 @@ float CalculateCloudShadows(vec3 rayPos, float dither) {
 	// Raymarch along the light vector
 	for (uint i = 0u; i < uint(steps) && extinction < threshold; ++i, rayPos += rayStep) {
 		// Normalized height in clouds
-		float heightFraction = (length(rayPos) - cumulusBottomRadius) * rcp(cumulusThickness);
+		float heightFraction = fma(length(rayPos), rcp(cumulusThickness), -cumulusBottomRadius / cumulusThickness);
 		// if (abs(heightFraction - 0.5) > 0.5) break; // Skip if outside the clouds
 
 		float temp;

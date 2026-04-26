@@ -45,7 +45,7 @@ float CloudVolumeOpticalDepth(vec3 rayPos, vec3 rayDir, float noise, uint steps)
         vec3 samplePos = rayPos + rayStep * sqr(fi);
 
 		// Normalized height in clouds
-		float heightFraction = (length(samplePos) - cumulusBottomRadius) * rcp(cumulusThickness);
+		float heightFraction = fma(length(samplePos), rcp(cumulusThickness), -cumulusBottomRadius / cumulusThickness);
 		// if (abs(heightFraction - 0.5) > 0.5) break; // Skip if outside the clouds
 
 		float temp;
@@ -207,7 +207,7 @@ vec4 RenderClouds(vec3 rayDir, vec2 noise) {
 					vec3 rayPos = atmosphereViewPos + rayDir * rayT;
 
 					// Normalized height in clouds
-					float heightFraction = (length(rayPos) - cumulusBottomRadius) * rcp(cumulusThickness);
+					float heightFraction = fma(length(rayPos), rcp(cumulusThickness), -cumulusBottomRadius / cumulusThickness);
 					// if (abs(heightFraction - 0.5) > 0.5) break; // Skip if outside the clouds
 
 					// Compute sample cloud density
