@@ -316,7 +316,7 @@ void main() {
 		// Indirect diffuse lighting
 		#ifdef SSILVB_ENABLED
 			#ifdef SVGF_ENABLED
-				vec3 radiance = UpscaleDiffuseIndirect(texelPos, worldNormal, length(viewPos), NdotV);
+				vec3 radiance = UpscaleDiffuseIndirect(screenCoord, worldNormal, viewDist, NdotV);
 			#else
 				vec3 radiance = texelFetch(colortex3, texelPos >> 1, 0).rgb;
 			#endif
