@@ -152,7 +152,7 @@ void main() {
 	#endif
 
 	#if defined MC_SPECULAR_MAP
-		vec4 specularTex = ReadTexture(specular);
+		vec4 specularTex = texture(specular, texCoord);
 	#else
 		vec4 specularTex = vec4(0.0);
 	#endif
