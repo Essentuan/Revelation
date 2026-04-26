@@ -219,7 +219,7 @@ void main() {
 				const float contactShadow = 1.0;
 			#endif
 
-			float LdotV = dot(worldLightDir, -worldDir);
+			float LdotV = dot(worldLightDir, worldDir);
 
 			// Subsurface scattering
 			if (sssAmount > EPS) {
@@ -227,7 +227,7 @@ void main() {
 				vec3 sigmaA = oms(beta) * 16.0 / (sssAmount * SUBSURFACE_SCATTERING_STRENGTH);
 				vec3 sigmaS = 4.0 * beta * sssAmount;
 
-				float phase = HenyeyGreensteinPhase(-LdotV, 0.7) * 0.25 + uniformPhase * 0.75;
+				float phase = HenyeyGreensteinPhase(LdotV, 0.7) * 0.25 + uniformPhase * 0.75;
 				vec3 sss = sigmaS * phase * exp2(-rLOG2 * surfaceDepth * (sigmaS + sigmaA));
 
 				float cutout = float(clamp(materialID, 1000u, 1003u) == materialID || clamp(materialID, 27u, 28u) == materialID);
@@ -249,7 +249,7 @@ void main() {
 				float NdotH = dot(worldNormal, halfway);
 				float LdotH = dot(worldLightDir, halfway);
 
-				diffuseRadiance += shadow * DiffuseBurley(LdotH, NdotV, NdotL, material.roughness) * NdotL;
+				diffuseRadiance += shadow * DiffuseOrenNayar(NdotV, NdotL, saturate(-LdotV), material.roughness) * NdotL;
 				specularRadiance += shadow * SpecularGGX(LdotH, NdotV, NdotL, NdotH, material.roughness, f0) * NdotL;
 			}
 		}
