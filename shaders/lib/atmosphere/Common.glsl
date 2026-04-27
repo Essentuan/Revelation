@@ -56,7 +56,7 @@ const AtmosphereParameters atmosphere = AtmosphereParameters(
     mieCoeffBase * 0.9,
     mieCoeffBase,
     vec3(8.304280072e-7, 1.314911970e-6, 5.440679729e-8) * sRGB_2_Rec2020,
-    vec3(0.2, 0.25, 0.45) * sRGB_2_Rec2020
+    vec3(0.1, 0.2, 0.5) * sRGB_2_Rec2020
 );
 
 const mat3 atmosphereExtinctionCoeff = mat3(
@@ -74,20 +74,22 @@ float atmosphereViewHeight = planetRadius + VIEWER_BASE_ALTITUDE + eyeAltitude;
 vec3 atmosphereViewPos = vec3(0.0, atmosphereViewHeight, 0.0);
 
 // Celestial bodies
-const float sunRadius   = 6.9634e8;
+const float sunRadius   = 6.9634e8 * SUN_RADIUS_MULT;
 const float sunDistance = 1.496e11;
-const float sunAngularRadius = SUN_RADIUS_MULT * atan(sunRadius / sunDistance);
+const float sunAngularRadius = atan(sunRadius / sunDistance);
+const float sunSolidAngle = TAU * (1.0 - cos(sunAngularRadius));
 
 const vec3 sunIrradiance = vec3(1.0, 0.949, 0.937) * 126.0; // kW/m^2
-const vec3 sunRadiance = sunIrradiance / (TAU * (1.0 - cos(sunAngularRadius)));
+const vec3 sunRadiance = sunIrradiance / sunSolidAngle;
 
-const float moonRadius   = 1.7374e6;
+const float moonRadius   = 1.7374e6 * MOON_RADIUS_MULT;
 const float moonDistance = 3.8440e8;
-const float moonAngularRadius = MOON_RADIUS_MULT * atan(moonRadius / moonDistance);
+const float moonAngularRadius = atan(moonRadius / moonDistance);
+const float moonSolidAngle = TAU * (1.0 - cos(moonAngularRadius));
 
 const vec3 moonAlbedo = vec3(0.136) * exp2(NIGHT_BRIGHTNESS);
 const vec3 moonRadiance = moonAlbedo * sunIrradiance;
-const vec3 moonIrradiance = moonRadiance * (TAU * (1.0 - cos(moonAngularRadius)));
+const vec3 moonIrradiance = moonRadiance * moonSolidAngle;
 
 //================================================================================================//
 
@@ -104,7 +106,7 @@ vec2 RaySphereIntersection(vec3 pos, vec3 dir, float rad) {
 }
 
 vec2 RaySphereIntersection(float r, float mu, float rad) {
-	float delta = sqr(r) * (sqr(mu) - 1.0) + sqr(rad);
+	float delta = sqr(r) * fma(mu, mu, -1.0) + sqr(rad);
 
 	if (delta >= 0.0) {
 		delta *= inversesqrt(delta);
@@ -266,7 +268,7 @@ vec3 ReadTransmittanceLUT(float r, float mu) {
 }
 
 bool RayIntersectPlanetGround(float r, float mu) {
-	return mu < 0.0 && r * r * (mu * mu - 1.0) + atmosphere.bottomRadius * atmosphere.bottomRadius >= 0.0;
+	return mu < 0.0 && r * r * fma(mu, mu, -1.0) + atmosphere.bottomRadius * atmosphere.bottomRadius >= 0.0;
 }
 
 vec3 AtmosphereTransmittance(vec3 pos, vec3 dir) {
@@ -327,7 +329,7 @@ vec3 AtmosphereSkyView(vec3 viewPos, vec3 rayDir, vec3 sunDir) {
 	float lightViewCos = normalize(lightOnPlane).y;
 
 	vec2 uv;
-	uv.x = sqrt(-lightViewCos * 0.5 + 0.5);
+	uv.x = sqrt(fma(lightViewCos, -0.5, 0.5));
 
 	float vHorizon = sqrt(height * height - atmosphere.bottomRadius * atmosphere.bottomRadius);
 	float beta = fastAcos(vHorizon / height);
@@ -399,7 +401,7 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
 
     // Adaptive sample count
     const float maxSamples = ATMOSPHERE_SKY_SAMPLES;
-	float sampleCount = round(maxSamples * saturate(0.5 + tMax * 1e-5));
+	float sampleCount = round(maxSamples * saturate(fma(tMax, 1e-5, 0.5)));
 
     float stepSize = tMax * rcp(sampleCount);
     vec3 rayStep = stepSize * rayDir;

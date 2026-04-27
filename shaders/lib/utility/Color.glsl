@@ -225,7 +225,7 @@ vec3 AP1_to_JMh(vec3 RGB) {
         0.506470263, 1407.27271, -3440.0
     ) * rgb_a;
 
-    if (Aab.r <= 0.0) {
+    if (Aab.r < EPS) {
         return vec3(0.0);
     }
 

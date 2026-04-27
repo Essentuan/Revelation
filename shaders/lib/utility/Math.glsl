@@ -5,8 +5,9 @@ const float TAU 		    = 6.28318530718;
 const float rTAU 		    = 0.15915494310;
 const float rLOG2 		    = 1.44269504089;
 const float PHI 		    = 0.61803398875;
-const float EPS 	        = 0.000001;
 const float goldenAngle     = 2.39996322973;
+
+const float EPS 	        = 0.000001;
 
 const float rcp255 		    = 0.00392156863;
 
@@ -20,23 +21,25 @@ const float FP16_MAX        = 65504.0;
 
 //================================================================================================//
 
-#define rcp(x) 			 (1.0 / (x))
-#define oms(x) 	 		 (1.0 - (x))
-#define max0(x) 		 max(x, 0.0)
-#define min1(x) 		 min(x, 1.0)
-#define maxEps(x) 		 max(x, EPS)
+#define rcp(x) 			    (1.0 / (x))
+#define oms(x) 	 		    (1.0 - (x))
+#define max0(x) 		    max(x, 0.0)
+#define min1(x) 		    min(x, 1.0)
+#define maxEps(x) 		    max(x, EPS)
 
-#define saturate(x) 	 clamp(x, 0.0, 1.0)
-#define satSnorm(x) 	 clamp(x, -1.0, 1.0)
+#define saturate(x) 	    clamp(x, 0.0, 1.0)
+#define satSnorm(x) 	    clamp(x, -1.0, 1.0)
 
-#define transMAD(m, v)	 (mat3(m) * (v) + (m)[3].xyz)
-#define diagonal2(m)	 vec2((m)[0].x, (m)[1].y)
-#define diagonal3(m)	 vec3((m)[0].x, (m)[1].y, m[2].z)
-#define diagonal4(m)	 vec4(diagonal3(m), (m)[2].w)
-#define projMAD(m, v)	 (diagonal3(m) * (v) + (m)[3].xyz)
+#define hermite(x)          smoothstep(0.0, 1.0, x)
 
-#define uvToTexel(coord) ivec2((coord) * viewSize)
-#define texelToUv(texel) ((vec2(texel) + 0.5) * viewPixelSize)
+#define transMAD(m, v)	    (mat3(m) * (v) + (m)[3].xyz)
+#define diagonal2(m)	    vec2((m)[0].x, (m)[1].y)
+#define diagonal3(m)	    vec3((m)[0].x, (m)[1].y, m[2].z)
+#define diagonal4(m)	    vec4(diagonal3(m), (m)[2].w)
+#define projMAD(m, v)	    (diagonal3(m) * (v) + (m)[3].xyz)
+
+#define uvToTexel(coord)    ivec2((coord) * viewSize)
+#define texelToUv(texel)    ((vec2(texel) + 0.5) * viewPixelSize)
 
 //================================================================================================//
 
@@ -70,10 +73,6 @@ float pow8(float x)   	 { x *= x; x *= x; return x * x; }
 float pow16(float x)	 { x *= x; x *= x; x *= x; return x * x; }
 
 float pow32(float x)	 { x *= x; x *= x; x *= x; x *= x; return x * x; }
-
-float curve(float x)  	 { return x * x * (3.0 - 2.0 * x); }
-vec2  curve(vec2 x)	  	 { return x * x * (3.0 - 2.0 * x); }
-vec3  curve(vec3 x)	  	 { return x * x * (3.0 - 2.0 * x); }
 
 float sdot(vec2 x) 	 	 { return dot(x, x); }
 float sdot(vec3 x) 	 	 { return dot(x, x); }
@@ -201,7 +200,11 @@ float quarticLength(vec2 v) {
 
 //================================================================================================//
 
-vec3 ProjectDivide(vec3 v, mat4 m) {
+vec4 project(mat4 m, vec3 v) {
+    return diagonal4(m) * v.xyzz + m[3];
+}
+
+vec3 projectAndDivide(mat4 m, vec3 v) {
 	return projMAD(m, v) * rcp(m[2].w * v.z + m[3].w);
 }
 

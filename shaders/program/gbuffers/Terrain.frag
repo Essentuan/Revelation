@@ -60,10 +60,14 @@ uniform sampler2D tex;
 //======// Function //============================================================================//
 
 #include "/lib/universal/Random.glsl"
+#include "/lib/universal/Transform.glsl"
 
 #ifdef PARALLAX
-	#include "/lib/universal/Transform.glsl"
 	#include "/lib/surface/Parallax.glsl"
+#endif
+
+#ifdef RAIN_PUDDLES
+	#include "/lib/surface/RainPuddle.glsl"
 #endif
 
 #ifdef AUTO_GENERATED_NORMAL
@@ -102,14 +106,17 @@ void main() {
 	float dither = BlueNoise(ivec2(gl_FragCoord.xy), frameCounter);
 
 	normalOut.xy = unpackSnorm2x16(normalPack);
+	vec3 geoNormal = OctDecodeSnorm(normalOut.xy);
 
 	// Construct TBN matrix
 	#if defined MC_NORMAL_MAP
 		vec3 tangent = OctDecodeSnorm(unpackSnorm2x16(tangentPack.x));
-		vec3 normal = OctDecodeSnorm(normalOut.xy);
-		vec3 bitangent = cross(tangent, normal) * uintBitsToFloat(tangentPack.y);
-		mat3 tbnMatrix = mat3(tangent, bitangent, normal);
+		vec3 bitangent = cross(tangent, geoNormal) * uintBitsToFloat(tangentPack.y);
+		mat3 tbnMatrix = mat3(tangent, bitangent, geoNormal);
 	#endif
+
+	vec3 viewPos = ScreenToViewPos(vec3(gl_FragCoord.xy * viewPixelSize, gl_FragCoord.z));
+	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
 
 	#ifdef PARALLAX
 		#define ReadTexture(tex) textureGrad(tex, parallaxCoord, texGrad[0], texGrad[1])
@@ -125,13 +132,12 @@ void main() {
 		#endif
 
 		if (normalTex.w < (1.0 - rcp255)) {
-			vec3 viewPos = ScreenToViewPos(vec3(gl_FragCoord.xy * viewPixelSize, gl_FragCoord.z));
-			vec3 tangentPos = mat3(gbufferModelViewInverse) * viewPos * tbnMatrix;
+			vec3 tangentPos = worldPos * tbnMatrix;
 
-			float tangentLength = length(tangentPos);
-			float parallaxFade = smoothstep(64.0, 32.0, tangentLength);
+			float worldLength = length(worldPos);
+			float parallaxFade = smoothstep(64.0, 32.0, worldLength);
 
-			vec3 offsetCoord = CalculateParallax(tangentPos / tangentLength, dither, parallaxFade);
+			vec3 offsetCoord = CalculateParallax(tangentPos / worldLength, dither, parallaxFade);
 			parallaxCoord = atlasCoord(offsetCoord.xy);
 
 			normalTex = ReadTexture(normals);
@@ -198,9 +204,17 @@ void main() {
 
 	#if defined MC_SPECULAR_MAP
 		vec4 specularTex = ReadTexture(specular);
-		materialOut.z = Packup2x8U(specularTex.xy);
-		materialOut.w = Packup2x8U(specularTex.zw);
 	#else
-		materialOut.zw = uvec2(0);
+		vec4 specularTex = vec4(0.0);
 	#endif
+
+	// Compute rain puddles
+	#ifdef RAIN_PUDDLES
+		if (wetnessCustom > EPS) {
+			CalculateRainPuddles(albedoOut.rgb, specularTex.rgb, worldPos, geoNormal, lightmap.y);
+		}
+	#endif
+
+	materialOut.z = Packup2x8U(specularTex.xy);
+	materialOut.w = Packup2x8U(specularTex.zw);
 }

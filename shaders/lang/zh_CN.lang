@@ -246,6 +246,7 @@ option.HANDHELD_LIGHTING=手持光照
 option.HELD_LIGHT_BRIGHTNESS=手持光照亮度
 
 option.NIGHT_BRIGHTNESS=夜间亮度
+prefix.NIGHT_BRIGHTNESS=2^
 option.MINIMUM_AMBIENT_BRIGHTNESS=基础环境光亮度
 
 option.AO_ENABLED=环境光遮蔽

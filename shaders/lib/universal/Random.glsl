@@ -3,7 +3,7 @@ const float noiseTexturePixelSize = 1.0 / noiseTextureResolution;
 
 float Pseudo3DNoise(vec3 pos) {
     vec3 p = floor(pos);
-	vec3 b = curve(pos - p);
+	vec3 b = hermite(pos - p);
 
 	vec2 uv = p.xy + b.xy + 97.0 * p.z;
     vec2 rg = texture(noisetex, (uv + 0.5) * noiseTexturePixelSize).xy;
@@ -382,64 +382,4 @@ uint OwenScramble(uint p, uint seed) {
     p = bitfieldReverse(p);
     p = OwenHash(p, seed);
     return bitfieldReverse(p);
-}
-
-//================================================================================================//
-
-// PDF = 1 / (4 * PI)
-vec3 SampleUniformSphere(vec2 xy) {
-    float phi = TAU * xy.x;
-    float cosTheta = 1.0 - xy.y * 2.0;
-    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-
-    float x = sinTheta * cos(phi);
-    float y = sinTheta * sin(phi);
-    float z = cosTheta;
-
-    return vec3(x, y, z);
-}
-
-// PDF = 1 / (2 * PI)
-vec3 SampleUniformHemisphere(vec2 xy) {
-    float phi = TAU * xy.x;
-    float cosTheta = xy.y;
-    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-
-    float x = sinTheta * cos(phi);
-    float y = sinTheta * sin(phi);
-    float z = cosTheta;
-
-    return vec3(x, y, z);
-}
-
-// PDF = NoL / PI
-vec3 SampleCosineHemisphere(vec2 xy) {
-    float phi = TAU * xy.x;
-    float cosTheta = sqrt(xy.y);
-    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-
-    float x = sinTheta * cos(phi);
-    float y = sinTheta * sin(phi);
-    float z = cosTheta;
-
-    return vec3(x, y, z);
-}
-
-// PDF = NoL / PI
-vec3 SampleCosineHemisphere(vec3 vector, vec2 xy) {
-    vec3 hemisphere = SampleUniformSphere(xy);
-	hemisphere = normalize(vector + hemisphere);
-	return signMul(hemisphere, dot(hemisphere, vector));
-}
-
-// PDF = 1 / (2 * PI * (1 - cosThetaMax));
-vec3 SampleConeVector(vec3 vector, vec2 xy, float cosThetaMax) {
-    float phi = TAU * xy.x;
-    float cosTheta = mix(cosThetaMax, 1.0, xy.y);
-    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-
-    float x = sinTheta * cos(phi);
-    float y = sinTheta * sin(phi);
-    float z = cosTheta;
-    return BuildOrthonormalBasis(vector) * vec3(x, y, z);
 }

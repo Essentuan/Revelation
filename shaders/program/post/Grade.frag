@@ -240,9 +240,6 @@ void main() {
 
 	// Apply DRT
 	{
-		// Working to DRT space
-		// color *= sRGB_2_Rec2020;
-
 		// Tone mapping
 		color = TONEMAPPING_FN(color);
 		#ifndef HDR_ENABLED

@@ -232,7 +232,7 @@ vec3 SpecularGGX(float LdotH, float NdotV, float NdotL, float NdotH, float rough
     // Visibility term (= G / (4 * NdotV * NdotL))
     float Vis = VisSmithJoint(NdotL, NdotV, alpha2);
 
-	return F * D * Vis * NdotL;
+	return F * D * Vis;
 }
 
 // Hammon 2017, "PBR Diffuse Lighting for GGX+Smith Microsurfaces"
@@ -245,14 +245,14 @@ vec3 DiffuseHammon(float LdotV, float NdotV, float NdotL, float NdotH, float rou
     float single = mix(singleSmooth, singleRough, roughness) * rPI;
     float multi = 0.1159 * roughness;
 
-    return (multi * albedo + single) * NdotL;
+    return (multi * albedo + single);
 }
 
 // Burley 2012, "Physically-Based Shading at Disney"
 float DiffuseBurley(float LdotH, float NdotV, float NdotL, float roughness) {
 	float f90 = 0.5 + 2.0 * roughness * LdotH * LdotH;
 
-	return NdotL * rPI * FresnelSchlick(NdotL, 1.0, f90) * FresnelSchlick(NdotV, 1.0, f90);
+	return rPI * FresnelSchlick(NdotL, 1.0, f90) * FresnelSchlick(NdotV, 1.0, f90);
 }
 
 // Gotanda 2012, "Beyond a Simple Physically Based Blinn-Phong Model in Real-Time"
@@ -263,7 +263,7 @@ float DiffuseOrenNayar(float NdotV, float NdotL, float VdotL, float roughness) {
 	float cosri = VdotL - NdotV * NdotL;
 	float C1 = 1.0 - 0.5 * s2 / (s2 + 0.33);
 	float C2 = 0.45 * s2 / (s2 + 0.09) * cosri * mix(rcp(max(NdotL, NdotV)), 1.0, cosri < 0.0);
-	return NdotL * rPI * (C1 + C2) * (1.0 + roughness * 0.5);
+	return rPI * (C1 + C2) * (1.0 + roughness * 0.5);
 }
 
 // Portsmouth et al. 2025, "EON: A Practical Energy-Preserving Rough Diffuse BRDF"
@@ -345,7 +345,7 @@ vec3 SphericalAreaGGX(float LdotH, float NdotV, float NdotL, float LdotV, float 
     float alphaSquaredLdotH = alpha2 * (LdotH + 0.001);
     float normalization = alphaSquaredLdotH / (alphaSquaredLdotH + 0.25 * radius * (3.0 * alpha + radius));
 
-	return F * D * Vis * normalization * NdotL;
+	return F * D * Vis * normalization;
 }
 
 float SpecularThroughputGGX(float NdotV, float NdotL, float roughness) {

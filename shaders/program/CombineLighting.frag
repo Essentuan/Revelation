@@ -24,8 +24,6 @@ out vec3 sceneOut;
 
 //======// Uniform //=============================================================================//
 
-writeonly uniform uimage2D colorimg7;
-
 uniform sampler2D cloudOriginTex;
 
 #include "/lib/universal/Uniform.glsl"
@@ -60,35 +58,10 @@ uniform sampler2D cloudOriginTex;
 
 #include "/lib/SpatialUpscale.glsl"
 
-#ifdef RAIN_PUDDLES
-	#include "/lib/surface/RainPuddle.glsl"
-#endif
-
 //======// Main //================================================================================//
 void main() {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
     vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
-
-	vec3 screenPos = vec3(screenCoord, loadDepth0(texelPos));
-
-	#if defined LOD_MOD
-		bool lodMask = screenPos.z > 1.0 - EPS;
-		if (lodMask) {
-			screenPos.z = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth0Lod(texelPos)));
-		}
-	#endif
-
-	// Hand-depth correction
-	if (screenPos.z < 0.56) {
-		screenPos.z = screenPos.z * rcp(MC_HAND_DEPTH) + (0.5 - 0.5 / MC_HAND_DEPTH);
-	}
-
-	vec3 viewPos = ScreenToViewPos(screenPos);
-	float viewDist = length(viewPos);
-
-	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
-	vec3 worldDir = worldPos / viewDist;
-	worldPos += gbufferModelViewInverse[3].xyz;
 
 	uvec4 materialPack = loadMaterialPack(texelPos);
 	uint materialID = materialPack.y;
@@ -100,11 +73,15 @@ void main() {
 	sceneOut = vec3(0.0);
 
 	if (materialID == 0u) { // Sky
+		vec3 viewDir  = ScreenToViewDir(screenCoord);
+		vec3 worldDir = mat3(gbufferModelViewInverse) * viewDir;
+
 		vec3 transmittance = AtmosphereTransmittance(atmosphereViewPos, worldDir);
 		vec3 skyRadiance = AtmosphereSkyView(atmosphereViewPos, worldDir, worldSunDir);
 
 		sceneOut = skyRadiance;
 
+		// Clouds
 		#ifdef CLOUDS
 			#ifdef CLOUD_TAAU_ENABLED
 				vec4 cloudData = texture(cloudReconstructTex, screenCoord);
@@ -118,11 +95,12 @@ void main() {
 			transmittance *= cloudData.w;
 		#endif
 
+		// Celestial objects
 		if (dot(transmittance, vec3(1.0)) > EPS) {
 			vec3 celestial = RenderSun(worldDir, worldSunDir);
 
 			#ifdef RENDER_MOON
-				vec4 moon = RenderMoon(worldDir, -worldSunDir);
+				vec4 moon = RenderMoon(worldDir, worldMoonDir);
 			#else
 				vec4 moon = vec4(albedo, step(0.06, albedo.g));
 			#endif
@@ -135,33 +113,34 @@ void main() {
 
 			sceneOut += celestial * transmittance;
 		}
-
-		imageStore(colorimg7, texelPos, uvec4(0));
 	} else {
+		vec3 screenPos = vec3(screenCoord, loadDepth0(texelPos));
+
+		#if defined LOD_MOD
+			bool lodMask = screenPos.z > 1.0 - EPS;
+			if (lodMask) {
+				screenPos.z = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth0Lod(texelPos)));
+			}
+		#endif
+
+		// Hand-depth correction
+		if (screenPos.z < 0.56) {
+			screenPos.z = screenPos.z * rcp(MC_HAND_DEPTH) + (0.5 - 0.5 / MC_HAND_DEPTH);
+		}
+
+		vec3 viewPos = ScreenToViewPos(screenPos);
+		float viewDist = length(viewPos);
+
+		vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
+		vec3 worldDir = worldPos / viewDist;
+		worldPos += gbufferModelViewInverse[3].xyz;
+
 		vec3 geoNormal, worldNormal;
 		FetchNormalData(texelPos, geoNormal, worldNormal);
 		vec3 viewNormal = mat3(gbufferModelView) * worldNormal;
 
 		vec2 lightmap = Unpack2x8U(materialPack.x);
-
-		#if defined MC_SPECULAR_MAP
-			vec4 specularTex = ExtractSpecularTex(materialPack);
-		#else
-			vec4 specularTex = vec4(0.0);
-		#endif
-
-		// Compute rain puddles
-		#ifdef RAIN_PUDDLES
-			if (wetnessCustom > EPS) {
-				// Skip foliage
-				if (clamp(materialID, 1000u, 1002u) != materialID) {
-					CalculateRainPuddles(albedo, worldNormal, specularTex.rgb, worldPos, geoNormal, lightmap.y);
-
-					materialPack.z = Packup2x8U(specularTex.xy);
-					imageStore(colorimg7, texelPos, materialPack);
-				}
-			}
-		#endif
+		vec4 specularTex = ExtractSpecularTex(materialPack);
 
 		Material material = GetMaterialData(specularTex);
 
@@ -240,7 +219,7 @@ void main() {
 				const float contactShadow = 1.0;
 			#endif
 
-			float LdotV = dot(worldLightDir, -worldDir);
+			float LdotV = dot(worldLightDir, worldDir);
 
 			// Subsurface scattering
 			if (sssAmount > EPS) {
@@ -248,7 +227,7 @@ void main() {
 				vec3 sigmaA = oms(beta) * 16.0 / (sssAmount * SUBSURFACE_SCATTERING_STRENGTH);
 				vec3 sigmaS = 4.0 * beta * sssAmount;
 
-				float phase = HenyeyGreensteinPhase(-LdotV, 0.7) * 0.25 + uniformPhase * 0.75;
+				float phase = HenyeyGreensteinPhase(LdotV, 0.7) * 0.25 + uniformPhase * 0.75;
 				vec3 sss = sigmaS * phase * exp2(-rLOG2 * surfaceDepth * (sigmaS + sigmaA));
 
 				float cutout = float(clamp(materialID, 1000u, 1003u) == materialID || clamp(materialID, 27u, 28u) == materialID);
@@ -270,8 +249,8 @@ void main() {
 				float NdotH = dot(worldNormal, halfway);
 				float LdotH = dot(worldLightDir, halfway);
 
-				diffuseRadiance += shadow * DiffuseBurley(LdotH, NdotV, NdotL, material.roughness);
-				specularRadiance += shadow * SpecularGGX(LdotH, NdotV, NdotL, NdotH, material.roughness, f0);
+				diffuseRadiance += shadow * DiffuseOrenNayar(NdotV, NdotL, saturate(-LdotV), material.roughness) * NdotL;
+				specularRadiance += shadow * SpecularGGX(LdotH, NdotV, NdotL, NdotH, material.roughness, f0) * NdotL;
 			}
 		}
 
@@ -337,7 +316,7 @@ void main() {
 		// Indirect diffuse lighting
 		#ifdef SSILVB_ENABLED
 			#ifdef SVGF_ENABLED
-				vec3 radiance = UpscaleDiffuseIndirect(texelPos, worldNormal, length(viewPos), NdotV);
+				vec3 radiance = UpscaleDiffuseIndirect(screenCoord, worldNormal, viewDist, NdotV);
 			#else
 				vec3 radiance = texelFetch(colortex3, texelPos >> 1, 0).rgb;
 			#endif
@@ -352,12 +331,12 @@ void main() {
 		diffuseRadiance *= albedo * oms(material.metalness);
 
 		// Indirect specular
-		#if defined MC_SPECULAR_MAP
+		if (material.specularMask) {
 			vec2 brdf = texture(brdfLutTex, vec2(material.roughness, NdotV)).xy;
 
 			vec3 specular = f0 * brdf.x + brdf.y;
 			specularRadiance += loadSceneMain(texelPos) * specular;
-		#endif
+		}
 
 		sceneOut = diffuseRadiance + specularRadiance;
 	}

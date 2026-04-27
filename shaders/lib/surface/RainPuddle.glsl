@@ -1,5 +1,5 @@
 
-void CalculateRainPuddles(inout vec3 albedo, inout vec3 normal, inout vec3 specTex, vec3 worldPos, vec3 geoNormal, float skylight) {
+void CalculateRainPuddles(inout vec3 albedo, inout vec3 specTex, vec3 worldPos, vec3 geoNormal, float skylight) {
     vec3 minecraftPos = worldPos + cameraPosition;
     vec2 puddlePos = minecraftPos.xz - minecraftPos.y;
 	puddlePos -= worldTimeCounter * vec2(0.016, 0.01);
@@ -19,15 +19,17 @@ void CalculateRainPuddles(inout vec3 albedo, inout vec3 normal, inout vec3 specT
     // Skylight falloff
     puddles *= saturate(skylight * 5.0 - 4.0);
 
-    // Apply wetness to albedo
-    vec3 wetAlbedo = desaturate(albedo, 0.25) * 0.5;
-    #if TEXTURE_FORMAT == 0
+    #if defined MC_SPECULAR_MAP && TEXTURE_FORMAT == 0
         // https://shaderlabs.org/wiki/LabPBR_Material_Standard
         float porosity = saturate(specTex.b * (255.0 / 64.0) - step(64.5, specTex.b * 255.0));
-
-        puddles *= 1.0 - porosity;
-        wetAlbedo *= oms(porosity * wetAlbedo);
+    #else
+        const float porosity = 0.25;
     #endif
+    puddles *= saturate(1.5 - porosity);
+
+    // Apply wetness to albedo
+    vec3 wetAlbedo = desaturate(albedo, 0.25);
+    wetAlbedo *= 1.0 - porosity * 0.75;
     albedo = mix(albedo, wetAlbedo, puddles);
 
     // Apply wetness to normal
