@@ -236,8 +236,8 @@ vec3 SpecularGGX(float LdotH, float NdotV, float NdotL, float NdotH, float rough
 }
 
 // Hammon 2017, "PBR Diffuse Lighting for GGX+Smith Microsurfaces"
-vec3 DiffuseHammon(float LdotV, float NdotV, float NdotL, float NdotH, float roughness, vec3 albedo) {
-    float facing = saturate(LdotV) * 0.5 + 0.5;
+vec3 DiffuseHammon(float NdotV, float NdotL, float VdotH, float NdotH, float roughness, vec3 albedo) {
+    float facing = saturate(VdotH * VdotH);
 
     float singleSmooth = 1.05 * oms(pow5(1.0 - NdotL)) * oms(pow5(1.0 - NdotV));
     float singleRough = facing * (0.9 - 0.4 * facing) * (0.5 + NdotH) / max(NdotH, 1e-2);
@@ -267,9 +267,9 @@ float DiffuseOrenNayar(float NdotV, float NdotL, float VdotL, float roughness) {
 }
 
 // Portsmouth et al. 2025, "EON: A Practical Energy-Preserving Rough Diffuse BRDF"
-vec3 DiffuseEON(vec3 albedo, float roughness, float NdotV, float NdotL, float VdotL) {
+vec3 DiffuseEON(float NdotV, float NdotL, float VdotL, float roughness, vec3 albedo) {
 	// Albedo inversion for EON model to maintain a consistent color with lambert
-	vec3 Rho = albedo * (1.0 + (0.189468 - 0.189468 * albedo) * roughness);
+	vec3 Rho = /* albedo *  */(1.0 + (0.189468 - 0.189468 * albedo) * roughness);
 
 	// This is the main shaping term from the Oren-Nayar model (with tweaks by Fujii)
 	float S = VdotL - NdotV * NdotL;
@@ -285,7 +285,7 @@ vec3 DiffuseEON(vec3 albedo, float roughness, float NdotV, float NdotL, float Vd
 	// Use (1 - Eo) only as a non-reciprocal approach to energy conservation
 	float f_ms = 1.0 - AF * (1.0 + roughness * GoverPi_V);
 	// The Rho_ms term from the paper can be approximated as just Rho^2
-	return Rho * (f_ss + Rho * f_ms) * rPI;
+	return Rho * (f_ss + albedo * Rho * f_ms) * rPI;
 }
 
 // de Carpentier 2017, "Decima Engine: Advances in Lighting and AA"

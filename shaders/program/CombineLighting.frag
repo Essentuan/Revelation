@@ -284,11 +284,12 @@ void main() {
 					#endif
 				#endif
 
-				vec3 halfway = normalize(worldLightDir - worldDir);
-				float NdotH = dot(worldNormal, halfway);
-				float LdotH = dot(worldLightDir, halfway);
+                vec3 halfway = normalize(worldLightDir - worldDir);
+                float NdotH = saturate(dot(worldNormal, halfway));
+                float LdotH = saturate(dot(worldLightDir, halfway));
+                float VdotH = saturate(-dot(worldDir, halfway));
 
-				diffuseRadiance += shadow * DiffuseOrenNayar(NdotV, NdotL, saturate(-LdotV), material.roughness) * NdotL;
+				diffuseRadiance += shadow * DiffuseHammon(NdotV, NdotL, VdotH, NdotH, material.roughness, albedo) * NdotL;
 				specularRadiance += shadow * SpecularGGX(LdotH, NdotV, NdotL, NdotH, material.roughness, f0) * NdotL;
 			}
 		}
