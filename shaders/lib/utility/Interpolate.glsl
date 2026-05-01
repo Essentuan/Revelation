@@ -1,15 +1,15 @@
 // From https://iquilezles.org/www/articles/texture/texture.htm
 vec4 textureSmoothFilter(sampler2D tex, vec2 coord) {
-    vec2 res = vec2(textureSize(tex, 0));
+	vec2 res = vec2(textureSize(tex, 0));
 
-    coord = coord * res + 0.5;
+	coord = coord * res + 0.5;
 
-    vec2 i, f = modf(coord, i);
-    f *= f * f * (f * (f * 6.0 - 15.0) + 10.0);
-    coord = i + f;
+	vec2 i, f = modf(coord, i);
+	f *= f * f * (f * (f * 6.0 - 15.0) + 10.0);
+	coord = i + f;
 
-    coord = (coord - 0.5) / res;
-    return textureLod(tex, coord, 0.0);
+	coord = (coord - 0.5) / res;
+	return textureLod(tex, coord, 0.0);
 }
 
 // From https://jvm-gaming.org/t/glsl-simple-fast-bicubic-filtering-shader-function/52549
@@ -24,26 +24,26 @@ vec4 cubic(float v) {
 }
 
 vec4 textureBicubic(sampler2D tex, vec2 coord) {
-    vec2 res = vec2(textureSize(tex, 0));
+	vec2 res = vec2(textureSize(tex, 0));
 
-    coord = coord * res - 0.5;
+	coord = coord * res - 0.5;
 
-    vec2 fxy = fract(coord);
-    coord -= fxy;
+	vec2 fxy = fract(coord);
+	coord -= fxy;
 
     vec4 xCubic = cubic(fxy.x);
     vec4 yCubic = cubic(fxy.y);
 
-    vec4 c = coord.xxyy + vec2(-0.5, 1.5).xyxy;
-    vec4 s = vec4(xCubic.xz + xCubic.yw, yCubic.xz + yCubic.yw);
+	vec4 c = coord.xxyy + vec2(-0.5, 1.5).xyxy;
+	vec4 s = vec4(xCubic.xz + xCubic.yw, yCubic.xz + yCubic.yw);
 
     vec4 offset = c + vec4(xCubic.yw, yCubic.yw) / s;
-    offset *= 1.0 / res.xxyy;
+	offset *= 1.0 / res.xxyy;
 
-    vec4 sample0 = textureLod(tex, offset.xz, 0.0);
-    vec4 sample1 = textureLod(tex, offset.yz, 0.0);
-    vec4 sample2 = textureLod(tex, offset.xw, 0.0);
-    vec4 sample3 = textureLod(tex, offset.yw, 0.0);
+	vec4 sample0 = textureLod(tex, offset.xz, 0.0);
+	vec4 sample1 = textureLod(tex, offset.yz, 0.0);
+	vec4 sample2 = textureLod(tex, offset.xw, 0.0);
+	vec4 sample3 = textureLod(tex, offset.yw, 0.0);
 
     float sx = s.x / (s.x + s.y);
     float sy = s.z / (s.z + s.w);
@@ -52,26 +52,26 @@ vec4 textureBicubic(sampler2D tex, vec2 coord) {
 }
 
 vec4 textureBicubicLod(sampler2D tex, vec2 coord, float lod) {
-    vec2 res = vec2(textureSize(tex, 0));
+	vec2 res = vec2(textureSize(tex, 0));
 
-    coord = coord * res - 0.5;
+	coord = coord * res - 0.5;
 
-    vec2 fxy = fract(coord);
-    coord -= fxy;
+	vec2 fxy = fract(coord);
+	coord -= fxy;
 
     vec4 xCubic = cubic(fxy.x);
     vec4 yCubic = cubic(fxy.y);
 
-    vec4 c = coord.xxyy + vec2(-0.5, 1.5).xyxy;
-    vec4 s = vec4(xCubic.xz + xCubic.yw, yCubic.xz + yCubic.yw);
+	vec4 c = coord.xxyy + vec2(-0.5, 1.5).xyxy;
+	vec4 s = vec4(xCubic.xz + xCubic.yw, yCubic.xz + yCubic.yw);
 
     vec4 offset = c + vec4(xCubic.yw, yCubic.yw) / s;
-    offset *= 1.0 / res.xxyy;
+	offset *= 1.0 / res.xxyy;
 
-    vec4 sample0 = textureLod(tex, offset.xz, lod);
-    vec4 sample1 = textureLod(tex, offset.yz, lod);
-    vec4 sample2 = textureLod(tex, offset.xw, lod);
-    vec4 sample3 = textureLod(tex, offset.yw, lod);
+	vec4 sample0 = textureLod(tex, offset.xz, lod);
+	vec4 sample1 = textureLod(tex, offset.yz, lod);
+	vec4 sample2 = textureLod(tex, offset.xw, lod);
+	vec4 sample3 = textureLod(tex, offset.yw, lod);
 
     float sx = s.x / (s.x + s.y);
     float sy = s.z / (s.z + s.w);
@@ -94,7 +94,7 @@ vec4 catmullRom(float f) {
 // Samples a texture with Catmull-Rom filtering, using 9 texture fetches instead of 16.
 // See http://vec3.ca/bicubic-filtering-in-fewer-taps/ for more details
 vec4 textureCatmullRom(sampler2D tex, vec2 uv) {
-    vec2 res = vec2(textureSize(tex, 0));
+	vec2 res = vec2(textureSize(tex, 0));
     vec2 pixelSize = 1.0 / res;
 
     vec2 samplePos = uv * res;
@@ -135,7 +135,7 @@ vec4 textureCatmullRom(sampler2D tex, vec2 uv) {
 
 // Approximation from SMAA presentation [Jimenez 2016]
 vec4 textureCatmullRomFast(sampler2D tex, vec2 coord) {
-    vec2 res = vec2(textureSize(tex, 0));
+	vec2 res = vec2(textureSize(tex, 0));
     vec2 pixelSize = 1.0 / res;
 
     vec2 pos = coord * res;
@@ -178,7 +178,7 @@ vec4 textureCatmullRomFast(sampler2D tex, vec2 coord) {
 }
 
 vec4 textureCatmullRomFastAntiRing(sampler2D tex, vec2 coord) {
-    vec2 res = vec2(textureSize(tex, 0));
+	vec2 res = vec2(textureSize(tex, 0));
     vec2 pixelSize = 1.0 / res;
 
     vec2 pos = coord * res;
@@ -236,29 +236,29 @@ float lanczos2(float x) {
 }
 
 vec4 textureLanczos(sampler2D tex, vec2 coord) {
-    const int radius = 2;
+	const int radius = 2;
 
-    vec2 res = vec2(textureSize(tex, 0));
-    coord = coord * res - 0.5;
+	vec2 res = vec2(textureSize(tex, 0));
+	coord = coord * res - 0.5;
 
     vec2 p = floor(coord);
     vec2 f = coord - p;
 
-    ivec2 texel = ivec2(p);
+	ivec2 texel = ivec2(p);
 
     vec4 sum = vec4(0.0);
-    float sumWeight = 0.0;
+	float sumWeight = 0.0;
 
     for (int x = -radius; x <= radius; ++x) {
         float fx = lanczos2(float(x) - f.x);
 
         for (int y = -radius; y <= radius; ++y) {
-            float fy = lanczos2(float(y) - f.y);
-            float weight = fx * fy;
+			float fy = lanczos2(float(y) - f.y);
+			float weight = fx * fy;
 
-            vec4 sampleData = texelFetch(tex, texel + ivec2(x, y), 0);
+			vec4 sampleData = texelFetch(tex, texel + ivec2(x, y), 0);
             sum += sampleData * weight;
-            sumWeight += weight;
+			sumWeight += weight;
         }
     }
 
@@ -266,8 +266,8 @@ vec4 textureLanczos(sampler2D tex, vec2 coord) {
 }
 
 vec3 textureRGBE8(sampler2D tex, vec2 coord) {
-    vec2 res = vec2(textureSize(tex, 0));
-    coord = coord * res - 0.5;
+	vec2 res = vec2(textureSize(tex, 0));
+	coord = coord * res - 0.5;
 
     ivec2 i = ivec2(floor(coord));
     vec2 f = coord - i;
@@ -281,7 +281,7 @@ vec3 textureRGBE8(sampler2D tex, vec2 coord) {
 }
 
 vec4 textureTiling(sampler2D tex, vec2 coord) {
-    vec2 p = coord - 0.5;
+	vec2 p = coord - 0.5;
 
     vec2 weight0 = hermite(abs(fract(p) * 2.0 - 1.0));
     vec2 weight1 = hermite(abs(fract(p + vec2(0.5, 0.5)) * 2.0 - 1.0));

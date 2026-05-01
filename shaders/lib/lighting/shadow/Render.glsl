@@ -7,18 +7,18 @@
 #include "Common.glsl"
 
 vec3 WorldToShadowScreenSpace(vec3 worldPos) {
-    vec3 shadowClipPos = transMAD(shadowModelView, worldPos);
-    shadowClipPos = projMAD(shadowProjection, shadowClipPos);
+	vec3 shadowClipPos = transMAD(shadowModelView, worldPos);
+	shadowClipPos = projMAD(shadowProjection, shadowClipPos);
 
-    return DistortShadowSpace(shadowClipPos) * 0.5 + 0.5;
+	return DistortShadowSpace(shadowClipPos) * 0.5 + 0.5;
 }
 
 vec3 WorldToShadowScreenSpace(vec3 worldPos, out float distortionFactor) {
-    vec3 shadowClipPos = transMAD(shadowModelView, worldPos);
-    shadowClipPos = projMAD(shadowProjection, shadowClipPos);
+	vec3 shadowClipPos = transMAD(shadowModelView, worldPos);
+	shadowClipPos = projMAD(shadowProjection, shadowClipPos);
 
-    distortionFactor = CalcDistortionFactor(shadowClipPos.xy);
-    return DistortShadowSpace(shadowClipPos, distortionFactor) * 0.5 + 0.5;
+	distortionFactor = CalcDistortionFactor(shadowClipPos.xy);
+	return DistortShadowSpace(shadowClipPos, distortionFactor) * 0.5 + 0.5;
 }
 
 //================================================================================================//
@@ -29,63 +29,63 @@ uniform sampler2D shadowcolor0;
 uniform sampler2D shadowcolor1;
 
 float BlockerSearch(vec3 shadowScreenPos, float dither, float searchScale) {
-    float blockerDepth = 0.0;
+	float blockerDepth = 0.0;
 
-    vec2 searchRadius = searchScale * diagonal2(shadowProjection);
+	vec2 searchRadius = searchScale * diagonal2(shadowProjection);
 
-    for (uint i = 0u; i < PCSS_SEARCH_SAMPLES; ++i) {
-        vec2 offset = sampleVogelDisk(i, PCSS_SEARCH_SAMPLES, dither);
-        vec2 sampleCoord = fma(offset, searchRadius, shadowScreenPos.xy);
+	for (uint i = 0u; i < PCSS_SEARCH_SAMPLES; ++i) {
+		vec2 offset = sampleVogelDisk(i, PCSS_SEARCH_SAMPLES, dither);
+		vec2 sampleCoord = fma(offset, searchRadius, shadowScreenPos.xy);
 
-        float sampleDepth = texelFetch(shadowtex0, ivec2(sampleCoord * realShadowMapRes), 0).x;
-        blockerDepth += saturate(shadowScreenPos.z - sampleDepth);
-    }
+		float sampleDepth = texelFetch(shadowtex0, ivec2(sampleCoord * realShadowMapRes), 0).x;
+		blockerDepth += saturate(shadowScreenPos.z - sampleDepth);
+	}
 
-    blockerDepth *= -5.0 / float(PCSS_SEARCH_SAMPLES);
-    return blockerDepth * shadowProjectionInverse[2].z;
+	blockerDepth *= -5.0 / float(PCSS_SEARCH_SAMPLES);
+	return blockerDepth * shadowProjectionInverse[2].z;
 }
 
 vec3 CalculateWaterCaustics(vec3 worldPos, float waterDepth, float dither) {
-    vec3 surfacePos = worldPos - vec3(0.0, 1.0, 0.0);
+	vec3 surfacePos = worldPos - vec3(0.0, 1.0, 0.0);
 
-    float caustics = 0.0;
-    for (uint i = 0u; i < 16u; ++i) {
-        vec3 samplePos = worldPos;
-        samplePos.xz += sampleVogelDisk(i, 16, dither) * 0.15;
+	float caustics = 0.0;
+	for (uint i = 0u; i < 16u; ++i) {
+		vec3 samplePos = worldPos;
+		samplePos.xz += sampleVogelDisk(i, 16, dither) * 0.15;
 
-        vec2 sampleCoord = WorldToShadowScreenSpace(samplePos).xy;
-        vec3 waveNormal = OctDecodeUnorm(texture(shadowcolor1, sampleCoord).xy);
+		vec2 sampleCoord = WorldToShadowScreenSpace(samplePos).xy;
+		vec3 waveNormal = OctDecodeUnorm(texture(shadowcolor1, sampleCoord).xy);
 
-        vec3 refractDir = refract(vec3(0.0, 1.0, 0.0), waveNormal, 1.0 / WATER_IOR);
-        vec3 refractedPos = samplePos + refractDir * abs(1.0 / refractDir.y);
+		vec3 refractDir = refract(vec3(0.0, 1.0, 0.0), waveNormal, 1.0 / WATER_IOR);
+		vec3 refractedPos = samplePos + refractDir * abs(1.0 / refractDir.y);
 
-        caustics += saturate(fma(distance(surfacePos, refractedPos), -20.0, 1.0));
-    }
+		caustics += saturate(fma(distance(surfacePos, refractedPos), -20.0, 1.0));
+	}
 
-    return -smin(-caustics, -0.1, 0.15) * saturate(exp2(-rLOG2 * waterExtinction * waterDepth));
+	return -smin(-caustics, -0.1, 0.15) * saturate(exp2(-rLOG2 * waterExtinction * waterDepth));
 }
 
 vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, float blockerDepth, float distortionFactor) {
-    blockerDepth *= mix(sunAngularRadius, moonAngularRadius, step(0.5, sunAngle)) * 2.0;
+	blockerDepth *= mix(sunAngularRadius, moonAngularRadius, step(0.5, sunAngle)) * 2.0;
 
-    const float minRadius = 0.015;
-    float sharpenFactor = saturate(blockerDepth * rcp(minRadius));
+	const float minRadius = 0.015;
+	float sharpenFactor = saturate(blockerDepth * rcp(minRadius));
 
-    blockerDepth = clamp(blockerDepth, minRadius, 0.25);
-    vec2 penumbraRadius = blockerDepth * distortionFactor * diagonal2(shadowProjection);
+	blockerDepth = clamp(blockerDepth, minRadius, 0.25);
+	vec2 penumbraRadius = blockerDepth * distortionFactor * diagonal2(shadowProjection);
 
     float shadow = 0.0;
-    vec3 color = vec3(0.0);
-    vec2 waterData = vec2(0.0); // (depth, count)
+	vec3 color = vec3(0.0);
+	vec2 waterData = vec2(0.0); // (depth, count)
 
-    for (uint i = 0u; i < PCSS_FILTER_SAMPLES; ++i) {
-        vec2 offset = sampleVogelDisk(i, PCSS_FILTER_SAMPLES, dither);
-        vec2 sampleCoord = fma(offset, penumbraRadius, shadowScreenPos.xy);
+	for (uint i = 0u; i < PCSS_FILTER_SAMPLES; ++i) {
+		vec2 offset = sampleVogelDisk(i, PCSS_FILTER_SAMPLES, dither);
+		vec2 sampleCoord = fma(offset, penumbraRadius, shadowScreenPos.xy);
 
-        float sampleDepth1 = texture(shadowtex1, vec3(sampleCoord, shadowScreenPos.z)).x;
-        shadow += sampleDepth1;
+		float sampleDepth1 = texture(shadowtex1, vec3(sampleCoord, shadowScreenPos.z)).x;
+		shadow += sampleDepth1;
 
-    #ifdef COLORED_SHADOWS
+	#ifdef COLORED_SHADOWS
         if (floatBitsToUint(sampleDepth1) > 0u) {
             ivec2 sampleTexel = ivec2(sampleCoord * realShadowMapRes);
             float sampleDepth0 = texelFetch(shadowtex0, sampleTexel, 0).x;
@@ -101,96 +101,96 @@ vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, f
                 color += 1.0;
             }
         }
-    #endif
-    }
+	#endif
+	}
 
-    // Early out if shadowed
-    if (shadow < EPS) return vec3(0.0);
+	// Early out if shadowed
+	if (shadow < EPS) return vec3(0.0);
 
-    const float rSteps = 1.0 / float(PCSS_FILTER_SAMPLES);
-    shadow *= rSteps;
-    color *= rSteps;
+	const float rSteps = 1.0 / float(PCSS_FILTER_SAMPLES);
+	shadow *= rSteps;
+	color *= rSteps;
 
-    #ifndef COLORED_SHADOWS
-        color = vec3(1.0);
-    #endif
+	#ifndef COLORED_SHADOWS
+		color = vec3(1.0);
+	#endif
 
-    #ifdef WATER_CAUSTICS
-        if (waterData.y > EPS) {
-            waterData.x /= waterData.y;
+	#ifdef WATER_CAUSTICS
+		if (waterData.y > EPS) {
+			waterData.x /= waterData.y;
 
-            float waterDepth = waterData.x * shadowProjectionInverse[2].z * 5.0;
-            vec3 caustics = CalculateWaterCaustics(worldPos, waterDepth, dither);
-            color = mix(color, caustics, waterData.y * rSteps);
-        }
-    #endif
+			float waterDepth = waterData.x * shadowProjectionInverse[2].z * 5.0;
+			vec3 caustics = CalculateWaterCaustics(worldPos, waterDepth, dither);
+			color = mix(color, caustics, waterData.y * rSteps);
+		}
+	#endif
 
-    // Sharpen the near shadow
-    shadow = mix(smoothstep(0.3, 0.7, shadow), shadow, sharpenFactor);
-    return shadow * color;
+	// Sharpen the near shadow
+	shadow = mix(smoothstep(0.3, 0.7, shadow), shadow, sharpenFactor);
+	return shadow * color;
 }
 
 vec3 CalculatePCSS(vec3 worldPos, vec3 normalOffset, float dither, out float blockerDepth) {
-    blockerDepth = 0.0;
+	blockerDepth = 0.0;
 
-    float distortionFactor;
-    vec3 shadowScreenPos = WorldToShadowScreenSpace(worldPos + normalOffset, distortionFactor);
-    shadowScreenPos.z -= 3e-8 * (1.0 + dither) * shadowProjectionInverse[1].y * distortionFactor;
+	float distortionFactor;
+	vec3 shadowScreenPos = WorldToShadowScreenSpace(worldPos + normalOffset, distortionFactor);
+	shadowScreenPos.z -= 3e-8 * (1.0 + dither) * shadowProjectionInverse[1].y * distortionFactor;
 
-    vec3 result = vec3(1.0);
-    if (saturate(shadowScreenPos) == shadowScreenPos) {
-        blockerDepth = BlockerSearch(shadowScreenPos, dither * TAU, 0.15 * distortionFactor);
+	vec3 result = vec3(1.0);
+	if (saturate(shadowScreenPos) == shadowScreenPos) {
+		blockerDepth = BlockerSearch(shadowScreenPos, dither * TAU, 0.15 * distortionFactor);
 
-        result = PercentageCloserFilter(shadowScreenPos, worldPos, dither * TAU, blockerDepth, distortionFactor);
-    }
+		result = PercentageCloserFilter(shadowScreenPos, worldPos, dither * TAU, blockerDepth, distortionFactor);
+	}
 
-    return result;
+	return result;
 }
 
 //================================================================================================//
 
 float ScreenSpaceShadow(vec3 rayPos, vec3 viewPos, float dither, float sssAmount) {
-    vec3 rayDir = ViewToScreenPos(viewLightDir * abs(viewPos.z) + viewPos) - rayPos;
-    rayDir *= minOf((step(0.0, rayDir) - rayPos) / rayDir);
-    rayDir *= inversesqrt(sdot(rayDir.xy));
+	vec3 rayDir = ViewToScreenPos(viewLightDir * abs(viewPos.z) + viewPos) - rayPos;
+	rayDir *= minOf((step(0.0, rayDir) - rayPos) / rayDir);
+	rayDir *= inversesqrt(sdot(rayDir.xy));
 
-    vec3 rayStep = rayDir * (0.05 / float(SCREEN_SPACE_SHADOWS_SAMPLES));
-    rayPos += dither * rayStep;
+	vec3 rayStep = rayDir * (0.05 / float(SCREEN_SPACE_SHADOWS_SAMPLES));
+	rayPos += dither * rayStep;
 
-    float viewDistInv = inversesqrt(sdot(viewPos));
-    float diffTolerance = 5e-4 * viewDistInv;
+	float viewDistInv = inversesqrt(sdot(viewPos));
+	float diffTolerance = 5e-4 * viewDistInv;
     float absorption = exp2(-0.125 / (viewDistInv * sssAmount));
 
-    float result = 1.0;
+	float result = 1.0;
 
-    for (uint i = 0u; i < SCREEN_SPACE_SHADOWS_SAMPLES; ++i, rayPos += rayStep) {
-        if (saturate(rayPos.xy) != rayPos.xy || result < 1e-2) break;
+	for (uint i = 0u; i < SCREEN_SPACE_SHADOWS_SAMPLES; ++i, rayPos += rayStep) {
+		if (saturate(rayPos.xy) != rayPos.xy || result < 1e-2) break;
 
-        ivec2 sampleTexel = uvToTexel(rayPos.xy);
-        float sampleDepth = loadDepth0(sampleTexel);
-        bool hit = abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance;
+		ivec2 sampleTexel = uvToTexel(rayPos.xy);
+		float sampleDepth = loadDepth0(sampleTexel);
+		bool hit = abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance;
 
-        #if defined LOD_MOD
-            if (sampleDepth > 1.0 - EPS) {
-                sampleDepth = loadDepth0Lod(sampleTexel);
-                sampleDepth = ViewToScreenDepth(ScreenToViewDepthLod(sampleDepth));
-                hit = abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance;
-            } else
-        #endif
-        if (hit) {
-            vec2 samplePos = rayPos.xy * viewSize + 0.5;
-            vec2 samplePosFloor = floor(samplePos);
-            vec2 samplePosFract = samplePos - samplePosFloor;
+		#if defined LOD_MOD
+			if (sampleDepth > 1.0 - EPS) {
+				sampleDepth = loadDepth0Lod(sampleTexel);
+				sampleDepth = ViewToScreenDepth(ScreenToViewDepthLod(sampleDepth));
+				hit = abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance;
+			} else
+		#endif
+		if (hit) {
+			vec2 samplePos = rayPos.xy * viewSize + 0.5;
+			vec2 samplePosFloor = floor(samplePos);
+			vec2 samplePosFract = samplePos - samplePosFloor;
 
-            vec4 sh = textureGather(depthtex0, samplePosFloor * viewPixelSize);
-            vec2 temp = mix(sh.wx, sh.zy, vec2(samplePosFract.x));
-            sampleDepth = mix(temp.x, temp.y, samplePosFract.y);
+			vec4 sh = textureGather(depthtex0, samplePosFloor * viewPixelSize);
+			vec2 temp = mix(sh.wx, sh.zy, vec2(samplePosFract.x));
+			sampleDepth = mix(temp.x, temp.y, samplePosFract.y);
 
-            hit = abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance;
-        }
+			hit = abs(sampleDepth - rayPos.z + diffTolerance) < diffTolerance;
+		}
 
-        result *= saturate(absorption + float(!hit));
-    }
+		result *= saturate(absorption + float(!hit));
+	}
 
-    return result;
+	return result;
 }

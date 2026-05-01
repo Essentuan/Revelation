@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -36,25 +36,25 @@ uniform vec2 taaJitter;
 
 //======// Main //================================================================================//
 void main() {
-    vertColor = gl_Color;
+	vertColor = gl_Color;
     texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 
-    lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
+	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
-    vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
-    // worldPos = transMAD(gbufferModelViewInverse, viewPos);
+	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
+	// worldPos = transMAD(gbufferModelViewInverse, viewPos);
     gl_Position = project(gl_ProjectionMatrix, viewPos);
 
-    #ifdef TAA_ENABLED
-        gl_Position.xy += taaJitter * gl_Position.w;
-    #endif
+	#ifdef TAA_ENABLED
+		gl_Position.xy += taaJitter * gl_Position.w;
+	#endif
 
-    // Encode normal and tangent
-    vec3 normal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
-    normalPack = packSnorm2x16(OctEncodeSnorm(normal));
-    #if defined MC_NORMAL_MAP
-        vec3 tangent = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * at_tangent.xyz);
-        tangentPack.x = packSnorm2x16(OctEncodeSnorm(tangent));
-        tangentPack.y = (floatBitsToUint(at_tangent.w) & 0x80000000u) | 0x3F800000u;
-    #endif
+	// Encode normal and tangent
+	vec3 normal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
+	normalPack = packSnorm2x16(OctEncodeSnorm(normal));
+	#if defined MC_NORMAL_MAP
+		vec3 tangent = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * at_tangent.xyz);
+		tangentPack.x = packSnorm2x16(OctEncodeSnorm(tangent));
+		tangentPack.y = (floatBitsToUint(at_tangent.w) & 0x80000000u) | 0x3F800000u;
+	#endif
 }

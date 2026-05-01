@@ -1,12 +1,12 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
-    Pass: Compute and store global SSBO
+	Pass: Compute and store global SSBO
 
 --------------------------------------------------------------------------------
 */
@@ -36,22 +36,22 @@ const ivec3 workGroups = ivec3(1, 1, 1);
 
 //======// Main //================================================================================//
 void main() {
-    // Compute illuminance
-    vec3 sunIlluminance = sunIrradiance * AtmosphereTransmittanceToSun(atmosphereViewPos, worldSunDir);
-    vec3 moonIlluminance = moonIrradiance * AtmosphereTransmittanceToSun(atmosphereViewPos, worldMoonDir);
-    global.directIlluminance = sunIlluminance + moonIlluminance;
+	// Compute illuminance
+	vec3 sunIlluminance = sunIrradiance * AtmosphereTransmittanceToSun(atmosphereViewPos, worldSunDir);
+	vec3 moonIlluminance = moonIrradiance * AtmosphereTransmittanceToSun(atmosphereViewPos, worldMoonDir);
+	global.directIlluminance = sunIlluminance + moonIlluminance;
 
-    // Avoid the misalignment at sunrise and sunset
-    global.directIlluminance *= smoothstep(0.0, 0.01, worldLightDir.y);
+	// Avoid the misalignment at sunrise and sunset
+	global.directIlluminance *= smoothstep(0.0, 0.01, worldLightDir.y);
 
-    // Reset history if time has changed rapidly
+	// Reset history if time has changed rapidly
     int worldTimeDiff = worldTime - global.prevWorldTime;
     worldTimeDiff = min(abs(worldTimeDiff + 24000), abs(worldTimeDiff));
-    global.historyReset = worldTimeDiff > 64;
+	global.historyReset = worldTimeDiff > 64;
 
-    #ifdef CLOUD_SHADOWS
-        mat4 projMat = BuildOrthoMat(CLOUD_SHADOW_DISTANCE * 32.0, CLOUD_SHADOW_DISTANCE * 32.0, 0.0, cumulusTopRadius);
-        cloud.shadowViewProj = projMat * shadowModelView;
-        cloud.shadowViewProjInv = inverse(cloud.shadowViewProj);
-    #endif
+	#ifdef CLOUD_SHADOWS
+		mat4 projMat = BuildOrthoMat(CLOUD_SHADOW_DISTANCE * 32.0, CLOUD_SHADOW_DISTANCE * 32.0, 0.0, cumulusTopRadius);
+		cloud.shadowViewProj = projMat * shadowModelView;
+		cloud.shadowViewProjInv = inverse(cloud.shadowViewProj);
+	#endif
 }

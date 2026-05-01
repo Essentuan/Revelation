@@ -1,12 +1,12 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
-    Pass: Compute specular reflections
+	Pass: Compute specular reflections
 
 --------------------------------------------------------------------------------
 */
@@ -47,39 +47,39 @@ out vec4 specularOut;
 
 //======// Main //================================================================================//
 void main() {
-    specularOut = vec4(0.0);
+	specularOut = vec4(0.0);
 
-    ivec2 texelPos = ivec2(gl_FragCoord.xy);
+	ivec2 texelPos = ivec2(gl_FragCoord.xy);
 
-    Material material = GetMaterialData(Unpack2x8U(loadMaterialPack(texelPos).z));
-    if (material.specularMask) {
-        vec3 screenPos = vec3(gl_FragCoord.xy * viewPixelSize, loadDepth0(texelPos));
-        if (screenPos.z > 1.0 - EPS) discard;
+	Material material = GetMaterialData(Unpack2x8U(loadMaterialPack(texelPos).z));
+	if (material.specularMask) {
+		vec3 screenPos = vec3(gl_FragCoord.xy * viewPixelSize, loadDepth0(texelPos));
+		if (screenPos.z > 1.0 - EPS) discard;
 
-        // Hand-depth correction
-        if (screenPos.z < 0.56) {
-            screenPos.z = screenPos.z * rcp(MC_HAND_DEPTH) + (0.5 - 0.5 / MC_HAND_DEPTH);
-        }
+		// Hand-depth correction
+		if (screenPos.z < 0.56) {
+			screenPos.z = screenPos.z * rcp(MC_HAND_DEPTH) + (0.5 - 0.5 / MC_HAND_DEPTH);
+		}
 
-        vec3 viewPos = ScreenToViewPos(screenPos);
+		vec3 viewPos = ScreenToViewPos(screenPos);
 
-        #if defined LOD_MOD
-            bool lodMask = screenPos.z > 1.0 - EPS;
-            if (lodMask) {
-                screenPos.z = loadDepth0Lod(texelPos);
-                viewPos = ScreenToViewPosLod(screenPos);
-            }
-        #endif
+		#if defined LOD_MOD
+			bool lodMask = screenPos.z > 1.0 - EPS;
+			if (lodMask) {
+				screenPos.z = loadDepth0Lod(texelPos);
+				viewPos = ScreenToViewPosLod(screenPos);
+			}
+		#endif
 
-        vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
-        vec3 worldDir = normalize(worldPos);
-        worldPos += gbufferModelViewInverse[3].xyz;
+		vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
+		vec3 worldDir = normalize(worldPos);
+		worldPos += gbufferModelViewInverse[3].xyz;
 
-        vec3 worldNormal = FetchSurfaceNormal(texelPos);
+		vec3 worldNormal = FetchSurfaceNormal(texelPos);
 
-        vec2 lightmap = Unpack2x8U(loadMaterialPack(texelPos).x);
+		vec2 lightmap = Unpack2x8U(loadMaterialPack(texelPos).x);
 
-        float dither = BlueNoise(texelPos, frameCounter);
-        specularOut = CalculateSpecularReflections(material, worldNormal, screenPos, worldDir, viewPos, lightmap.y, dither);
-    }
+		float dither = BlueNoise(texelPos, frameCounter);
+		specularOut = CalculateSpecularReflections(material, worldNormal, screenPos, worldDir, viewPos, lightmap.y, dither);
+	}
 }

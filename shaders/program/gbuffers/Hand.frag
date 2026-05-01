@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -41,7 +41,7 @@ in vec2 lightmap;
 uniform sampler2D tex;
 
 #if defined MC_NORMAL_MAP
-    uniform sampler2D normals;
+	uniform sampler2D normals;
 #endif
 
 #if defined MC_SPECULAR_MAP
@@ -55,44 +55,44 @@ float bayer2 (vec2 a) { a = 0.5 * floor(a); return fract(1.5 * fract(a.y) + a.x)
 
 //======// Main //================================================================================//
 void main() {
-    vec4 albedo = texture(tex, texCoord) * vertColor;
+	vec4 albedo = texture(tex, texCoord) * vertColor;
 
-    if (albedo.a < 0.1) { discard; return; }
+	if (albedo.a < 0.1) { discard; return; }
 
-    #ifdef WHITE_WORLD
-        albedo.rgb = vec3(1.0);
-    #endif
+	#ifdef WHITE_WORLD
+		albedo.rgb = vec3(1.0);
+	#endif
 
-    albedoOut = albedo;
+	albedoOut = albedo;
 
-    materialOut.x = PackupDithered2x8U(lightmap, bayer4(gl_FragCoord.xy));
-    materialOut.y = 1u;
+	materialOut.x = PackupDithered2x8U(lightmap, bayer4(gl_FragCoord.xy));
+	materialOut.y = 1u;
 
-    #if defined MC_SPECULAR_MAP
-        vec4 specularTex = texture(specular, texCoord);
-        materialOut.z = Packup2x8U(specularTex.xy);
-        materialOut.w = Packup2x8U(specularTex.zw);
-    #else
-        materialOut.zw = uvec2(0);
-    #endif
+	#if defined MC_SPECULAR_MAP
+		vec4 specularTex = texture(specular, texCoord);
+		materialOut.z = Packup2x8U(specularTex.xy);
+		materialOut.w = Packup2x8U(specularTex.zw);
+	#else
+		materialOut.zw = uvec2(0);
+	#endif
 
-    normalOut.xy = unpackSnorm2x16(normalPack);
+	normalOut.xy = unpackSnorm2x16(normalPack);
 
-    #if defined MC_NORMAL_MAP
-        // Construct TBN matrix
-        vec3 tangent = OctDecodeSnorm(unpackSnorm2x16(tangentPack.x));
-        vec3 normal = OctDecodeSnorm(normalOut.xy);
-        vec3 bitangent = cross(tangent, normal) * uintBitsToFloat(tangentPack.y);
-        mat3 tbnMatrix = mat3(tangent, bitangent, normal);
+	#if defined MC_NORMAL_MAP
+		// Construct TBN matrix
+		vec3 tangent = OctDecodeSnorm(unpackSnorm2x16(tangentPack.x));
+		vec3 normal = OctDecodeSnorm(normalOut.xy);
+		vec3 bitangent = cross(tangent, normal) * uintBitsToFloat(tangentPack.y);
+		mat3 tbnMatrix = mat3(tangent, bitangent, normal);
 
         vec3 normalTex = texture(normals, texCoord).rgb;
         DecodeNormalTex(normalTex);
-        normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
-    #else
-        normalOut.zw = normalOut.xy;
-    #endif
+		normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
+	#else
+		normalOut.zw = normalOut.xy;
+	#endif
 
-    #if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
-        parallaxShadowOut = 0.0;
-    #endif
+	#if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
+		parallaxShadowOut = 0.0;
+	#endif
 }

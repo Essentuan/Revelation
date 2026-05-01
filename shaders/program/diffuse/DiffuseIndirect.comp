@@ -1,12 +1,12 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
-    Pass: Compute diffuse indirect lighting
+	Pass: Compute diffuse indirect lighting
 
 --------------------------------------------------------------------------------
 */
@@ -59,31 +59,31 @@ void main() {
     ivec2 texelPos = ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy);
 
     ivec2 renderTexel = texelPos * 2 + checkerboardOffset2x2[frameCounter & 3u];
-    float depth = loadDepth0(renderTexel);
-    bool terrainCheck = min(GetClosestDepthN(renderTexel), depth) < 1.0;
-    #if defined LOD_MOD
+	float depth = loadDepth0(renderTexel);
+	bool terrainCheck = min(GetClosestDepthN(renderTexel), depth) < 1.0;
+	#if defined LOD_MOD
         bool lodMask = !terrainCheck;
-        if (lodMask) {
-            depth = loadDepth0Lod(renderTexel);
-            terrainCheck = depth < 1.0;
-        }
-    #endif
+		if (lodMask) {
+			depth = loadDepth0Lod(renderTexel);
+			terrainCheck = depth < 1.0;
+		}
+	#endif
 
-    if (terrainCheck) {
-        #if defined LOD_MOD
-            if (lodMask) depth = ViewToScreenDepth(ScreenToViewDepthLod(depth));
-        #endif
+	if (terrainCheck) {
+		#if defined LOD_MOD
+			if (lodMask) depth = ViewToScreenDepth(ScreenToViewDepthLod(depth));
+		#endif
 
-        vec2 screenCoord = texelToUv(renderTexel);
-        vec3 viewPos = ScreenToViewPos(vec3(screenCoord, depth));
+    	vec2 screenCoord = texelToUv(renderTexel);
+		vec3 viewPos = ScreenToViewPos(vec3(screenCoord, depth));
 
-        vec3 worldNormal = FetchSurfaceNormal(renderTexel);
-        float lightmapSky = Unpack2x8UY(loadMaterialPack(renderTexel).x);
+		vec3 worldNormal = FetchSurfaceNormal(renderTexel);
+		float lightmapSky = Unpack2x8UY(loadMaterialPack(renderTexel).x);
 
-        vec4 result = CalculateSSILVB(screenCoord, viewPos, worldNormal, lightmapSky);
-        result.rgb = RGBToYCoCg(result.rgb); // Convert to YCoCg color space (for filtering)
-        imageStore(colorimg3, texelPos, result);
-    } else {
-        imageStore(colorimg3, texelPos, vec4(0.0));
-    }
+		vec4 result = CalculateSSILVB(screenCoord, viewPos, worldNormal, lightmapSky);
+		result.rgb = RGBToYCoCg(result.rgb); // Convert to YCoCg color space (for filtering)
+		imageStore(colorimg3, texelPos, result);
+	} else {
+		imageStore(colorimg3, texelPos, vec4(0.0));
+	}
 }

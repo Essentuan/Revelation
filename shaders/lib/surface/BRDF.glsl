@@ -1,7 +1,7 @@
 /*
 --------------------------------------------------------------------------------
 
-    References:
+	References:
         https://ubm-twvideo01.s3.amazonaws.com/o1/vault/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf
         https://schuttejoe.github.io/post/disneybsdf/
         https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models#\
@@ -30,14 +30,14 @@ vec3 SampleGGXVNDF(vec3 viewDir, float alpha, vec2 xy) {
     // Importance sampling bias
     xy.y *= 1.0 - SPECULAR_IMPORTANCE_SAMPLING_BIAS;
 
-    viewDir = normalize(vec3(alpha * viewDir.xy, viewDir.z));
+	viewDir = normalize(vec3(alpha * viewDir.xy, viewDir.z));
 
     float phi = TAU * xy.x;
     float cosTheta = 1.0 - viewDir.z * xy.y - xy.y;
     float sinTheta = sqrt(saturate(1.0 - cosTheta * cosTheta));
     viewDir += vec3(cossin(phi) * sinTheta, cosTheta);
 
-    return normalize(vec3(alpha * viewDir.xy, viewDir.z));
+	return normalize(vec3(alpha * viewDir.xy, viewDir.z));
 }
 
 // https://ggx-research.github.io/publication/2023/06/09/publication-ggx.html
@@ -109,9 +109,9 @@ float FresnelSchlickGaussian(float VdotH, float f0) {
 
 // Kutz et al. 2021, "Novel aspects of the Adobe Standard Material"
 vec3 FresnelAdobeF82(float VdotH, vec3 f0, vec3 f82) {
-    const float K = 49.0 / 46656.0;
-    vec3 b = (K - K * f82) * (7776.0 + 9031.0 * f0);
-    return saturate(f0 + pow5(1.0 - VdotH) * (oms(f0) - b * (VdotH - VdotH * VdotH)));
+	const float K = 49.0 / 46656.0;
+	vec3 b = (K - K * f82) * (7776.0 + 9031.0 * f0);
+	return saturate(f0 + pow5(1.0 - VdotH) * (oms(f0) - b * (VdotH - VdotH * VdotH)));
 }
 
 // Based on the F0 (Fresnel reflectance at 0 degrees incidence)
@@ -164,22 +164,22 @@ float NDFBeckmann(float NdotH2, float alpha2) {
 }
 
 float NDFGaussian(float NdotH, float alpha2) {
-    float thetaH = fastAcos(NdotH);
+	float thetaH = fastAcos(NdotH);
     return exp(-thetaH * thetaH / alpha2);
 }
 
 // GGX / Trowbridge-Reitz
 // Walter et al. 2007, "Microfacet models for refraction through rough surfaces"
 float NDFTrowbridgeReitz(float NdotH2, float alpha2) {
-    return alpha2 * rPI / sqr(1.0 + (alpha2 - 1.0) * NdotH2);
+	return alpha2 * rPI / sqr(1.0 + (alpha2 - 1.0) * NdotH2);
 }
 
 // Anisotropic GGX
 // Burley 2012, "Physically-Based Shading at Disney"
 float NDFAnisotropicGGX(float ax, float ay, float NdotH, float XdotH, float YdotH) {
-    float a2 = ax * ay;
-    vec3 V = vec3(ay * XdotH, ax * YdotH, a2 * NdotH);
-    return rPI * a2 * sqr(a2 / dot(V, V));
+	float a2 = ax * ay;
+	vec3 V = vec3(ay * XdotH, ax * YdotH, a2 * NdotH);
+	return rPI * a2 * sqr(a2 / dot(V, V));
 }
 
 //================================================================================================//
@@ -197,9 +197,9 @@ float VisSmithGGX(float NdotL, float NdotV, float alpha2) {
 
 // Heitz 2014, "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs"
 float VisSmithJoint(float NdotL, float NdotV, float alpha2) {
-    float visL = NdotV * sqrt((NdotL - NdotL * alpha2) * NdotL + alpha2);
-    float visV = NdotL * sqrt((NdotV - NdotV * alpha2) * NdotV + alpha2);
-    return 0.5 * rcp(visL + visV);
+	float visL = NdotV * sqrt((NdotL - NdotL * alpha2) * NdotL + alpha2);
+	float visV = NdotL * sqrt((NdotV - NdotV * alpha2) * NdotV + alpha2);
+	return 0.5 * rcp(visL + visV);
 }
 
 // Schlick 1994, "An Inexpensive BRDF Model for Physically-Based Rendering"
@@ -227,12 +227,12 @@ vec3 SpecularGGX(float LdotH, float NdotV, float NdotL, float NdotH, float rough
     vec3 F = FresnelSchlick(LdotH, f0, saturate(50.0 * f0));
 
     // Distribution term
-    float D = NDFTrowbridgeReitz(NdotH * NdotH, alpha2);
+	float D = NDFTrowbridgeReitz(NdotH * NdotH, alpha2);
 
     // Visibility term (= G / (4 * NdotV * NdotL))
     float Vis = VisSmithJoint(NdotL, NdotV, alpha2);
 
-    return F * D * Vis;
+	return F * D * Vis;
 }
 
 // Hammon 2017, "PBR Diffuse Lighting for GGX+Smith Microsurfaces"
@@ -250,50 +250,50 @@ vec3 DiffuseHammon(float NdotV, float NdotL, float VdotH, float NdotH, float rou
 
 // Burley 2012, "Physically-Based Shading at Disney"
 float DiffuseBurley(float LdotH, float NdotV, float NdotL, float roughness) {
-    float f90 = 0.5 + 2.0 * roughness * LdotH * LdotH;
+	float f90 = 0.5 + 2.0 * roughness * LdotH * LdotH;
 
-    return rPI * FresnelSchlick(NdotL, 1.0, f90) * FresnelSchlick(NdotV, 1.0, f90);
+	return rPI * FresnelSchlick(NdotL, 1.0, f90) * FresnelSchlick(NdotV, 1.0, f90);
 }
 
 // Gotanda 2012, "Beyond a Simple Physically Based Blinn-Phong Model in Real-Time"
 float DiffuseOrenNayar(float NdotV, float NdotL, float VdotL, float roughness) {
-    float a = roughness * roughness;
-    float s = a; // / ( 1.29 + 0.5 * a );
-    float s2 = s * s;
-    float cosri = VdotL - NdotV * NdotL;
-    float C1 = 1.0 - 0.5 * s2 / (s2 + 0.33);
-    float C2 = 0.45 * s2 / (s2 + 0.09) * cosri * mix(rcp(max(NdotL, NdotV)), 1.0, cosri < 0.0);
-    return rPI * (C1 + C2) * (1.0 + roughness * 0.5);
+	float a = roughness * roughness;
+	float s = a; // / ( 1.29 + 0.5 * a );
+	float s2 = s * s;
+	float cosri = VdotL - NdotV * NdotL;
+	float C1 = 1.0 - 0.5 * s2 / (s2 + 0.33);
+	float C2 = 0.45 * s2 / (s2 + 0.09) * cosri * mix(rcp(max(NdotL, NdotV)), 1.0, cosri < 0.0);
+	return rPI * (C1 + C2) * (1.0 + roughness * 0.5);
 }
 
 // Portsmouth et al. 2025, "EON: A Practical Energy-Preserving Rough Diffuse BRDF"
 vec3 DiffuseEON(float NdotV, float NdotL, float VdotL, float roughness, vec3 albedo) {
-    // Albedo inversion for EON model to maintain a consistent color with lambert
-    vec3 Rho = /* albedo *  */(1.0 + (0.189468 - 0.189468 * albedo) * roughness);
+	// Albedo inversion for EON model to maintain a consistent color with lambert
+	vec3 Rho = /* albedo *  */(1.0 + (0.189468 - 0.189468 * albedo) * roughness);
 
-    // This is the main shaping term from the Oren-Nayar model (with tweaks by Fujii)
-    float S = VdotL - NdotV * NdotL;
-    float SOverT = max(S * rcp(maxEps(max(NdotV, NdotL))), S);
-    const float constant1_FON = 0.5 - 2.0 / (3.0 * PI);
-    // AF = rcp(1 + roughness * constant1_FON) is nearly a straight line, so approximate it as such
-    float AF = 1.0 - roughness * (1.0 - rcp(1.0 + constant1_FON));
-    float f_ss = AF * (1.0 + roughness * SOverT);
+	// This is the main shaping term from the Oren-Nayar model (with tweaks by Fujii)
+	float S = VdotL - NdotV * NdotL;
+	float SOverT = max(S * rcp(maxEps(max(NdotV, NdotL))), S);
+	const float constant1_FON = 0.5 - 2.0 / (3.0 * PI);
+	// AF = rcp(1 + roughness * constant1_FON) is nearly a straight line, so approximate it as such
+	float AF = 1.0 - roughness * (1.0 - rcp(1.0 + constant1_FON));
+	float f_ss = AF * (1.0 + roughness * SOverT);
 
-    // 4th Order approximation from the paper is a bit too heavy, first order seems to work just as well
-    const float g1 = 0.262048f;
-    float GoverPi_V = g1 - g1 * NdotV;
-    // Use (1 - Eo) only as a non-reciprocal approach to energy conservation
-    float f_ms = 1.0 - AF * (1.0 + roughness * GoverPi_V);
-    // The Rho_ms term from the paper can be approximated as just Rho^2
-    return Rho * (f_ss + albedo * Rho * f_ms) * rPI;
+	// 4th Order approximation from the paper is a bit too heavy, first order seems to work just as well
+	const float g1 = 0.262048f;
+	float GoverPi_V = g1 - g1 * NdotV;
+	// Use (1 - Eo) only as a non-reciprocal approach to energy conservation
+	float f_ms = 1.0 - AF * (1.0 + roughness * GoverPi_V);
+	// The Rho_ms term from the paper can be approximated as just Rho^2
+	return Rho * (f_ss + albedo * Rho * f_ms) * rPI;
 }
 
 // de Carpentier 2017, "Decima Engine: Advances in Lighting and AA"
 float GetNoHSquared(float radius, float NdotL, float NdotV, float VdotL) {
-    float radiusCos = cos(radius);
-    float radiusTan = tan(radius);
+	float radiusCos = cos(radius);
+	float radiusTan = tan(radius);
 
-    // Early out if R falls within the disc​
+	// Early out if R falls within the disc​
     float RoL = 2.0 * NdotL * NdotV - VdotL;
     if (RoL >= radiusCos) return 1.0;
 
@@ -301,10 +301,10 @@ float GetNoHSquared(float radius, float NdotL, float NdotV, float VdotL) {
     float NoTr = rOverLengthT * (NdotV - RoL * NdotL);
     float VoTr = rOverLengthT * (2.0 * NdotV * NdotV - 1.0 - RoL * VdotL);
 
-    // Calculate dot(cross(N, L), V). This could already be calculated and available.​
+	// Calculate dot(cross(N, L), V). This could already be calculated and available.​
     float triple = sqrt(saturate(1.0 - NdotL * NdotL - NdotV * NdotV - VdotL * VdotL + 2.0 * NdotL * NdotV * VdotL));
 
-    // Do one Newton iteration to improve the bent light Direction​
+	// Do one Newton iteration to improve the bent light Direction​
     float NoBr = rOverLengthT * triple, VoBr = rOverLengthT * (2.0 * triple * NdotV);
     float NdotLVTr = NdotL * radiusCos + NdotV + NoTr, VdotLVTr = VdotL * radiusCos + 1.0 + VoTr;
     float p = NoBr * VdotLVTr, q = NdotLVTr * VdotLVTr, s = VoBr * NdotLVTr;
@@ -317,7 +317,7 @@ float GetNoHSquared(float radius, float NdotL, float NdotV, float VdotL) {
     NoTr = cosTheta * NoTr + sinTheta * NoBr;
     VoTr = cosTheta * VoTr + sinTheta * VoBr;
 
-    // Calculate (N.H)^2 based on the bent light direction​
+	// Calculate (N.H)^2 based on the bent light direction​
     float newNdotL = NdotL * radiusCos + NoTr;
     float newVdotL = VdotL * radiusCos + VoTr;
     float NoH = NdotV + newNdotL;
@@ -334,8 +334,8 @@ vec3 SphericalAreaGGX(float LdotH, float NdotV, float NdotL, float LdotV, float 
     vec3 F = FresnelSchlick(LdotH, f0, saturate(50.0 * f0));
 
     // Distribution term
-    float NdotH2 = GetNoHSquared(radius, NdotL, NdotV, LdotV);
-    float D = NDFTrowbridgeReitz(NdotH2, alpha2);
+	float NdotH2 = GetNoHSquared(radius, NdotL, NdotV, LdotV);
+	float D = NDFTrowbridgeReitz(NdotH2, alpha2);
 
     // Visibility term (= G / (4 * NdotV * NdotL))
     float Vis = VisSmithJoint(NdotL, NdotV, alpha2);
@@ -345,10 +345,10 @@ vec3 SphericalAreaGGX(float LdotH, float NdotV, float NdotL, float LdotV, float 
     float alphaSquaredLdotH = alpha2 * (LdotH + 0.001);
     float normalization = alphaSquaredLdotH / (alphaSquaredLdotH + 0.25 * radius * (3.0 * alpha + radius));
 
-    return F * D * Vis * normalization;
+	return F * D * Vis * normalization;
 }
 
 float SpecularThroughputGGX(float NdotV, float NdotL, float roughness) {
     float alpha2 = roughness * roughness;
-    return VisSmithJoint(NdotL, NdotV, alpha2) / VisSmithGGX(NdotV, alpha2);
+	return VisSmithJoint(NdotL, NdotV, alpha2) / VisSmithGGX(NdotV, alpha2);
 }

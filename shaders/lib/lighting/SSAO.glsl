@@ -6,42 +6,42 @@
 //================================================================================================//
 
 float CalculateSSAO(vec2 coord, vec3 viewPos, vec3 normal, vec2 dir) {
-    const float rSteps = 1.0 / float(SSAO_SAMPLES);
-    float maxSqLen = sqr(viewPos.z) * 0.25;
-    float rMaxSqLen = 1.0 / maxSqLen;
+	const float rSteps = 1.0 / float(SSAO_SAMPLES);
+	float maxSqLen = sqr(viewPos.z) * 0.25;
+	float rMaxSqLen = 1.0 / maxSqLen;
 
-    vec2 radius = vec2(0.0);
-    vec2 rayStep = diagonal2(gbufferProjection) / viewPos.z * -rSteps;
+	vec2 radius = vec2(0.0);
+	vec2 rayStep = diagonal2(gbufferProjection) / viewPos.z * -rSteps;
 
-    const mat2 goldenRotate = mat2(cos(goldenAngle), -sin(goldenAngle), sin(goldenAngle), cos(goldenAngle));
+	const mat2 goldenRotate = mat2(cos(goldenAngle), -sin(goldenAngle), sin(goldenAngle), cos(goldenAngle));
 
-    float sum = 0.0;
+	float sum = 0.0;
 
-    for (uint i = 0u; i < SSAO_SAMPLES; ++i, dir *= goldenRotate) {
-        radius += rayStep;
+	for (uint i = 0u; i < SSAO_SAMPLES; ++i, dir *= goldenRotate) {
+		radius += rayStep;
 
-        vec2 sampleCoord = coord + dir * radius;
-        float sampleDepth = loadDepth0(uvToTexel(sampleCoord));
-        if (sampleDepth < 0.56) continue;
+		vec2 sampleCoord = coord + dir * radius;
+		float sampleDepth = loadDepth0(uvToTexel(sampleCoord));
+		if (sampleDepth < 0.56) continue;
 
-        #if defined LOD_MOD
-            vec3 difference;
-            if (sampleDepth > 1.0 - EPS) {
-                sampleDepth = loadDepth0Lod(uvToTexel(sampleCoord));
-                difference = ScreenToViewPosLod(vec3(sampleCoord, sampleDepth)) - viewPos;
-            } else {
-                difference = ScreenToViewPos(vec3(sampleCoord, sampleDepth)) - viewPos;
-            }
-        #else
-            vec3 difference = ScreenToViewPos(vec3(sampleCoord, sampleDepth)) - viewPos;
-        #endif
+		#if defined LOD_MOD
+			vec3 difference;
+			if (sampleDepth > 1.0 - EPS) {
+				sampleDepth = loadDepth0Lod(uvToTexel(sampleCoord));
+				difference = ScreenToViewPosLod(vec3(sampleCoord, sampleDepth)) - viewPos;
+			} else {
+				difference = ScreenToViewPos(vec3(sampleCoord, sampleDepth)) - viewPos;
+			}
+		#else
+			vec3 difference = ScreenToViewPos(vec3(sampleCoord, sampleDepth)) - viewPos;
+		#endif
 
-        float diffSqLen = sdot(difference);
-        if (diffSqLen > EPS && diffSqLen < maxSqLen) {
-            float cosAngle = saturate(dot(normal, difference * inversesqrt(diffSqLen)));
-            sum += cosAngle * saturate(1.0 - diffSqLen * rMaxSqLen);
-        }
-    }
+		float diffSqLen = sdot(difference);
+		if (diffSqLen > EPS && diffSqLen < maxSqLen) {
+			float cosAngle = saturate(dot(normal, difference * inversesqrt(diffSqLen)));
+			sum += cosAngle * saturate(1.0 - diffSqLen * rMaxSqLen);
+		}
+	}
 
-    return sqr(saturate(1.0 - sum * rSteps * SSAO_STRENGTH));
+	return sqr(saturate(1.0 - sum * rSteps * SSAO_STRENGTH));
 }

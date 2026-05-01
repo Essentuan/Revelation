@@ -1,12 +1,12 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
-    Pass: Blit voxy transparent data (since it is rendered before deferred pass)
+	Pass: Blit voxy transparent data (since it is rendered before deferred pass)
 
 --------------------------------------------------------------------------------
 */
@@ -32,12 +32,12 @@ uniform sampler2D colortex17;
 
 //======// Main //================================================================================//
 void main() {
-    ivec2 texelPos = ivec2(gl_GlobalInvocationID.xy);
+	ivec2 texelPos = ivec2(gl_GlobalInvocationID.xy);
 
-    uvec4 materialData = texelFetch(colortex16, texelPos, 0);
+	uvec4 materialData = texelFetch(colortex16, texelPos, 0);
 
     if (materialData.y > 0u && loadDepth1(texelPos) > 1.0 - EPS) {
-        imageStore(colorimg7, texelPos, materialData);
-        imageStore(colorimg8, texelPos, texelFetch(colortex17, texelPos, 0));
-    }
+		imageStore(colorimg7, texelPos, materialData);
+		imageStore(colorimg8, texelPos, texelFetch(colortex17, texelPos, 0));
+	}
 }

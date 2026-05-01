@@ -4,7 +4,7 @@
     Description: This is a character renderer
     Reference: https://github.com/moyongxin/mc-shaders-helpers
 
-    Copyright © 2024 Mo Yongxin "qwertyuiop", Factorization, HaringPro
+    Copyright © 2024 Mo Yongxin "qwertyuiop", Factorization, HaringPro 
 
 =============================================================================
 
@@ -180,7 +180,7 @@ const int   text_advances[]  = {0,6,10,14,20,26,28,34,40,46,48,52,58,64,70,72,78
 //==============================// Character Render //========================================//
 
 bool isChar(uint text, uint index) {
-    return index < 32u && bool(text >> index & 1u); // Use the right shift operation to decode our character code
+	return index < 32u && bool(text >> index & 1u); // Use the right shift operation to decode our character code
 }
 
 bool isText(ivec2 texel, ivec2 pos, uvec3 text, int size) {
@@ -190,7 +190,7 @@ bool isText(ivec2 texel, ivec2 pos, uvec3 text, int size) {
 
     // Calculate the index for the lower part
     // 8 is the number of columns in the character grid
-    uint index = uint(relPos.x + relPos.y * 8);
+    uint index = uint(relPos.x + relPos.y * 8); 
 
     // Lower part
     bool result = isChar(text.x, index);
@@ -202,7 +202,7 @@ bool isText(ivec2 texel, ivec2 pos, uvec3 text, int size) {
 }
 
 vec3 renderText(ivec2 pos, int size, vec3 color) {
-    vec3 result = vec3(0.0);
+	vec3 result = vec3(0.0);
     ivec2 screenTexel = ivec2(gl_FragCoord.st);
 
     if (max(screenTexel, ivec2(pos.x, pos.y - size * 6)) == screenTexel) {
@@ -225,5 +225,5 @@ vec3 renderText(ivec2 pos, int size, vec3 color) {
         }
     }
 
-    return result;
+	return result;
 }

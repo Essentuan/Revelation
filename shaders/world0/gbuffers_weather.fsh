@@ -3,10 +3,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -30,5 +30,5 @@ void main() {
 
     if (albedoAlpha < 0.1) discard;
 
-    albedoOut.a = albedoAlpha;
+	albedoOut.a = albedoAlpha;
 }

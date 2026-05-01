@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -26,10 +26,10 @@ in vec2 lightmap;
 
 //======// Main //================================================================================//
 void main() {
-    if (vertColor.a < 0.1) { discard; return; }
+	if (vertColor.a < 0.1) { discard; return; }
 
-    albedoOut = vec4(vertColor.rgb, 1.0);
+	albedoOut = vec4(vertColor.rgb, 1.0);
 
-    materialOut.x = Packup2x8U(lightmap);
-    materialOut.y = lightmap.x > 0.999 ? 20u : 1u;
+	materialOut.x = Packup2x8U(lightmap);
+	materialOut.y = lightmap.x > 0.999 ? 20u : 1u;
 }

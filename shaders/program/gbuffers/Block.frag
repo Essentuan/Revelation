@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -39,7 +39,7 @@ in vec3 worldPos;
 uniform sampler2D tex;
 
 #if defined MC_NORMAL_MAP
-    uniform sampler2D normals;
+	uniform sampler2D normals;
 #endif
 
 #if defined MC_SPECULAR_MAP
@@ -73,15 +73,15 @@ const vec3[] COLORS = vec3[](
 );
 
 vec2 endPortalLayer(vec2 coord, float layer) {
-    vec2 offset = vec2(8.5 / layer, (1.0 + layer / 3.0) * (frameTimeCounter * 0.0015)) + 0.25;
+	vec2 offset = vec2(8.5 / layer, (1.0 + layer / 3.0) * (frameTimeCounter * 0.0015)) + 0.25;
 
-    mat2 rotate = rotateMat(radians(layer * layer * 8642.0 + layer * 18.0));
+	mat2 rotate = rotateMat(radians(layer * layer * 8642.0 + layer * 18.0));
 
-    return (4.5 - layer * 0.25) * (rotate * coord) + offset;
+	return (4.5 - layer * 0.25) * (rotate * coord) + offset;
 }
 
 #ifdef RAIN_PUDDLES
-    #include "/lib/surface/RainPuddle.glsl"
+	#include "/lib/surface/RainPuddle.glsl"
 #endif
 
 //======// Main //================================================================================//
@@ -89,10 +89,10 @@ void main() {
     vec3 deltaPos1 = dFdx(worldPos);
     vec3 deltaPos2 = dFdy(worldPos);
 
-    vec3 geoNormal = normalize(cross(deltaPos1, deltaPos2));
+	vec3 geoNormal = normalize(cross(deltaPos1, deltaPos2));
 
-    // Construct TBN matrix
-    #ifdef MC_NORMAL_MAP
+	// Construct TBN matrix
+	#ifdef MC_NORMAL_MAP
         vec3 deltaPos1Perp = cross(geoNormal, deltaPos1);
         vec3 deltaPos2Perp = cross(deltaPos2, geoNormal);
 
@@ -114,65 +114,65 @@ void main() {
         const float mipLevel = 0.0;
     #endif
 
-    vec4 albedo = textureLod(tex, texCoord, mipLevel) * vertColor;
+	vec4 albedo = textureLod(tex, texCoord, mipLevel) * vertColor;
 
-    if (albedo.a < 0.1) { discard; return; }
+	if (albedo.a < 0.1) { discard; return; }
 
-    #ifdef WHITE_WORLD
-        albedo.rgb = vec3(1.0);
-    #endif
+	#ifdef WHITE_WORLD
+		albedo.rgb = vec3(1.0);
+	#endif
 
-    if (materialID == 46u) {
-        vec3 worldDir = normalize(worldPos);
-        vec3 worldDirAbs = abs(worldDir);
-        vec3 samplePartAbs = step(maxOf(worldDirAbs), worldDirAbs);
-        vec3 samplePart = signMul(samplePartAbs, worldDir);
-        float intersection = 1.0 / dot(samplePartAbs, worldDirAbs);
-        vec3 sampleNDCRaw = samplePart - worldDir * intersection;
-        vec2 sampleNDC = sampleNDCRaw.xy * vec2(samplePartAbs.y + samplePart.z, 1.0 - samplePartAbs.y) + sampleNDCRaw.z * vec2(-samplePart.x, samplePartAbs.y);
-        vec2 portalCoord = sampleNDC * 0.5 + 0.5;
+	if (materialID == 46u) {
+		vec3 worldDir = normalize(worldPos);
+		vec3 worldDirAbs = abs(worldDir);
+		vec3 samplePartAbs = step(maxOf(worldDirAbs), worldDirAbs);
+		vec3 samplePart = signMul(samplePartAbs, worldDir);
+		float intersection = 1.0 / dot(samplePartAbs, worldDirAbs);
+		vec3 sampleNDCRaw = samplePart - worldDir * intersection;
+		vec2 sampleNDC = sampleNDCRaw.xy * vec2(samplePartAbs.y + samplePart.z, 1.0 - samplePartAbs.y) + sampleNDCRaw.z * vec2(-samplePart.x, samplePartAbs.y);
+		vec2 portalCoord = sampleNDC * 0.5 + 0.5;
 
-        vec3 portalColor = texture(tex, portalCoord).rgb * COLORS[0];
-        for (int i = 0; i < 16; ++i) {
-            portalColor += texture(tex, endPortalLayer(portalCoord, float(i + 1))).rgb * COLORS[i];
-        }
-        albedo.rgb = portalColor;
-        // specularTex = vec4(1.0, 0.04, vec2(254.0 / 255.0));
-    }
+		vec3 portalColor = texture(tex, portalCoord).rgb * COLORS[0];
+		for (int i = 0; i < 16; ++i) {
+			portalColor += texture(tex, endPortalLayer(portalCoord, float(i + 1))).rgb * COLORS[i];
+		}
+		albedo.rgb = portalColor;
+		// specularTex = vec4(1.0, 0.04, vec2(254.0 / 255.0));
+	}
 
-    albedoOut = albedo;
+	albedoOut = albedo;
 
-    materialOut.x = PackupDithered2x8U(lightmap, bayer4(gl_FragCoord.xy));
-    materialOut.y = materialID;
+	materialOut.x = PackupDithered2x8U(lightmap, bayer4(gl_FragCoord.xy));
+	materialOut.y = materialID;
 
-    #if defined MC_NORMAL_MAP
+	#if defined MC_NORMAL_MAP
         vec3 normalTex = textureLod(normals, texCoord, mipLevel).rgb;
         DecodeNormalTex(normalTex);
-        vec3 normal = tbnMatrix * normalTex;
-    #else
-        vec3 normal = geoNormal;
-    #endif
+		vec3 normal = tbnMatrix * normalTex;
+	#else
+		vec3 normal = geoNormal;
+	#endif
 
-    #if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
-        parallaxShadowOut = 0.0;
-    #endif
+	#if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
+		parallaxShadowOut = 0.0;
+	#endif
 
-    #if defined MC_SPECULAR_MAP
-        vec4 specularTex = textureLod(specular, texCoord, 0.0);
-    #else
-        vec4 specularTex = vec4(0.0);
-    #endif
+	#if defined MC_SPECULAR_MAP
+		vec4 specularTex = textureLod(specular, texCoord, 0.0);
+	#else
+		vec4 specularTex = vec4(0.0);
+	#endif
 
-    // Compute rain puddles
-    #ifdef RAIN_PUDDLES
-        if (wetnessCustom > EPS) {
-            CalculateRainPuddles(albedoOut.rgb, specularTex.rgb, worldPos, normal, geoNormal, lightmap.y);
-        }
-    #endif
+	// Compute rain puddles
+	#ifdef RAIN_PUDDLES
+		if (wetnessCustom > EPS) {
+			CalculateRainPuddles(albedoOut.rgb, specularTex.rgb, worldPos, normal, geoNormal, lightmap.y);
+		}
+	#endif
 
-    normalOut.xy = OctEncodeSnorm(geoNormal);
-    normalOut.zw = OctEncodeSnorm(normal);
+	normalOut.xy = OctEncodeSnorm(geoNormal);
+	normalOut.zw = OctEncodeSnorm(normal);
 
-    materialOut.z = Packup2x8U(specularTex.xy);
-    materialOut.w = Packup2x8U(specularTex.zw);
+	materialOut.z = Packup2x8U(specularTex.xy);
+	materialOut.w = Packup2x8U(specularTex.zw);
 }

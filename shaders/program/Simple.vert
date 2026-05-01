@@ -1,17 +1,17 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
 
 //======// Main //================================================================================//
 void main() {
-    // Full screen triangle
-    vec2 uv = vec2((gl_VertexID & 1) << 1, gl_VertexID & 2);
+	// Full screen triangle
+	vec2 uv = vec2((gl_VertexID & 1) << 1, gl_VertexID & 2);
     gl_Position = vec4(uv * 2.0 - 1.0, 0.0, 1.0);
 }

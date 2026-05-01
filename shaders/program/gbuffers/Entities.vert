@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -16,9 +16,9 @@
 //======// Output //==============================================================================//
 
 #if defined MC_NORMAL_MAP
-    out mat3 tbnMatrix;
+	out mat3 tbnMatrix;
 #else
-    out vec3 geoNormal;
+	out vec3 geoNormal;
 #endif
 
 out vec4 vertColor;
@@ -40,35 +40,35 @@ uniform vec2 taaJitter;
 
 //======// Main //================================================================================//
 void main() {
-    #if 0
-    // Kill the nametag
-    if (clamp(gl_Color.a, 0.24, 0.254) == gl_Color.a) {
-        gl_Position = vec4(-1.0);
-        return;
-    }
-    #endif
+	#if 0
+	// Kill the nametag
+	if (clamp(gl_Color.a, 0.24, 0.254) == gl_Color.a) {
+		gl_Position = vec4(-1.0);
+		return;
+	}
+	#endif
 
-    vertColor = gl_Color;
+	vertColor = gl_Color;
     texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 
-    lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
+	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
-    vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
-    // worldPos = transMAD(gbufferModelViewInverse, viewPos);
+	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
+	// worldPos = transMAD(gbufferModelViewInverse, viewPos);
     gl_Position = project(gl_ProjectionMatrix, viewPos);
 
-    #ifdef TAA_ENABLED
-        gl_Position.xy += taaJitter * gl_Position.w;
-    #endif
+	#ifdef TAA_ENABLED
+		gl_Position.xy += taaJitter * gl_Position.w;
+	#endif
 
-    #if defined MC_NORMAL_MAP
-        tbnMatrix[2] = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
-        tbnMatrix[0] = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * at_tangent.xyz);
-        tbnMatrix[1] = signMul(cross(tbnMatrix[0], tbnMatrix[2]), at_tangent.w);
-    #else
-        geoNormal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
-    #endif
+	#if defined MC_NORMAL_MAP
+		tbnMatrix[2] = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
+		tbnMatrix[0] = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * at_tangent.xyz);
+		tbnMatrix[1] = signMul(cross(tbnMatrix[0], tbnMatrix[2]), at_tangent.w);
+	#else
+		geoNormal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
+	#endif
 
-    // 829925: Physics mod snow
-    materialID = entityId == 829925 ? 39u : uint(entityId - 10000);
+	// 829925: Physics mod snow
+	materialID = entityId == 829925 ? 39u : uint(entityId - 10000);
 }

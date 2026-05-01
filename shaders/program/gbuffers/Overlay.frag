@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -25,9 +25,9 @@ uniform sampler2D tex;
 
 //======// Main //================================================================================//
 void main() {
-    vec4 albedo = texture(tex, texCoord) * vertColor;
+	vec4 albedo = texture(tex, texCoord) * vertColor;
 
-    if (albedo.a < 0.1) { discard; return; }
+	if (albedo.a < 0.1) { discard; return; }
 
-    albedoOut = albedo;
+	albedoOut = albedo;
 }

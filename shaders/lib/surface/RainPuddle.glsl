@@ -2,14 +2,14 @@
 void CalculateRainPuddles(inout vec3 albedo, inout vec3 specTex, vec3 worldPos, inout vec3 normal, vec3 geoNormal, float skylight) {
     vec3 minecraftPos = worldPos + cameraPosition;
     vec2 puddlePos = minecraftPos.xz - minecraftPos.y;
-    puddlePos -= worldTimeCounter * vec2(0.016, 0.01);
-    puddlePos *= RAIN_PUDDLE_SCALE;
+	puddlePos -= worldTimeCounter * vec2(0.016, 0.01);
+	puddlePos *= RAIN_PUDDLE_SCALE;
 
     // Puddle noise
-    float noise = texture(noisetex, puddlePos).z;
-    noise += texture(noisetex, puddlePos * 0.7).z;
-    noise += texture(noisetex, puddlePos * 0.3).z * 2.0;
-    noise = saturate(noise * 0.2) * wetnessCustom;
+	float noise = texture(noisetex, puddlePos).z;
+	noise += texture(noisetex, puddlePos * 0.7).z;
+	noise += texture(noisetex, puddlePos * 0.3).z * 2.0;
+	noise = saturate(noise * 0.2) * wetnessCustom;
 
     float puddles = smoothstep(0.45, 0.55, noise);
 

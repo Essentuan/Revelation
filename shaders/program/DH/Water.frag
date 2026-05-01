@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -48,61 +48,61 @@ in vec3 worldPos;
 #define PHYSICS_OCEAN_SUPPORT
 
 #ifdef PHYSICS_OCEAN
-    #define PHYSICS_FRAGMENT
-    #include "/lib/water/PhysicsOceans.glsl"
+	#define PHYSICS_FRAGMENT
+	#include "/lib/water/PhysicsOceans.glsl"
 #else
-    #include "/lib/water/WaterWave.glsl"
+	#include "/lib/water/WaterWave.glsl"
 #endif
 
 //======// Main //================================================================================//
 void main() {
-    ivec2 texel = ivec2(gl_FragCoord.xy);
+	ivec2 texel = ivec2(gl_FragCoord.xy);
     float alpha = smoothstep(sqr(far - 32.0), sqr(far - 16.0), sdot(worldPos));
-    float dither = BlueNoise(texel, frameCounter);
+	float dither = BlueNoise(texel, frameCounter);
 
     if (alpha < dither || loadDepth0(texel) < 1.0) {
         discard;
         return;
     }
 
-    normalOut.xy = OctEncodeSnorm(geoNormal);
+	normalOut.xy = OctEncodeSnorm(geoNormal);
 
-    if (materialID == 3u) { // water
-        vec3 worldDir = normalize(worldPos - gbufferModelViewInverse[3].xyz);
+	if (materialID == 3u) { // water
+		vec3 worldDir = normalize(worldPos - gbufferModelViewInverse[3].xyz);
 
-        #ifdef PHYSICS_OCEAN
-            WavePixelData wave = physics_wavePixel(physics_localPosition.xz, physics_localWaviness, physics_iterationsNormal, physics_gameTime);
+		#ifdef PHYSICS_OCEAN
+			WavePixelData wave = physics_wavePixel(physics_localPosition.xz, physics_localWaviness, physics_iterationsNormal, physics_gameTime);
 
-            vec3 worldNormal = wave.normal;
-        #else
-            mat3 tbnMatrix = BuildOrthonormalBasis(geoNormal);
+			vec3 worldNormal = wave.normal;
+		#else
+			mat3 tbnMatrix = BuildOrthonormalBasis(geoNormal);
 
-            vec3 minecraftPos = worldPos + cameraPosition;
-            #ifdef WATER_PARALLAX
-                vec3 worldNormal = CalculateWaterNormal(minecraftPos, worldDir * tbnMatrix);
-            #else
-                vec3 worldNormal = CalculateWaterNormal(minecraftPos);
-            #endif
+			vec3 minecraftPos = worldPos + cameraPosition;
+			#ifdef WATER_PARALLAX
+				vec3 worldNormal = CalculateWaterNormal(minecraftPos, worldDir * tbnMatrix);
+			#else
+				vec3 worldNormal = CalculateWaterNormal(minecraftPos);
+			#endif
 
-            worldNormal = tbnMatrix * worldNormal;
-        #endif
+			worldNormal = tbnMatrix * worldNormal;
+		#endif
 
-        float depthBack = loadDepth1Lod(texel);
-        vec3 viewPosBack = ScreenToViewPos(vec3(gl_FragCoord.xy * viewPixelSize, depthBack));
-        vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
+		float depthBack = loadDepth1Lod(texel);
+		vec3 viewPosBack = ScreenToViewPos(vec3(gl_FragCoord.xy * viewPixelSize, depthBack));
+		vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
 
-        vec2 encodedNormal = OctEncodeSnorm(worldNormal);
-        normalOut.zw = encodedNormal;
+		vec2 encodedNormal = OctEncodeSnorm(worldNormal);
+		normalOut.zw = encodedNormal;
 
-        waterOut = vec4(distance(worldPos, worldPosBack) * rcp255, Packup2x8(encodedNormal), 0.0, 1.0);
-    } else {
-        normalOut.zw = normalOut.xy;
+		waterOut = vec4(distance(worldPos, worldPosBack) * rcp255, Packup2x8(encodedNormal), 0.0, 1.0);
+	} else {
+		normalOut.zw = normalOut.xy;
 
-        materialOut.z = Packup2x8U(vertColor.xy);
-        materialOut.w = Packup2x8U(vertColor.zw);
-        waterOut = vec4(0.0);
-    }
+		materialOut.z = Packup2x8U(vertColor.xy);
+		materialOut.w = Packup2x8U(vertColor.zw);
+		waterOut = vec4(0.0);
+	}
 
-    materialOut.x = Packup2x8U(lightmap);
-    materialOut.y = materialID;
+	materialOut.x = Packup2x8U(lightmap);
+	materialOut.y = materialID;
 }

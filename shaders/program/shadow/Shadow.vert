@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -40,31 +40,31 @@ uniform int blockEntityId;
 
 //======// Main //================================================================================//
 void main() {
-    if (blockEntityId == 10030) {
-        gl_Position = vec4(-1.0);
-        return;
-    }
+	if (blockEntityId == 10030) {
+		gl_Position = vec4(-1.0);
+		return;
+	}
 
     vec3 normal = normalize(gl_NormalMatrix * gl_Normal);
-    #ifdef SHADOW_BACKFACE_CULLING
-        if (normal.z < 0.0) {
-            gl_Position = vec4(-1.0);
-            return;
-        }
-    #endif
+	#ifdef SHADOW_BACKFACE_CULLING
+		if (normal.z < 0.0) {
+			gl_Position = vec4(-1.0);
+			return;
+		}
+	#endif
 
     texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 
-    vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
+	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
 
-    isWater = 0u;
-    if (int(mc_Entity.x) == 10003) {
-        isWater = 1u;
-        vectorData = transMAD(shadowModelViewInverse, viewPos) + cameraPosition;
-    } else {
-        vectorData = gl_Color.rgb;
-    }
+	isWater = 0u;
+	if (int(mc_Entity.x) == 10003) {
+		isWater = 1u;
+		vectorData = transMAD(shadowModelViewInverse, viewPos) + cameraPosition;
+	} else {
+		vectorData = gl_Color.rgb;
+	}
 
-    gl_Position.xyz = DistortShadowSpace(projMAD(gl_ProjectionMatrix, viewPos));
-    gl_Position.w = 1.0;
+	gl_Position.xyz = DistortShadowSpace(projMAD(gl_ProjectionMatrix, viewPos));
+	gl_Position.w = 1.0;
 }

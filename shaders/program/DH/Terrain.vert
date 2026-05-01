@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -38,20 +38,20 @@ uniform vec2 taaJitter;
 
 //======// Main //================================================================================//
 void main() {
-    vertColor = gl_Color.rgb;
+	vertColor = gl_Color.rgb;
 
-    lightmap = mat2(gl_TextureMatrix[1]) * gl_MultiTexCoord1.xy + gl_TextureMatrix[1][3].xy;
-    lightmap = saturate((lightmap - 0.03125) * 1.06667);
+	lightmap = mat2(gl_TextureMatrix[1]) * gl_MultiTexCoord1.xy + gl_TextureMatrix[1][3].xy;
+	lightmap = saturate((lightmap - 0.03125) * 1.06667);
 
-    materialID = dhMaterialId == DH_BLOCK_LEAVES ? 13u : 1u;
+	materialID = dhMaterialId == DH_BLOCK_LEAVES ? 13u : 1u;
 
-    geoNormal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
+	geoNormal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
 
-    vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
-    worldPos = transMAD(gbufferModelViewInverse, viewPos);
+	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
+	worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
     gl_Position = project(dhProjection, viewPos);
-    #ifdef TAA_ENABLED
-        gl_Position.xy += taaJitter * gl_Position.w;
-    #endif
+	#ifdef TAA_ENABLED
+		gl_Position.xy += taaJitter * gl_Position.w;
+	#endif
 }

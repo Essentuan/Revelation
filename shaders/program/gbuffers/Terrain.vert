@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -31,9 +31,9 @@ out vec2 lightmap;
 flat out uint materialID;
 
 #if defined PARALLAX || defined AUTO_GENERATED_NORMAL
-    out vec2 tileBase;
-    flat out vec2 tileScale;
-    flat out vec2 tileOffset;
+	out vec2 tileBase;
+	flat out vec2 tileScale;
+	flat out vec2 tileOffset;
 #endif
 
 //======// Attribute //===========================================================================//
@@ -52,76 +52,76 @@ in vec4 at_tangent;
 
 //======// Main //================================================================================//
 void main() {
-    vertColor = gl_Color.rgb;
+	vertColor = gl_Color.rgb;
     texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 
-    lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
+	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
-    vec3 worldPos = transMAD(gbufferModelViewInverse, transMAD(gl_ModelViewMatrix, gl_Vertex.xyz));
+	vec3 worldPos = transMAD(gbufferModelViewInverse, transMAD(gl_ModelViewMatrix, gl_Vertex.xyz));
 
-    materialID = uint(max(mc_Entity.x - 1e4, 1));
+	materialID = uint(max(mc_Entity.x - 1e4, 1));
 
-    // Encode normal and tangent
-    vec3 normal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
-    normalPack = packSnorm2x16(OctEncodeSnorm(normal));
-    #if defined MC_NORMAL_MAP || defined AUTO_GENERATED_NORMAL
-        vec3 tangent = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * at_tangent.xyz);
-        tangentPack.x = packSnorm2x16(OctEncodeSnorm(tangent));
-        tangentPack.y = (floatBitsToUint(at_tangent.w) & 0x80000000u) | 0x3F800000u;
-    #endif
+	// Encode normal and tangent
+	vec3 normal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
+	normalPack = packSnorm2x16(OctEncodeSnorm(normal));
+	#if defined MC_NORMAL_MAP || defined AUTO_GENERATED_NORMAL
+		vec3 tangent = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * at_tangent.xyz);
+		tangentPack.x = packSnorm2x16(OctEncodeSnorm(tangent));
+		tangentPack.y = (floatBitsToUint(at_tangent.w) & 0x80000000u) | 0x3F800000u;
+	#endif
 
-    #ifdef WAVING_FOLIAGE
-        // Plants
-        if (clamp(materialID, 1000u, 1002u) == materialID) {
-            worldPos += cameraPosition;
+	#ifdef WAVING_FOLIAGE
+		// Plants
+		if (clamp(materialID, 1000u, 1002u) == materialID) {
+			worldPos += cameraPosition;
 
-            float time = frameTimeCounter * WAVING_FOLIAGE_SPEED;
-            float intensity = cube(lightmap.y) * (wetness + 1.0) * WAVING_FOLIAGE_STRENGTH;
-            float topVertex = step(gl_MultiTexCoord0.y, mc_midTexCoord.y) + float(materialID == 1001u);
-            intensity *= step(materialID, 1000u) * 0.25 + 0.75; // Decrease intensity for tall plants
+			float time = frameTimeCounter * WAVING_FOLIAGE_SPEED;
+			float intensity = cube(lightmap.y) * (wetness + 1.0) * WAVING_FOLIAGE_STRENGTH;
+			float topVertex = step(gl_MultiTexCoord0.y, mc_midTexCoord.y) + float(materialID == 1001u);
+			intensity *= step(materialID, 1000u) * 0.25 + 0.75; // Decrease intensity for tall plants
 
-            float noise = textureBicubic(noisetex, (worldPos.xz + time) * 0.005).x * 2.0;
+			float noise = textureBicubic(noisetex, (worldPos.xz + time) * 0.005).x * 2.0;
 
-            float windOffset = sin(dot(worldPos.xz, vec2(2.0, 2.5)) + sin(time * 0.5) * 2.0);
-            windOffset *= sin(dot(worldPos.xz + time * 2.0, vec2(1.0, 0.75))) + noise;
-            worldPos.xz += vec2(0.4, 0.3) * windOffset * intensity * topVertex;
+			float windOffset = sin(dot(worldPos.xz, vec2(2.0, 2.5)) + sin(time * 0.5) * 2.0);
+			windOffset *= sin(dot(worldPos.xz + time * 2.0, vec2(1.0, 0.75))) + noise;
+			worldPos.xz += vec2(0.4, 0.3) * windOffset * intensity * topVertex;
 
-            worldPos -= cameraPosition;
-        }
+			worldPos -= cameraPosition;
+		}
 
-        // Leaves
-        if (materialID == 13u) {
-            worldPos += cameraPosition;
+		// Leaves
+		if (materialID == 13u) {
+			worldPos += cameraPosition;
 
-            float time = frameTimeCounter * WAVING_FOLIAGE_SPEED;
-            float intensity = cube(lightmap.y) * (wetness + 1.0) * WAVING_FOLIAGE_STRENGTH;
+			float time = frameTimeCounter * WAVING_FOLIAGE_SPEED;
+			float intensity = cube(lightmap.y) * (wetness + 1.0) * WAVING_FOLIAGE_STRENGTH;
 
-            float noise = Pseudo3DNoise((worldPos + time) * 2.0) * 2.0;
+			float noise = Pseudo3DNoise((worldPos + time) * 2.0) * 2.0;
 
-            float windOffset = sin(dot(worldPos, vec3(2.0, 1.5, 1.5)) + sin(time * 0.5) * 2.0);
-            windOffset *= sin(dot(worldPos + time * 2.0, vec3(1.0, 0.5, 0.75))) + noise;
-            worldPos += vec3(0.15, 0.1, 0.1) * windOffset * intensity;
+			float windOffset = sin(dot(worldPos, vec3(2.0, 1.5, 1.5)) + sin(time * 0.5) * 2.0);
+			windOffset *= sin(dot(worldPos + time * 2.0, vec3(1.0, 0.5, 0.75))) + noise;
+			worldPos += vec3(0.15, 0.1, 0.1) * windOffset * intensity;
 
-            worldPos -= cameraPosition;
-        }
-    #endif
+			worldPos -= cameraPosition;
+		}
+	#endif
 
-    // Unlabelled foilage detection
-    #ifdef UNLABELLED_FOILAGE_DETECTION
-        if (materialID < 1u && maxOf(abs(gl_Normal)) < 0.99) materialID = 1003u;
-    #endif
+	// Unlabelled foilage detection
+	#ifdef UNLABELLED_FOILAGE_DETECTION
+		if (materialID < 1u && maxOf(abs(gl_Normal)) < 0.99) materialID = 1003u;
+	#endif
 
-    #if defined PARALLAX || defined AUTO_GENERATED_NORMAL
-        vec2 minMidCoord = texCoord - mc_midTexCoord;
-        tileBase = signI(minMidCoord) * 0.5 + 0.5;
-        tileScale = abs(minMidCoord) * 2.0;
-        tileOffset = min(texCoord, mc_midTexCoord - minMidCoord);
-    #endif
+	#if defined PARALLAX || defined AUTO_GENERATED_NORMAL
+		vec2 minMidCoord = texCoord - mc_midTexCoord;
+		tileBase = signI(minMidCoord) * 0.5 + 0.5;
+		tileScale = abs(minMidCoord) * 2.0;
+		tileOffset = min(texCoord, mc_midTexCoord - minMidCoord);
+	#endif
 
-    vec3 viewPos = transMAD(gbufferModelView, worldPos);
+	vec3 viewPos = transMAD(gbufferModelView, worldPos);
     gl_Position = project(gl_ProjectionMatrix, viewPos);
 
-    #ifdef TAA_ENABLED
-        gl_Position.xy += taaJitter * gl_Position.w;
-    #endif
+	#ifdef TAA_ENABLED
+		gl_Position.xy += taaJitter * gl_Position.w;
+	#endif
 }

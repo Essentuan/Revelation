@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    References:
-        Sébastien Hillaire. "A Scalable and Production Ready Sky and Atmosphere Rendering Technique". EGSR 2020.
+	References:
+		Sébastien Hillaire. "A Scalable and Production Ready Sky and Atmosphere Rendering Technique". EGSR 2020.
             https://sebh.github.io/publications/egsr2020.pdf
-        Epic Games, Inc. "Unreal Engine Sky Atmosphere Rendering Technique". 2020.
+		Epic Games, Inc. "Unreal Engine Sky Atmosphere Rendering Technique". 2020.
             https://github.com/sebh/UnrealEngineSkyAtmosphere
 
 --------------------------------------------------------------------------------
@@ -43,8 +43,8 @@ const float aerosol_d = 1.6; // Mean diameter in µm
 
 // https://www.desmos.com/calculator/2ys2dp2faw
 #define PreethamMieScatteringCoeff(turbidity) \
-    max(vec3(-6.68430439852e-6, -7.85166616868e-6, -1.13646707643e-5) + \
-        vec3( 6.71921474408e-6,  7.89267333454e-6,     1.14240254196e-5) * turbidity, 0.0)
+	max(vec3(-6.68430439852e-6, -7.85166616868e-6, -1.13646707643e-5) + \
+		vec3( 6.71921474408e-6,  7.89267333454e-6, 	1.14240254196e-5) * turbidity, 0.0)
 
 const vec3 mieCoeffBase = PreethamMieScatteringCoeff(exp2(ATMOSPHERE_TURBIDITY));
 
@@ -60,14 +60,14 @@ const AtmosphereParameters atmosphere = AtmosphereParameters(
 );
 
 const mat3 atmosphereExtinctionCoeff = mat3(
-    atmosphere.rayleighScattering,
-    atmosphere.mieExtinction,
-    atmosphere.ozoneExtinction
+	atmosphere.rayleighScattering,
+	atmosphere.mieExtinction,
+	atmosphere.ozoneExtinction
 );
 
 const mat2x3 atmosphereScatteringCoeff = mat2x3(
-    atmosphere.rayleighScattering,
-    atmosphere.mieScattering
+	atmosphere.rayleighScattering,
+	atmosphere.mieScattering
 );
 
 float atmosphereViewHeight = planetRadius + VIEWER_BASE_ALTITUDE + eyeAltitude;
@@ -94,26 +94,26 @@ const vec3 moonIrradiance = moonRadiance * moonSolidAngle;
 //================================================================================================//
 
 vec2 RaySphereIntersection(vec3 pos, vec3 dir, float rad) {
-    float PdotD = dot(pos, dir);
-    float delta = sqr(PdotD) - sdot(pos) + sqr(rad);
+	float PdotD = dot(pos, dir);
+	float delta = sqr(PdotD) - sdot(pos) + sqr(rad);
 
-    if (delta >= 0.0) {
-        delta *= inversesqrt(delta);
-        return vec2(-delta, delta) - PdotD;
-    } else {
-        return vec2(-1.0);
-    }
+	if (delta >= 0.0) {
+		delta *= inversesqrt(delta);
+		return vec2(-delta, delta) - PdotD;
+	} else {
+		return vec2(-1.0);
+	}
 }
 
 vec2 RaySphereIntersection(float r, float mu, float rad) {
-    float delta = sqr(r) * fma(mu, mu, -1.0) + sqr(rad);
+	float delta = sqr(r) * fma(mu, mu, -1.0) + sqr(rad);
 
-    if (delta >= 0.0) {
-        delta *= inversesqrt(delta);
-        return vec2(-delta, delta) - r * mu;
-    } else {
-        return vec2(-1.0);
-    }
+	if (delta >= 0.0) {
+		delta *= inversesqrt(delta);
+		return vec2(-delta, delta) - r * mu;
+	} else {
+		return vec2(-1.0);
+	}
 }
 
 vec2 RaySphericalShellIntersection(vec3 pos, vec3 dir, float bottomRad, float topRad) {
@@ -121,22 +121,22 @@ vec2 RaySphericalShellIntersection(vec3 pos, vec3 dir, float bottomRad, float to
     vec2 topIntersection = RaySphereIntersection(pos, dir, topRad);
 
     if (topIntersection.y >= 0.0) {
-        vec2 intersection;
-        if (bottomIntersection.y < 0.0) {
-            intersection.x = max0(topIntersection.x);
-            intersection.y = topIntersection.y;
-        } else if (bottomIntersection.x < 0.0) {
-            intersection.x = bottomIntersection.y;
-            intersection.y = topIntersection.y;
-        } else {
-            intersection.x = max0(topIntersection.x);
-            intersection.y = bottomIntersection.x;
-        }
+		vec2 intersection;
+		if (bottomIntersection.y < 0.0) {
+			intersection.x = max0(topIntersection.x);
+			intersection.y = topIntersection.y;
+		} else if (bottomIntersection.x < 0.0) {
+			intersection.x = bottomIntersection.y;
+			intersection.y = topIntersection.y;
+		} else {
+			intersection.x = max0(topIntersection.x);
+			intersection.y = bottomIntersection.x;
+		}
 
-        return intersection;
-    } else {
-        return vec2(-1.0);
-    }
+		return intersection;
+	} else {
+		return vec2(-1.0);
+	}
 }
 
 vec2 RaySphericalShellIntersection(float r, float mu, float bottomRad, float topRad) {
@@ -144,22 +144,22 @@ vec2 RaySphericalShellIntersection(float r, float mu, float bottomRad, float top
     vec2 topIntersection = RaySphereIntersection(r, mu, topRad);
 
     if (topIntersection.y >= 0.0) {
-        vec2 intersection;
-        if (bottomIntersection.y < 0.0) {
-            intersection.x = max0(topIntersection.x);
-            intersection.y = topIntersection.y;
-        } else if (bottomIntersection.x < 0.0) {
-            intersection.x = bottomIntersection.y;
-            intersection.y = topIntersection.y;
-        } else {
-            intersection.x = max0(topIntersection.x);
-            intersection.y = bottomIntersection.x;
-        }
+		vec2 intersection;
+		if (bottomIntersection.y < 0.0) {
+			intersection.x = max0(topIntersection.x);
+			intersection.y = topIntersection.y;
+		} else if (bottomIntersection.x < 0.0) {
+			intersection.x = bottomIntersection.y;
+			intersection.y = topIntersection.y;
+		} else {
+			intersection.x = max0(topIntersection.x);
+			intersection.y = bottomIntersection.x;
+		}
 
-        return intersection;
-    } else {
-        return vec2(-1.0);
-    }
+		return intersection;
+	} else {
+		return vec2(-1.0);
+	}
 }
 
 // From https://gamedev.stackexchange.com/questions/96459/fast-ray-sphere-collision-code.
@@ -191,35 +191,35 @@ float RaySphereIntersectNearest(vec3 ro, vec3 rd, float sr) {
 
 // https://doi.org/10.1364/JOSA.47.000176
 float AirPhase(float mu) {
-    return uniformPhase * 0.7629 * (1.0 + 0.932 * mu * mu);
+	return uniformPhase * 0.7629 * (1.0 + 0.932 * mu * mu);
 }
 
 vec2 AtmospherePhase(float mu) {
-    return vec2(RayleighPhase(mu), KleinNishinaPhase(mu, 2500.0));
+	return vec2(RayleighPhase(mu), KleinNishinaPhase(mu, 2500.0));
 }
 
 vec3 LightningContribution(vec3 pos) {
-    if (lightningBoltPosition.w < 0.5) return vec3(0.0);
+	if (lightningBoltPosition.w < 0.5) return vec3(0.0);
 
     float distSq = sdot(lightningBoltPosition.xyz - pos);
-    return vec3(0.32, 0.3, 1.0) * 5e5 / (1.0 + distSq);
+	return vec3(0.32, 0.3, 1.0) * 5e5 / (1.0 + distSq);
 }
 
 vec3 LightningContribution(vec3 pos, vec3 normal) {
-    if (lightningBoltPosition.w < 0.5) return vec3(0.0);
+	if (lightningBoltPosition.w < 0.5) return vec3(0.0);
 
     vec3 vector = lightningBoltPosition.xyz - pos;
     float distSq = sdot(vector);
     vec3 lightDir = vector * inversesqrt(distSq);
 
     float diffuse = saturate(dot(normal, lightDir)) * 0.75 + 0.25;
-    return vec3(0.32, 0.3, 1.0) * 5e3 / (1.0 + distSq) * diffuse;
+	return vec3(0.32, 0.3, 1.0) * 5e3 / (1.0 + distSq) * diffuse;
 }
 
 //================================================================================================//
 
 vec2 UnitToSubUv(vec2 uv, vec2 res) {
-    return uv * (1.0 - 1.0 / res) + 0.5 / res;
+	return uv * (1.0 - 1.0 / res) + 0.5 / res;
 }
 
 // Transmittance LUT function parameterisation from Bruneton 2017 https://github.com/ebruneton/precomputed_atmospheric_scattering
@@ -228,33 +228,33 @@ vec2 UnitToSubUv(vec2 uv, vec2 res) {
 // r in [bottomRadius, topRadius]
 
 void UvToLutTransmittanceParams(out float r, out float mu, vec2 uv) {
-    float x_mu = uv.x;
-    float x_r = uv.y;
+	float x_mu = uv.x;
+	float x_r = uv.y;
 
-    float H = sqrt(atmosphere.topRadius * atmosphere.topRadius - atmosphere.bottomRadius * atmosphere.bottomRadius);
-    float rho = H * x_r;
-    r = sqrt(rho * rho + atmosphere.bottomRadius * atmosphere.bottomRadius);
+	float H = sqrt(atmosphere.topRadius * atmosphere.topRadius - atmosphere.bottomRadius * atmosphere.bottomRadius);
+	float rho = H * x_r;
+	r = sqrt(rho * rho + atmosphere.bottomRadius * atmosphere.bottomRadius);
 
-    float d_min = atmosphere.topRadius - r;
-    float d_max = rho + H;
-    float d = d_min + x_mu * (d_max - d_min);
-    mu = d == 0.0 ? 1.0 : (H * H - rho * rho - d * d) / (2.0 * r * d);
-    mu = clamp(mu, -1.0, 1.0);
+	float d_min = atmosphere.topRadius - r;
+	float d_max = rho + H;
+	float d = d_min + x_mu * (d_max - d_min);
+	mu = d == 0.0 ? 1.0 : (H * H - rho * rho - d * d) / (2.0 * r * d);
+	mu = clamp(mu, -1.0, 1.0);
 }
 
 vec2 LutTransmittanceParamsToUv(float r, float mu) {
-    float H = sqrt(max0(atmosphere.topRadius * atmosphere.topRadius - atmosphere.bottomRadius * atmosphere.bottomRadius));
-    float rho = sqrt(max0(r * r - atmosphere.bottomRadius * atmosphere.bottomRadius));
+	float H = sqrt(max0(atmosphere.topRadius * atmosphere.topRadius - atmosphere.bottomRadius * atmosphere.bottomRadius));
+	float rho = sqrt(max0(r * r - atmosphere.bottomRadius * atmosphere.bottomRadius));
 
-    float discriminant = r * r * (mu * mu - 1.0) + atmosphere.topRadius * atmosphere.topRadius;
-    float d = max0(-r * mu + sqrt(discriminant)); // Distance to atmosphere boundary
+	float discriminant = r * r * (mu * mu - 1.0) + atmosphere.topRadius * atmosphere.topRadius;
+	float d = max0(-r * mu + sqrt(discriminant)); // Distance to atmosphere boundary
 
-    float d_min = atmosphere.topRadius - r;
-    float d_max = rho + H;
-    float x_mu = (d - d_min) / (d_max - d_min);
-    float x_r = rho / H;
+	float d_min = atmosphere.topRadius - r;
+	float d_max = rho + H;
+	float x_mu = (d - d_min) / (d_max - d_min);
+	float x_r = rho / H;
 
-    return vec2(x_mu, x_r);
+	return vec2(x_mu, x_r);
 }
 
 vec3 AtmosphereDensity(vec3 pos) {
@@ -268,48 +268,48 @@ vec3 ReadTransmittanceLUT(float r, float mu) {
 }
 
 bool RayIntersectPlanetGround(float r, float mu) {
-    return mu < 0.0 && r * r * fma(mu, mu, -1.0) + atmosphere.bottomRadius * atmosphere.bottomRadius >= 0.0;
+	return mu < 0.0 && r * r * fma(mu, mu, -1.0) + atmosphere.bottomRadius * atmosphere.bottomRadius >= 0.0;
 }
 
 vec3 AtmosphereTransmittance(vec3 pos, vec3 dir) {
     float r = length(pos);
-    float mu = dot(dir, pos) / r;
+	float mu = dot(dir, pos) / r;
     float earthShadow = float(!RayIntersectPlanetGround(r, mu));
 
     return ReadTransmittanceLUT(r, mu) * earthShadow;
 }
 
 vec3 AtmosphereTransmittanceToPoint(float r, float mu, float d) {
-    float r_d = sqrt(d * d + 2.0 * r * mu * d + r * r);
-    float mu_d = clamp((r * mu + d) / r_d, -1.0, 1.0);
+	float r_d = sqrt(d * d + 2.0 * r * mu * d + r * r);
+	float mu_d = clamp((r * mu + d) / r_d, -1.0, 1.0);
 
-    if (mu * d < 0.0) {
-        return saturate(ReadTransmittanceLUT(r_d, -mu_d) / ReadTransmittanceLUT(r, -mu));
-    } else {
-        return saturate(ReadTransmittanceLUT(r, mu) / ReadTransmittanceLUT(r_d, mu_d));
-    }
+	if (mu * d < 0.0) {
+		return saturate(ReadTransmittanceLUT(r_d, -mu_d) / ReadTransmittanceLUT(r, -mu));
+	} else {
+		return saturate(ReadTransmittanceLUT(r, mu) / ReadTransmittanceLUT(r_d, mu_d));
+	}
 }
 
 vec3 AtmosphereTransmittanceToPoint(vec3 pos, vec3 dir, float d) {
     float r = length(pos);
-    float mu = dot(dir, pos) / r;
+	float mu = dot(dir, pos) / r;
 
-    return AtmosphereTransmittanceToPoint(r, mu, d);
+	return AtmosphereTransmittanceToPoint(r, mu, d);
 }
 
 vec3 AtmosphereTransmittanceToSun(float r, float mu) {
-    float sinThetaH = atmosphere.bottomRadius / r;
-    float cosThetaH = sqrt(saturate(1.0 - sinThetaH * sinThetaH));
+	float sinThetaH = atmosphere.bottomRadius / r;
+	float cosThetaH = sqrt(saturate(1.0 - sinThetaH * sinThetaH));
     float earthShadow = linearstep(-sinThetaH * sunAngularRadius, sinThetaH * sunAngularRadius, mu + cosThetaH);
 
-    return ReadTransmittanceLUT(r, mu) * earthShadow;
+	return ReadTransmittanceLUT(r, mu) * earthShadow;
 }
 
 vec3 AtmosphereTransmittanceToSun(vec3 pos, vec3 dir) {
     float r = length(pos);
-    float mu = dot(dir, pos) / r;
+	float mu = dot(dir, pos) / r;
 
-    return AtmosphereTransmittanceToSun(r, mu);
+	return AtmosphereTransmittanceToSun(r, mu);
 }
 
 vec3 AtmosphereMultiScattering(float r, float mu) {
@@ -321,32 +321,32 @@ vec3 AtmosphereSkyView(vec3 viewPos, vec3 rayDir, vec3 sunDir) {
     float height = length(viewPos);
     vec3 up = viewPos / height;
 
-    float viewZenithCos = dot(rayDir, up);
-    vec3 sideVector = normalize(cross(up, rayDir));
-    vec3 forwardVector = normalize(cross(sideVector, up));
+	float viewZenithCos = dot(rayDir, up);
+	vec3 sideVector = normalize(cross(up, rayDir));
+	vec3 forwardVector = normalize(cross(sideVector, up));
 
     vec2 lightOnPlane = vec2(dot(sunDir, sideVector), dot(sunDir, forwardVector));
-    float lightViewCos = normalize(lightOnPlane).y;
+	float lightViewCos = normalize(lightOnPlane).y;
 
-    vec2 uv;
-    uv.x = sqrt(fma(lightViewCos, -0.5, 0.5));
+	vec2 uv;
+	uv.x = sqrt(fma(lightViewCos, -0.5, 0.5));
 
-    float vHorizon = sqrt(height * height - atmosphere.bottomRadius * atmosphere.bottomRadius);
-    float beta = fastAcos(vHorizon / height);
-    float zenithHorizon = PI - beta;
+	float vHorizon = sqrt(height * height - atmosphere.bottomRadius * atmosphere.bottomRadius);
+	float beta = fastAcos(vHorizon / height);
+	float zenithHorizon = PI - beta;
 
-    float coord = fastAcos(viewZenithCos);
-    if (RayIntersectPlanetGround(height, viewZenithCos)) {
-        coord = (coord - zenithHorizon) / beta;
-        coord = sqrt(coord); // Non-linear mapping
-        uv.y = coord * 0.5 + 0.5;
-    } else {
-        coord = 1.0 - coord / zenithHorizon;
-        coord = sqrt(coord); // Non-linear mapping
-        uv.y = (1.0 - coord) * 0.5;
-    }
+	float coord = fastAcos(viewZenithCos);
+	if (RayIntersectPlanetGround(height, viewZenithCos)) {
+		coord = (coord - zenithHorizon) / beta;
+		coord = sqrt(coord); // Non-linear mapping
+		uv.y = coord * 0.5 + 0.5;
+	} else {
+		coord = 1.0 - coord / zenithHorizon;
+		coord = sqrt(coord); // Non-linear mapping
+		uv.y = (1.0 - coord) * 0.5;
+	}
 
-    uv = UnitToSubUv(uv, textureSize(skyViewTex, 0));
+	uv = UnitToSubUv(uv, textureSize(skyViewTex, 0));
     return textureRGBE8(skyViewTex, saturate(uv));
 }
 
@@ -401,7 +401,7 @@ vec3 RaymarchScattering(vec3 rayPos, vec3 rayDir, vec3 sunDir) {
 
     // Adaptive sample count
     const float maxSamples = ATMOSPHERE_SKY_SAMPLES;
-    float sampleCount = round(maxSamples * saturate(fma(tMax, 1e-5, 0.5)));
+	float sampleCount = round(maxSamples * saturate(fma(tMax, 1e-5, 0.5)));
 
     float stepSize = tMax * rcp(sampleCount);
     vec3 rayStep = stepSize * rayDir;

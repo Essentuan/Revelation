@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
     Pass: Reproject scene history
 
@@ -35,7 +35,7 @@ void main() {
     uvec2 localPos = RemapThread16x16(gl_LocalInvocationIndex);
     ivec2 texelPos = ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy);
 
-    float depth = loadDepth0(texelPos);
+	float depth = loadDepth0(texelPos);
     vec2 previousCoord = ReprojectScreenPos(vec3(texelToUv(texelPos), depth)).xy;
 
     if (saturate(previousCoord) == previousCoord && depth > 0.56) {

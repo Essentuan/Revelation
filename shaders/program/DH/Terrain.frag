@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -40,34 +40,34 @@ flat in uint materialID;
 //======// Main //================================================================================//
 void main() {
     float alpha = smoothstep(sqr(far - 32.0), sqr(far - 16.0), sdot(worldPos));
-    float dither = BlueNoise(ivec2(gl_FragCoord.xy), frameCounter);
+	float dither = BlueNoise(ivec2(gl_FragCoord.xy), frameCounter);
 
     if (alpha < dither) {
         discard;
         return;
     }
 
-    albedoOut = vec4(vertColor, 1.0);
-    /* Terrain noises */ {
-        const float res = 8.0;
-        const float strength = 0.5;
+	albedoOut = vec4(vertColor, 1.0);
+	/* Terrain noises */ {
+		const float res = 8.0;
+		const float strength = 0.5;
 
-        mat3 tbnMatrix = BuildOrthonormalBasis(geoNormal);
+		mat3 tbnMatrix = BuildOrthonormalBasis(geoNormal);
 
-        vec2 noisePos = ((worldPos + cameraPosition) * tbnMatrix).xy;
-        float noise = texture(noisetex, noisePos * (res / 256.0)).x * 2.0;
+		vec2 noisePos = ((worldPos + cameraPosition) * tbnMatrix).xy;
+		float noise = texture(noisetex, noisePos * (res / 256.0)).x * 2.0;
 
-        albedoOut.rgb = pow(albedoOut.rgb, vec3(mix(1.0, noise, strength)));
-    }
+		albedoOut.rgb = pow(albedoOut.rgb, vec3(mix(1.0, noise, strength)));
+	}
 
-    #ifdef WHITE_WORLD
-        albedoOut = vec4(1.0);
-    #endif
+	#ifdef WHITE_WORLD
+		albedoOut = vec4(1.0);
+	#endif
 
-    materialOut.x = Packup2x8U(lightmap);
-    materialOut.y = materialID;
-    materialOut.zw = uvec2(0);
+	materialOut.x = Packup2x8U(lightmap);
+	materialOut.y = materialID;
+	materialOut.zw = uvec2(0);
 
-    normalOut.xy = OctEncodeSnorm(geoNormal);
-    normalOut.zw = normalOut.xy;
+	normalOut.xy = OctEncodeSnorm(geoNormal);
+	normalOut.zw = normalOut.xy;
 }

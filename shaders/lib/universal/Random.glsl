@@ -3,9 +3,9 @@ const float noiseTexturePixelSize = 1.0 / noiseTextureResolution;
 
 float Pseudo3DNoise(vec3 pos) {
     vec3 p = floor(pos);
-    vec3 b = hermite(pos - p);
+	vec3 b = hermite(pos - p);
 
-    vec2 uv = p.xy + b.xy + 97.0 * p.z;
+	vec2 uv = p.xy + b.xy + 97.0 * p.z;
     vec2 rg = texture(noisetex, (uv + 0.5) * noiseTexturePixelSize).xy;
 
     return mix(rg.x, rg.y, b.z);
@@ -74,7 +74,7 @@ vec3 hash33(vec3 p3) {
 
 // A perfect integer hash function from https://nullprogram.com/blog/2018/07/31/
 uint triple32(uint x) {
-    // exact bias: 0.020888578919738908
+	// exact bias: 0.020888578919738908
     x ^= x >> 17;
     x *= 0xed5ad4bbu;
     x ^= x >> 11;
@@ -91,58 +91,58 @@ uint triple32(uint x) {
 float R1(int n) {
     const float g = 1.6180339887498948482;
     const float a = 1.0 / g;
-    return fract(0.5 + n * a);
+	return fract(0.5 + n * a);
 }
 
 float R1(int n, float seed) {
     const float g = 1.6180339887498948482;
     const float a = 1.0 / g;
-    return fract(seed + n * a);
+	return fract(seed + n * a);
 }
 
 vec2 R2(int n) {
     const float g = 1.32471795724474602596;
     const vec2 a = 1.0 / vec2(g, g * g);
-    return fract(0.5 + n * a);
+	return fract(0.5 + n * a);
 }
 
 vec2 R2(int n, vec2 seed) {
     const float g = 1.32471795724474602596;
     const vec2 a = 1.0 / vec2(g, g * g);
-    return fract(seed + n * a);
+	return fract(seed + n * a);
 }
 
 vec3 R3(int n) {
     const float g = 1.22074408460575947536;
     const vec3 a = 1.0 / vec3(g, g * g, g * g * g);
-    return fract(0.5 + n * a);
+	return fract(0.5 + n * a);
 }
 
 vec3 R3(int n, vec3 seed) {
     const float g = 1.22074408460575947536;
     const vec3 a = 1.0 / vec3(g, g * g, g * g * g);
-    return fract(seed + n * a);
+	return fract(seed + n * a);
 }
 
 vec2 R2(float n) {
     const float g = 1.32471795724474602596;
     const vec2 a = 1.0 / vec2(g, g * g);
-    return fract(0.5 + n * a);
+	return fract(0.5 + n * a);
 }
 
 //================================================================================================//
 
 // Blue Noise
 float BlueNoise(ivec2 texel) {
-    return texelFetch(noisetex, texel & 255, 0).a;
+	return texelFetch(noisetex, texel & 255, 0).a;
 }
 
 float BlueNoise(ivec2 texel, int frame) {
-    #ifdef TAA_ENABLED
-        return R1(frame, texelFetch(noisetex, texel & 255, 0).a);
-    #else
-        return texelFetch(noisetex, texel & 255, 0).a;
-    #endif
+	#ifdef TAA_ENABLED
+		return R1(frame, texelFetch(noisetex, texel & 255, 0).a);
+	#else
+		return texelFetch(noisetex, texel & 255, 0).a;
+	#endif
 }
 
 // Spatiotemporal Blue Noise
@@ -179,13 +179,13 @@ float bayer128(vec2 a) { return bayer64(0.5 * a) * 0.25 + bayer2(a); }
 // https://www.iryoku.com/next-generation-post-processing-in-call-of-duty-advanced-warfare/
 // https://blog.demofox.org/2022/01/01/interleaved-gradient-noise-a-different-kind-of-low-discrepancy-sequence/
 float InterleavedGradientNoise(vec2 coord) {
-    return fract(52.9829189 * fract(0.06711056 * coord.x + 0.00583715 * coord.y));
+	return fract(52.9829189 * fract(0.06711056 * coord.x + 0.00583715 * coord.y));
 }
 
 float InterleavedGradientNoise(vec2 coord, int frame) {
-    #ifdef TAA_ENABLED
+	#ifdef TAA_ENABLED
         coord += 5.588238 * float(frame % 64);
-    #endif
+	#endif
     return fract(52.9829189 * fract(0.06711056 * coord.x + 0.00583715 * coord.y));
 }
 
@@ -193,11 +193,11 @@ float InterleavedGradientNoise(vec2 coord, int frame) {
 
 // From Peter Shirley's 'Realistic Ray Tracing (2nd Edition)' book, pg. 60
 float TentFilter(float x) {
-    return (x < 0.5) ? sqrt(2.0 * x) - 1.0 : 1.0 - sqrt(2.0 - (2.0 * x));
+	return (x < 0.5) ? sqrt(2.0 * x) - 1.0 : 1.0 - sqrt(2.0 - (2.0 * x));
 }
 
 vec2 TentFilter(vec2 x) {
-    return vec2(TentFilter(x.x), TentFilter(x.y));
+	return vec2(TentFilter(x.x), TentFilter(x.y));
 }
 
 //================================================================================================//

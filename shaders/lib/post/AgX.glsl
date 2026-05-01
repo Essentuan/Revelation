@@ -170,52 +170,52 @@ mat3 primaries_to_matrix(vec2 xy_red, vec2 xy_green, vec2 xy_blue, vec2 xy_white
     vec3 XYZ_white = unproject(xy_white);
 
     mat3 temp = mat3(
-                XYZ_red.x,    XYZ_green.x,    XYZ_blue.x,
+                XYZ_red.x,	XYZ_green.x,	XYZ_blue.x,
                 1.0,        1.0,            1.0,
-                XYZ_red.z,    XYZ_green.z,    XYZ_blue.z);
+                XYZ_red.z,	XYZ_green.z,	XYZ_blue.z);
 
     mat3 inv = inverse(temp);
     vec3 scale = XYZ_white * inv;
 
     return mat3(
-        scale.x * XYZ_red.x, scale.y * XYZ_green.x,    scale.z * XYZ_blue.x,
-        scale.x * XYZ_red.y, scale.y * XYZ_green.y,    scale.z * XYZ_blue.y,
-        scale.x * XYZ_red.z, scale.y * XYZ_green.z,    scale.z * XYZ_blue.z);
+        scale.x * XYZ_red.x, scale.y * XYZ_green.x,	scale.z * XYZ_blue.x,
+        scale.x * XYZ_red.y, scale.y * XYZ_green.y,	scale.z * XYZ_blue.y,
+        scale.x * XYZ_red.z, scale.y * XYZ_green.z,	scale.z * XYZ_blue.z);
 }
 
 float RotationToSlide(vec2 primary, vec2 neighborA, vec2 neighborB, float angle) {
-    vec2 neighbor = angle >= 0.0 ? neighborA : neighborB;
+	vec2 neighbor = angle >= 0.0 ? neighborA : neighborB;
 
-    float distance_to_neighbor = distance(primary, neighbor);
-    float distance_to_center = length(primary);
+	float distance_to_neighbor = distance(primary, neighbor);
+	float distance_to_center = length(primary);
 
-    float side = sin(angle / 180.0 * PI) * distance_to_center;
+	float side = sin(angle / 180.0 * PI) * distance_to_center;
 
-    return side / distance_to_neighbor;
+	return side / distance_to_neighbor;
 }
 
 vec2 SlidePrimary(vec2 primary, vec2 neighborA, vec2 neighborB, float amount) {
-    return mix(primary, amount >= 0.0 ? neighborA : neighborB, saturate(abs(amount)));
+	return mix(primary, amount >= 0.0 ? neighborA : neighborB, saturate(abs(amount)));
 }
 
 mat3 ComputeCompressionMatrix(vec2 xyR, vec2 xyG, vec2 xyB, vec2 xyW) {
-    vec2 offsetR = xyR - xyW;
-    vec2 offsetG = xyG - xyW;
-    vec2 offsetB = xyB - xyW;
+	vec2 offsetR = xyR - xyW;
+	vec2 offsetG = xyG - xyW;
+	vec2 offsetB = xyB - xyW;
 
-    vec3 slide = vec3(0.0);
-    slide.r = RotationToSlide(offsetR, offsetB, offsetG, rotation.r);
-    slide.g = RotationToSlide(offsetG, offsetR, offsetB, rotation.g);
-    slide.b = RotationToSlide(offsetB, offsetG, offsetR, rotation.b);
+	vec3 slide = vec3(0.0);
+	slide.r = RotationToSlide(offsetR, offsetB, offsetG, rotation.r);
+	slide.g = RotationToSlide(offsetG, offsetR, offsetB, rotation.g);
+	slide.b = RotationToSlide(offsetB, offsetG, offsetR, rotation.b);
 
-    vec3 scale_factor = 1.0 / (1.0 - compression);
+	vec3 scale_factor = 1.0 / (1.0 - compression);
 
-    vec2 R = (SlidePrimary(offsetR, offsetB, offsetG, slide.r) * scale_factor.r) + xyW;
-    vec2 G = (SlidePrimary(offsetG, offsetR, offsetB, slide.g) * scale_factor.g) + xyW;
-    vec2 B = (SlidePrimary(offsetB, offsetG, offsetR, slide.b) * scale_factor.b) + xyW;
-    vec2 W = xyW;
+	vec2 R = (SlidePrimary(offsetR, offsetB, offsetG, slide.r) * scale_factor.r) + xyW;
+	vec2 G = (SlidePrimary(offsetG, offsetR, offsetB, slide.g) * scale_factor.g) + xyW;
+	vec2 B = (SlidePrimary(offsetB, offsetG, offsetR, slide.b) * scale_factor.b) + xyW;
+	vec2 W = xyW;
 
-    return primaries_to_matrix(R, G, B, W);
+	return primaries_to_matrix(R, G, B, W);
 }
 
 vec3 open_domain_to_normalized_log2(vec3 in_od, float minimum_ev, float maximum_ev) {
@@ -287,32 +287,32 @@ vec3 allenwp_curve(vec3 x) {
     #else
         const float output_max_value = 1.0;
     #endif
-    // These constants must match the those in the C++ code that calculates the parameters.
-    // 18% "middle gray" is perceptually 50% of the brightness of reference white.
-    const float awp_crossover_point = 0.1841865;
-    const float awp_shoulder_max = output_max_value - awp_crossover_point;
+	// These constants must match the those in the C++ code that calculates the parameters.
+	// 18% "middle gray" is perceptually 50% of the brightness of reference white.
+	const float awp_crossover_point = 0.1841865;
+	const float awp_shoulder_max = output_max_value - awp_crossover_point;
     float awp_high_clip = 12.0;
     awp_high_clip = max(awp_high_clip, output_max_value);
-    const float awp_contrast = 1.5;
-    float awp_toe_a = ((1.0 / awp_crossover_point) - 1.0) * pow(awp_crossover_point, awp_contrast);
+	const float awp_contrast = 1.5;
+	float awp_toe_a = ((1.0 / awp_crossover_point) - 1.0) * pow(awp_crossover_point, awp_contrast);
     float awp_slope_denom = pow(awp_crossover_point, awp_contrast) + awp_toe_a;
-    float awp_slope = (awp_contrast * pow(awp_crossover_point, awp_contrast - 1.0) * awp_toe_a) / (awp_slope_denom * awp_slope_denom);
-    float awp_w = awp_high_clip - awp_crossover_point;
-    awp_w = awp_w * awp_w;
-    awp_w = awp_w / awp_shoulder_max;
-    awp_w = awp_w * awp_slope;
+	float awp_slope = (awp_contrast * pow(awp_crossover_point, awp_contrast - 1.0) * awp_toe_a) / (awp_slope_denom * awp_slope_denom);
+	float awp_w = awp_high_clip - awp_crossover_point;
+	awp_w = awp_w * awp_w;
+	awp_w = awp_w / awp_shoulder_max;
+	awp_w = awp_w * awp_slope;
 
-    // Reinhard-like shoulder:
-    vec3 s = x - awp_crossover_point;
-    vec3 slope_s = awp_slope * s;
-    s = slope_s * (1.0 + s / awp_w) / (1.0 + (slope_s / awp_shoulder_max));
-    s += awp_crossover_point;
+	// Reinhard-like shoulder:
+	vec3 s = x - awp_crossover_point;
+	vec3 slope_s = awp_slope * s;
+	s = slope_s * (1.0 + s / awp_w) / (1.0 + (slope_s / awp_shoulder_max));
+	s += awp_crossover_point;
 
-    // Sigmoid power function toe:
-    vec3 t = pow(x, vec3(awp_contrast));
-    t = t / (t + awp_toe_a);
+	// Sigmoid power function toe:
+	vec3 t = pow(x, vec3(awp_contrast));
+	t = t / (t + awp_toe_a);
 
-    return mix(s, t, lessThan(x, vec3(awp_crossover_point)));
+	return mix(s, t, lessThan(x, vec3(awp_crossover_point)));
 }
 
 // This is an approximation and simplification of EaryChow's AgX implementation that is used by Blender.
@@ -320,46 +320,46 @@ vec3 allenwp_curve(vec3 x) {
 // Source: https://github.com/EaryChow/AgX_LUT_Gen/blob/main/AgXBasesRGB.py
 // Colorspace transformation source: https://www.colour-science.org:8010/apps/rgb_colourspace_transformation_matrix
 vec3 AgX_AllenWp(vec3 color) {
-    // Input color should be non-negative!
-    // Large negative values in one channel and large positive values in other
-    // channels can result in a colour that appears darker and more saturated than
-    // desired after passing it through the inset matrix. For this reason, it is
-    // best to prevent negative input values.
-    // This is done before the Rec. 2020 transform to allow the Rec. 2020
-    // transform to be combined with the AgX inset matrix. This results in a loss
-    // of color information that could be correctly interpreted within the
-    // Rec. 2020 color space as positive RGB values, but is often not worth
-    // the performance cost of an additional matrix multiplication.
-    //
-    // Additionally, this AgX configuration was created subjectively based on
-    // output appearance in the Rec. 709 color gamut, so it is possible that these
-    // matrices will not perform well with non-Rec. 709 output (more testing with
-    // future wide-gamut displays is be needed).
-    // See this comment from the author on the decisions made to create the matrices:
-    // https://github.com/godotengine/godot-proposals/issues/12317#issuecomment-2835824250
+	// Input color should be non-negative!
+	// Large negative values in one channel and large positive values in other
+	// channels can result in a colour that appears darker and more saturated than
+	// desired after passing it through the inset matrix. For this reason, it is
+	// best to prevent negative input values.
+	// This is done before the Rec. 2020 transform to allow the Rec. 2020
+	// transform to be combined with the AgX inset matrix. This results in a loss
+	// of color information that could be correctly interpreted within the
+	// Rec. 2020 color space as positive RGB values, but is often not worth
+	// the performance cost of an additional matrix multiplication.
+	//
+	// Additionally, this AgX configuration was created subjectively based on
+	// output appearance in the Rec. 709 color gamut, so it is possible that these
+	// matrices will not perform well with non-Rec. 709 output (more testing with
+	// future wide-gamut displays is be needed).
+	// See this comment from the author on the decisions made to create the matrices:
+	// https://github.com/godotengine/godot-proposals/issues/12317#issuecomment-2835824250
 
     #ifdef HDR_ENABLED
-        float output_max_value = HdrGamePeakBrightness / HdrGamePaperWhiteBrightness;
+	    float output_max_value = HdrGamePeakBrightness / HdrGamePaperWhiteBrightness;
     #else
         const float output_max_value = 1.0;
     #endif
 
     // Apply inset matrix.
-    color = agx_inset_matrix * color;
+	color = agx_inset_matrix * color;
 
-    // Use the allenwp tonemapping curve to match the Blender AgX curve while
-    // providing stability across all variable dyanimc range (SDR, HDR, EDR).
-    color = allenwp_curve(color);
+	// Use the allenwp tonemapping curve to match the Blender AgX curve while
+	// providing stability across all variable dyanimc range (SDR, HDR, EDR).
+	color = allenwp_curve(color);
 
-    // Clipping to output_max_value is required to address a cyan colour that occurs
-    // with very bright inputs.
-    color = min(vec3(output_max_value), color);
+	// Clipping to output_max_value is required to address a cyan colour that occurs
+	// with very bright inputs.
+	color = min(vec3(output_max_value), color);
 
-    // Apply outset to make the result more chroma-laden and then go back to Rec. 709.
-    color = agx_inverse_outset_matrix * color;
+	// Apply outset to make the result more chroma-laden and then go back to Rec. 709.
+	color = agx_inverse_outset_matrix * color;
 
-    // Blender's lusRGB.compensate_low_side is too complex for this shader, so
-    // simply return the color, even if it has negative components. These negative
-    // components may be useful for subsequent color adjustments.
+	// Blender's lusRGB.compensate_low_side is too complex for this shader, so
+	// simply return the color, even if it has negative components. These negative
+	// components may be useful for subsequent color adjustments.
     return color;
 }

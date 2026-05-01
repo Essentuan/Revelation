@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-    Revelation Shaders
+	Revelation Shaders
 
-    Copyright (C) 2026 HaringPro
-    Apache License 2.0
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -30,7 +30,7 @@ layout (location = 3) out float parallaxShadowOut;
 uniform sampler2D tex;
 
 #if defined MC_NORMAL_MAP
-    uniform sampler2D normals;
+	uniform sampler2D normals;
 #endif
 
 #if defined MC_SPECULAR_MAP
@@ -44,10 +44,10 @@ uniform vec4 entityColor;
 //======// Input //===============================================================================//
 
 #if defined MC_NORMAL_MAP
-    in mat3 tbnMatrix;
-    #define geoNormal tbnMatrix[2]
+	in mat3 tbnMatrix;
+	#define geoNormal tbnMatrix[2]
 #else
-    in vec3 geoNormal;
+	in vec3 geoNormal;
 #endif
 
 in vec4 vertColor;
@@ -62,47 +62,47 @@ float bayer2 (vec2 a) { a = 0.5 * floor(a); return fract(1.5 * fract(a.y) + a.x)
 
 //======// Main //================================================================================//
 void main() {
-    vec4 albedo = texture(tex, texCoord) * vertColor;
+	vec4 albedo = texture(tex, texCoord) * vertColor;
 
-    // if (materialID == 2000u) albedo = vec4(skyColor, 1.0);
-    if (materialID == 2000u) albedo.rgb = vec3(0.7, 0.675, 1.0);
+	// if (materialID == 2000u) albedo = vec4(skyColor, 1.0);
+	if (materialID == 2000u) albedo.rgb = vec3(0.7, 0.675, 1.0);
 
-    if (albedo.a < 0.1) { discard; return; }
+	if (albedo.a < 0.1) { discard; return; }
 
-    #ifdef WHITE_WORLD
-        albedo.rgb = vec3(1.0);
-    #endif
+	#ifdef WHITE_WORLD
+		albedo.rgb = vec3(1.0);
+	#endif
 
-    albedo.rgb = mix(albedo.rgb, entityColor.rgb, entityColor.a);
+	albedo.rgb = mix(albedo.rgb, entityColor.rgb, entityColor.a);
 
-    albedoOut = albedo;
+	albedoOut = albedo;
 
-    materialOut.x = PackupDithered2x8U(lightmap, bayer4(gl_FragCoord.xy));
+	materialOut.x = PackupDithered2x8U(lightmap, bayer4(gl_FragCoord.xy));
     #if GBUFFER_SPIDEREYES
-        materialOut.y = 20u;
-    #else
-        materialOut.y = materialID;
+		materialOut.y = 20u;
+	#else
+	    materialOut.y = materialID;
     #endif
 
-    #if defined MC_SPECULAR_MAP
-        vec4 specularTex = texture(specular, texCoord);
-        materialOut.z = Packup2x8U(specularTex.xy);
-        materialOut.w = Packup2x8U(specularTex.zw);
-    #else
-        materialOut.zw = uvec2(0);
-    #endif
+	#if defined MC_SPECULAR_MAP
+		vec4 specularTex = texture(specular, texCoord);
+		materialOut.z = Packup2x8U(specularTex.xy);
+		materialOut.w = Packup2x8U(specularTex.zw);
+	#else
+		materialOut.zw = uvec2(0);
+	#endif
 
-    normalOut.xy = OctEncodeSnorm(geoNormal);
+	normalOut.xy = OctEncodeSnorm(geoNormal);
 
-    #if defined MC_NORMAL_MAP
+	#if defined MC_NORMAL_MAP
         vec3 normalTex = texture(normals, texCoord).rgb;
         DecodeNormalTex(normalTex);
-        normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
-    #else
-        normalOut.zw = normalOut.xy;
-    #endif
+		normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
+	#else
+		normalOut.zw = normalOut.xy;
+	#endif
 
-    #if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
-        parallaxShadowOut = 0.0;
-    #endif
+	#if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
+		parallaxShadowOut = 0.0;
+	#endif
 }

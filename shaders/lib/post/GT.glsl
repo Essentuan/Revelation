@@ -9,11 +9,11 @@ vec3 GT(in vec3 x) {
     #else
         const float maxDisplayBrightness = 1.0;
     #endif
-    const float contrast             = 1.0;
-    const float linearStart             = 0.2;
-    const float linearLength         = 0.1;
-    const float black                 = 1.33;
-    const float pedestal             = 0.0;
+    const float contrast			 = 1.0;
+    const float linearStart			 = 0.2;
+    const float linearLength		 = 0.1;
+    const float black				 = 1.33;
+    const float pedestal			 = 0.0;
 
     const float l0 = ((maxDisplayBrightness - linearStart) * linearLength) / contrast;
     const float L0 = linearStart - linearStart / contrast;
@@ -31,7 +31,7 @@ vec3 GT(in vec3 x) {
     vec3 S = maxDisplayBrightness - (maxDisplayBrightness - S1) * exp2(CP * (x - S0));
     vec3 L = linearStart + contrast * (x - linearStart);
 
-    return T * w0 + L * w1 + S * w2;
+	return T * w0 + L * w1 + S * w2;
 }
 
 //======// GT7 //=================================================================================//
@@ -245,8 +245,8 @@ iCtCpToRgb(vec3 ictCp, out vec3 rgb) // Output: linear Rec.2020
     float mLin = eotfSt2084(m, 1.0);
     float sLin = eotfSt2084(s, 1.0);
 
-    rgb[0] =  3.4366066943330793 * lLin - 2.5064521186562705 * mLin + 0.0698454243231915 * sLin;
-    rgb[1] = -0.7913295555989289 * lLin + 1.9836004517922909 * mLin - 0.1922708961933620 * sLin;
+	rgb[0] =  3.4366066943330793 * lLin - 2.5064521186562705 * mLin + 0.0698454243231915 * sLin;
+	rgb[1] = -0.7913295555989289 * lLin + 1.9836004517922909 * mLin - 0.1922708961933620 * sLin;
     rgb[2] = -0.0259498996905927 * lLin - 0.0989137147117265 * mLin + 1.1248636144023192 * sLin;
 }
 
