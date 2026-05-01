@@ -248,7 +248,7 @@ void main() {
 			color = saturate(pow(color, vec3(1.0 / GAMMA_CORRECTION)));
 		#else
 			// Limited in Rec2020 non negative linear value range for CAS
-			color = max(color, vec3(0.0));
+			color = max0(color);
 		#endif
 	}
 

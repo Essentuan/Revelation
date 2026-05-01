@@ -278,6 +278,7 @@ vec3 RRTAndODTFit(vec3 rgb) {
 
 	return a / b;
 }
+
 #ifndef HDR_ENABLED
 	vec3 AcademyFit(vec3 rgb) {
 		rgb *= Rec2020_2_AP0;
@@ -298,14 +299,15 @@ vec3 RRTAndODTFit(vec3 rgb) {
 	// https://knarkowicz.wordpress.com/2016/08/31/hdr-display-first-steps/
 	vec3 AcademyFit(vec3 x){
 		x *= 0.65;
-		float a = 15.8f;
-		float b = 2.12f;
-		float c = 1.2f;
-		float d = 5.92f;
-		float e = 1.9f;
+		const float a = 15.8f;
+		const float b = 2.12f;
+		const float c = 1.2f;
+		const float d = 5.92f;
+		const float e = 1.9f;
 		return ( x * ( a * x + b ) ) / ( x * ( c * x + d ) + e );
 	}
 #endif
+
 //======// ACES 2.0 //===========================================================================//
 
 // This implementation is based on the shaders emitted by OCIO's ACES 2.0 implementation and [the reference implementation](https://github.com/aces-aswf/aces-core)
@@ -355,15 +357,15 @@ float aces_reach_m_table_sample(float h) {
 
 float aces_tonescale_fwd0(float J) {
     float A = 0.0323680267 * pow(abs(J) * 0.00999999978, 0.879464149);
-    float Y = pow((27.1299992 * A) / (1.0f - A), 2.3809523809523809);
+    float Y = pow((27.1299992 * A) / (1.0 - A), 2.3809523809523809);
     #ifndef HDR_ENABLED
         float f = 1.04710376 * pow(Y / (Y + 0.73009213709383403), 1.14999998);
     #else
         float f = 41.1687241 * pow(Y / (Y + 14.433662900070772), 1.14999998);
     #endif
-    float Y_ts = max(0.0, f * f / (f + 0.0399999991));
+    float Y_ts = max0(f * f / (f + 0.0399999991));
     float F_L_Y = pow(0.79370057210326195 * Y_ts, 0.42);
-    float J_ts = 100. * pow((F_L_Y / (27.1299992 + F_L_Y)) * 30.8946857, 1.13705599);
+    float J_ts = 100.0 * pow((F_L_Y / (27.1299992 + F_L_Y)) * 30.8946857, 1.13705599);
     return sign(J) * J_ts;
 }
 
@@ -397,7 +399,7 @@ float aces_get_focus_gain0(float J, float cuspJ) {
     float thr = mix(cuspJ, aces_limit_J_max, 0.300000);
     if (J > thr) {
         float gain = (aces_limit_J_max - thr) / maxEps(aces_limit_J_max - J);
-        gain = log(gain) / log(10.0);
+        gain = log10(gain);
         return gain * gain + 1.0;
     } else {
         return 1.0;
@@ -410,13 +412,13 @@ float aces_solve_J_intersect0(float J, float M, float focusJ, float slope_gain) 
     if (J < focusJ) {
         float b = 1.0 - M_scaled;
         float c = -J;
-        float det = b * b - 4.f * a * c;
+        float det = b * b - 4.0 * a * c;
         float root = sqrt(det);
         return -2.0 * c / (b + root);
     } else {
         float b = -(1.0 + M_scaled + aces_limit_J_max * a);
         float c = aces_limit_J_max * M_scaled + J;
-        float det = b * b - 4.f * a * c;
+        float det = b * b - 4.0 * a * c;
         float root = sqrt(det);
         return -2.0 * c / (b - root);
     }
@@ -430,7 +432,7 @@ float aces_find_gamut_boundary_intersection0(vec2 JM_cusp, float gamma_top_inv, 
         float a = M_boundary_lower > 0.0 ? M_boundary_lower : 10000.0;
         float b = M_boundary_upper > 0.0 ? M_boundary_upper : 10000.0;
         float s = 0.119999997 * JM_cusp.g;
-        float h = max(s - abs(a - b), 0.0) / s;
+        float h = max0(s - abs(a - b)) / s;
         smin = min(a, b) - h * h * h * s * 0.16666666666666666;
     }
     return smin;
@@ -440,15 +442,15 @@ float aces_remap_M_fwd0(float M, float gamut_boundary_M, float reach_boundary_M)
     float boundary_ratio = gamut_boundary_M / reach_boundary_M;
     float proportion = max(boundary_ratio, 0.75);
     float threshold = proportion * gamut_boundary_M;
-    if (proportion >= 1.0f || M <= threshold) {
+    if (proportion >= 1.0 || M <= threshold) {
         return M;
     }
     float m_offset = M - threshold;
     float gamut_offset = gamut_boundary_M - threshold;
     float reach_offset = reach_boundary_M - threshold;
-    float scale = reach_offset / ((reach_offset / gamut_offset) - 1.0f);
+    float scale = reach_offset / ((reach_offset / gamut_offset) - 1.0);
     float nd = m_offset / scale;
-    return threshold + scale * nd / (1.0f + nd);
+    return threshold + scale * nd / (1.0 + nd);
 }
 
 vec3 aces_gamut_compress0(vec3 JMh, float Jx, vec3 JMGcusp, float reachMaxM) {
@@ -463,7 +465,7 @@ vec3 aces_gamut_compress0(vec3 JMh, float Jx, vec3 JMGcusp, float reachMaxM) {
     } else {
         vec2 JMcusp = JMGcusp.rg;
         float focusJ = mix(JMcusp.r, 34.096539, min(1.0, 1.300000 - (JMcusp.r / aces_limit_J_max)));
-        float slope_gain = 135. * aces_get_focus_gain0(Jx, JMcusp.r);
+        float slope_gain = 135.0 * aces_get_focus_gain0(Jx, JMcusp.r);
         float J_intersect_source = aces_solve_J_intersect0(JMh.r, JMh.g, focusJ, slope_gain);
         float gamut_slope = (J_intersect_source < focusJ) ? J_intersect_source : (aces_limit_J_max - J_intersect_source);
         gamut_slope = gamut_slope * (J_intersect_source - focusJ) / (focusJ * slope_gain);
@@ -504,7 +506,7 @@ vec3 ACES2(vec3 inPixel) {
         float nJ = J_ts / aces_limit_J_max;
         float snJ = max0(1.0 - nJ);
         float Mnorm;
-        
+
         float cos_hr2 = 2.0 * cos_hr * cos_hr - 1.0;
         float sin_hr2 = 2.0 * cos_hr * sin_hr;
         float cos_hr3 = 4.0 * cos_hr * cos_hr * cos_hr - 3.0 * cos_hr;
@@ -514,7 +516,7 @@ vec3 ACES2(vec3 inPixel) {
         vec3 sines = vec3(sin_hr, sin_hr2, sin_hr3);
         vec3 sine_weights = vec3(14.665187919584513, -6.3725780354404442, 9.1941277054452897);
         Mnorm = dot(cosines, cosine_weights) + dot(sines, sine_weights) + 77.133051547393805;
-        
+
         float limit = pow(nJ, 0.879464149) * reachMaxM / Mnorm;
         M_cp = M * pow(J_ts / J, 0.879464149);
         M_cp = M_cp / Mnorm;
@@ -533,10 +535,8 @@ vec3 ACES2(vec3 inPixel) {
 
     outColor = JMh_to_RGB(outColor);
 
-
     #ifndef HDR_ENABLED
-        outColor = clamp(outColor, vec3(0.0), vec3(1.0));
-        outColor *= sRGB_2_Rec2020;
+        outColor = saturate(outColor) * sRGB_2_Rec2020;
     #elif ACES_HDR_TARGET_GAMUT == 2
         // P3-D65 to Rec.2020
         outColor = mat3(0.75383303436172167, 0.045743848965358269, -0.0012103403545183939, 0.1985973690526166, 0.94177721981169349, 0.01760171730109, 0.047569596585661789, 0.012478931222948141, 0.98360862305342855) * outColor;

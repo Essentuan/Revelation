@@ -113,11 +113,10 @@ void main() {
 	#ifdef DEBUG_BLOOM_TILES
 		finalOut = texelFetch(colortex4, texelPos, 0).rgb;
 	#else
+		finalOut = FFXCasFilter(texelPos, CAS_STRENGTH);
 		#ifdef HDR_ENABLED
 			// sRGB encode after CAS
-			finalOut = linearToSRGBSafe(FFXCasFilter(texelPos, CAS_STRENGTH) * Rec2020_2_sRGB * HdrGamePaperWhiteBrightness / HdrUIBrightness);
-		#else
-			finalOut = FFXCasFilter(texelPos, CAS_STRENGTH);
+			finalOut = linearToSRGBSafe(finalOut * Rec2020_2_sRGB * HdrGamePaperWhiteBrightness / HdrUIBrightness);
 		#endif
 	#endif
 

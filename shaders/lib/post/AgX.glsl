@@ -277,6 +277,7 @@ vec3 AgX_Full(vec3 rgb) {
 }
 
 //======// AgX AllenWp, for HDR/SDR use //============================================================================//
+
 // allenwp tonemapping curve; developed for use in the Godot game engine.
 // Source and details: https://allenwp.com/blog/2025/05/29/allenwp-tonemapping-curve/
 // Input must be a non-negative linear scene value.
@@ -292,7 +293,7 @@ vec3 allenwp_curve(vec3 x) {
 	const float awp_shoulder_max = output_max_value - awp_crossover_point;
     float awp_high_clip = 12.0;
     awp_high_clip = max(awp_high_clip, output_max_value);
-	float awp_contrast = 1.5;
+	const float awp_contrast = 1.5;
 	float awp_toe_a = ((1.0 / awp_crossover_point) - 1.0) * pow(awp_crossover_point, awp_contrast);
     float awp_slope_denom = pow(awp_crossover_point, awp_contrast) + awp_toe_a;
 	float awp_slope = (awp_contrast * pow(awp_crossover_point, awp_contrast - 1.0) * awp_toe_a) / (awp_slope_denom * awp_slope_denom);
@@ -340,7 +341,7 @@ vec3 AgX_AllenWp(vec3 color) {
     #ifdef HDR_ENABLED
 	    float output_max_value = HdrGamePeakBrightness / HdrGamePaperWhiteBrightness;
     #else
-        float output_max_value = 1.0;
+        const float output_max_value = 1.0;
     #endif
 
     // Apply inset matrix.
