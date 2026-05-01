@@ -1,15 +1,15 @@
-const float PI                 = 3.14159265359;
+const float PI              = 3.14159265359;
 const float hPI             = 1.57079632679;
 const float rPI             = 0.31830988618;
 const float TAU             = 6.28318530718;
-const float rTAU             = 0.15915494310;
-const float rLOG2             = 1.44269504089;
+const float rTAU            = 0.15915494310;
+const float rLOG2           = 1.44269504089;
 const float PHI             = 0.61803398875;
 const float goldenAngle     = 2.39996322973;
 
 const float EPS             = 0.000001;
 
-const float rcp255             = 0.00392156863;
+const float rcp255          = 0.00392156863;
 
 const float FP16_MIN        = 6.10e-05;
 const float FP16_MAX        = 65504.0;
@@ -21,22 +21,22 @@ const float FP16_MAX        = 65504.0;
 
 //================================================================================================//
 
-#define rcp(x)                 (1.0 / (x))
-#define oms(x)                  (1.0 - (x))
+#define rcp(x)              (1.0 / (x))
+#define oms(x)              (1.0 - (x))
 #define max0(x)             max(x, 0.0)
 #define min1(x)             min(x, 1.0)
-#define maxEps(x)             max(x, EPS)
+#define maxEps(x)           max(x, EPS)
 
 #define saturate(x)         clamp(x, 0.0, 1.0)
 #define satSnorm(x)         clamp(x, -1.0, 1.0)
 
 #define hermite(x)          smoothstep(0.0, 1.0, x)
 
-#define transMAD(m, v)        (mat3(m) * (v) + (m)[3].xyz)
+#define transMAD(m, v)      (mat3(m) * (v) + (m)[3].xyz)
 #define diagonal2(m)        vec2((m)[0].x, (m)[1].y)
 #define diagonal3(m)        vec3((m)[0].x, (m)[1].y, m[2].z)
 #define diagonal4(m)        vec4(diagonal3(m), (m)[2].w)
-#define projMAD(m, v)        (diagonal3(m) * (v) + (m)[3].xyz)
+#define projMAD(m, v)       (diagonal3(m) * (v) + (m)[3].xyz)
 
 #define uvToTexel(coord)    ivec2((coord) * viewSize)
 #define texelToUv(texel)    ((vec2(texel) + 0.5) * viewPixelSize)
@@ -51,41 +51,39 @@ float minOf(vec3 v)        { return min(v.x, min(v.y, v.z)); }
 float minOf(vec4 v)        { return min(v.x, min(v.y, min(v.z, v.w))); }
 
 float sqr(float x)         { return x * x; }
-vec2  sqr(vec2 x)           { return x * x; }
-vec3  sqr(vec3 x)           { return x * x; }
-vec4  sqr(vec4 x)           { return x * x; }
+vec2  sqr(vec2 x)          { return x * x; }
+vec3  sqr(vec3 x)          { return x * x; }
+vec4  sqr(vec4 x)          { return x * x; }
 
 float pow1d5(float x)      { return x * x * inversesqrt(x); }
-vec3  pow1d5(vec3 x)      { return x * x * inversesqrt(x); }
+vec3  pow1d5(vec3 x)       { return x * x * inversesqrt(x); }
 
 float cube(float x)        { return x * x * x; }
-vec2  cube(vec2 x)           { return x * x * x; }
-vec3  cube(vec3 x)           { return x * x * x; }
+vec2  cube(vec2 x)         { return x * x * x; }
+vec3  cube(vec3 x)         { return x * x * x; }
 
 float pow4(float x)        { x *= x; return x * x; }
-vec3  pow4(vec3 x)           { x *= x; return x * x; }
+vec3  pow4(vec3 x)         { x *= x; return x * x; }
 
 float pow5(float x)        { return pow4(x) * x; }
-vec3  pow5(vec3 x)           { return pow4(x) * x; }
+vec3  pow5(vec3 x)         { return pow4(x) * x; }
 
 float pow8(float x)        { x *= x; x *= x; return x * x; }
 
-float pow16(float x)     { x *= x; x *= x; x *= x; return x * x; }
+float pow16(float x)       { x *= x; x *= x; x *= x; return x * x; }
 
-float pow32(float x)     { x *= x; x *= x; x *= x; x *= x; return x * x; }
+float pow32(float x)       { x *= x; x *= x; x *= x; x *= x; return x * x; }
 
-float sdot(vec2 x)           { return dot(x, x); }
-float sdot(vec3 x)           { return dot(x, x); }
-float sdot(vec4 x)           { return dot(x, x); }
+float sdot(vec2 x)         { return dot(x, x); }
+float sdot(vec3 x)         { return dot(x, x); }
+float sdot(vec4 x)         { return dot(x, x); }
 
-vec2  sincos(float x)    { return vec2(sin(x), cos(x)); }
-vec2  cossin(float x)    { return vec2(cos(x), sin(x)); }
+vec2  sincos(float x)      { return vec2(sin(x), cos(x)); }
+vec2  cossin(float x)      { return vec2(cos(x), sin(x)); }
 
-float mean(vec2 v)       { return dot(v, vec2(1.0 / 3.0)); }
-float mean(vec3 v)       { return dot(v, vec3(1.0 / 3.0)); }
-float mean(vec4 v)       { return dot(v, vec4(1.0 / 3.0)); }
-
-//================================================================================================//
+float mean(vec2 v)         { return dot(v, vec2(1.0 / 3.0)); }
+float mean(vec3 v)         { return dot(v, vec3(1.0 / 3.0)); }
+float mean(vec4 v)         { return dot(v, vec4(1.0 / 3.0)); }
 
 float linearstep(float a, float b, float x) {
     return saturate((x - a) / (b - a));
