@@ -183,13 +183,15 @@ vec4 CalculateSSILVB(vec2 fragCoord, vec3 viewPos, vec3 worldNormal, float skyli
     #if defined LOD_MOD
         float screenDepthSky = ViewToScreenDepth(ScreenToViewDepthLod(1.0));
     #else
-        #define screenDepthSky 1.0
+        const float screenDepthSky = 1.0;
     #endif
 
     float dither = SampleStbnVec1(ivec2(gl_GlobalInvocationID.xy), frameCounter);
 
     vec3 viewDir = normalize(-viewPos);
     vec3 viewNormal = mat3(gbufferModelView) * worldNormal;
+
+    vec3 viewDirOffset = viewDir * hitThickness;
 
     vec4 Q_toV = GetQuaternion(viewDir);
     vec4 Q_fromV = Q_toV * vec4(vec3(-1.0), 1.0);
@@ -249,7 +251,7 @@ vec4 CalculateSSILVB(vec2 fragCoord, vec3 viewPos, vec3 worldNormal, float skyli
                 vec3 samplePos = ScreenToViewPos(vec3(sampleUV, sampleDepth));
 
                 vec3 sampleDirFront = samplePos - viewPos;
-                vec3 sampleDirBack = sampleDirFront + viewDir * samplePos.z * hitThickness;
+                vec3 sampleDirBack = sampleDirFront + viewDirOffset * samplePos.z;
 
                 vec2 frontBackHorizon = vec2(
                     fastRcpSqrtNR0(sdot(sampleDirFront)) * dot(sampleDirFront, viewDir),
@@ -269,15 +271,13 @@ vec4 CalculateSSILVB(vec2 fragCoord, vec3 viewPos, vec3 worldNormal, float skyli
                 uint sampleOccludedBit = sBitMask & ~bitMask;
 
                 if (sampleOccludedBit > 0u) {
-                    // vec3 sampleNormal = mat3(gbufferModelView) * FetchSurfaceNormal(sampleTexel);
-
                     vec3 sampleRadiance = texelFetch(colortex4, sampleTexel, 0).rgb;
                     sampleRadiance = min(sampleRadiance, 512.0); // clamp to prevent overflow
-                    irradiance.rgb += float(bitCount(sampleOccludedBit)) *
-                        // fastSqrtNR0(saturate(-dot(sampleNormal, sampleDirFront))) *
-                        sampleRadiance;
+                    irradiance.rgb += float(bitCount(sampleOccludedBit)) * sampleRadiance;
 
                     bitMask |= sBitMask;
+
+                    if (bitMask == 0xFFFFFFFFu) break;
                 }
 			}
         }
