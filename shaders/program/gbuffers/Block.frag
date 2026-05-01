@@ -137,14 +137,12 @@ void main() {
 	materialOut.x = PackupDithered2x8U(lightmap, bayer4(gl_FragCoord.xy));
 	materialOut.y = materialID;
 
-	normalOut.xy = OctEncodeSnorm(geoNormal);
-
 	#if defined MC_NORMAL_MAP
         vec3 normalTex = texture(normals, texCoord).rgb;
         DecodeNormalTex(normalTex);
-		normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
+		vec3 normal = tbnMatrix * normalTex;
 	#else
-		normalOut.zw = normalOut.xy;
+		vec3 normal = geoNormal;
 	#endif
 
 	#if defined PARALLAX && defined PARALLAX_SHADOW && !defined PARALLAX_DEPTH_WRITE
@@ -160,9 +158,12 @@ void main() {
 	// Compute rain puddles
 	#ifdef RAIN_PUDDLES
 		if (wetnessCustom > EPS) {
-			CalculateRainPuddles(albedoOut.rgb, specularTex.rgb, worldPos, geoNormal, lightmap.y);
+			CalculateRainPuddles(albedoOut.rgb, specularTex.rgb, worldPos, normal, geoNormal, lightmap.y);
 		}
 	#endif
+
+	normalOut.xy = OctEncodeSnorm(geoNormal);
+	normalOut.zw = OctEncodeSnorm(normal);
 
 	materialOut.z = Packup2x8U(specularTex.xy);
 	materialOut.w = Packup2x8U(specularTex.zw);

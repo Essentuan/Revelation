@@ -118,14 +118,10 @@ void main() {
 	vec3 viewPos = ScreenToViewPos(vec3(gl_FragCoord.xy * viewPixelSize, gl_FragCoord.z));
 	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
 
+	vec2 realTexCoord = texCoord;
+
 	#ifdef PARALLAX
-		#define ReadTexture(tex) textureGrad(tex, parallaxCoord, texGrad[0], texGrad[1])
-
-		mat2 texGrad = mat2(dFdx(texCoord), dFdy(texCoord));
-
-		vec2 parallaxCoord = texCoord;
-
-		vec4 normalTex = ReadTexture(normals);
+		vec4 normalTex = textureLod(normals, realTexCoord, 0.0);
 
 		#ifdef PARALLAX_DEPTH_WRITE
 			gl_FragDepth = gl_FragCoord.z;
@@ -138,10 +134,9 @@ void main() {
 			float parallaxFade = smoothstep(64.0, 32.0, worldLength);
 
 			vec3 offsetCoord = CalculateParallax(tangentPos / worldLength, dither, parallaxFade);
-			parallaxCoord = atlasCoord(offsetCoord.xy);
+			realTexCoord = atlasCoord(offsetCoord.xy);
 
-			normalTex = ReadTexture(normals);
-
+			normalTex = textureLod(normals, realTexCoord, 0.0);
 			DecodeNormalTex(normalTex.xyz);
 
 			if (offsetCoord.z < (1.0 - rcp255) && parallaxFade > EPS) {
@@ -171,25 +166,23 @@ void main() {
 			DecodeNormalTex(normalTex.xyz);
 		}
 
-		normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex.xyz);
+		vec3 normal = tbnMatrix * normalTex.xyz;
 	#else
-		#define ReadTexture(tex) texture(tex, texCoord)
-
-		#if defined MC_NORMAL_MAP
+		#if defined MC_NORMAL_MAP || defined AUTO_GENERATED_NORMAL
 			#ifdef AUTO_GENERATED_NORMAL
 				vec3 normalTex = AutoGenerateNormal();
 			#else
-				vec3 normalTex = ReadTexture(normals).xyz;
+				vec3 normalTex = textureLod(normals, realTexCoord, 0.0).xyz;
 				DecodeNormalTex(normalTex);
 			#endif
 
-			normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
-		#else
-			normalOut.zw = normalOut.xy;
+            vec3 normal = tbnMatrix * normalTex;
+        #else
+            vec3 normal = geoNormal;
 		#endif
 	#endif
 
-	vec4 albedo = ReadTexture(tex);
+	vec4 albedo = textureLod(tex, realTexCoord, 0.0);
 
 	if (albedo.a < 0.1) { discard; return; }
 
@@ -203,7 +196,7 @@ void main() {
 	materialOut.y = materialID;
 
 	#if defined MC_SPECULAR_MAP
-		vec4 specularTex = ReadTexture(specular);
+		vec4 specularTex = textureLod(specular, realTexCoord, 0.0);
 	#else
 		vec4 specularTex = vec4(0.0);
 	#endif
@@ -211,9 +204,11 @@ void main() {
 	// Compute rain puddles
 	#ifdef RAIN_PUDDLES
 		if (wetnessCustom > EPS) {
-			CalculateRainPuddles(albedoOut.rgb, specularTex.rgb, worldPos, geoNormal, lightmap.y);
+			CalculateRainPuddles(albedoOut.rgb, specularTex.rgb, worldPos, normal, geoNormal, lightmap.y);
 		}
 	#endif
+
+	normalOut.zw = OctEncodeSnorm(normal);
 
 	materialOut.z = Packup2x8U(specularTex.xy);
 	materialOut.w = Packup2x8U(specularTex.zw);
