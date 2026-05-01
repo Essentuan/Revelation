@@ -32,6 +32,9 @@ bool ScreenSpaceRaytrace(vec3 viewPos, vec3 viewDir, float dither, uint steps, i
 	bool hit = false;
 
     float t = dither * rSteps;
+    float stepMin = rSteps * 0.01;
+    float stepMax = rSteps * 1.1;
+
     for (uint i = 0u; i < steps; ++i) {
         vec3 rayPos = rayOrigin + rayDir * t;
 
@@ -44,9 +47,10 @@ bool ScreenSpaceRaytrace(vec3 viewPos, vec3 viewDir, float dither, uint steps, i
             break;
         }
 
-        float sampleDepth = loadDepth2(uvToTexel(rayPos.xy));
+        ivec2 sampleTexel = uvToTexel(rayPos.xy);
+        float sampleDepth = loadDepth2(sampleTexel);
         #if defined LOD_MOD
-            if (sampleDepth > 1.0 - EPS) sampleDepth = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth1Lod(ivec2(rayPos.xy))));
+            if (sampleDepth > 1.0 - EPS) sampleDepth = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth1Lod(sampleTexel)));
         #endif
 
         float depthDiff = sampleDepth - rayPos.z;
@@ -56,7 +60,7 @@ bool ScreenSpaceRaytrace(vec3 viewPos, vec3 viewDir, float dither, uint steps, i
             break;
         }
 
-        t += clamp(depthDiff * invDirZ, rSteps * 0.01, rSteps * 1.1);
+        t += clamp(depthDiff * invDirZ, stepMin, stepMax);
     }
 
     #ifdef SSRT_REFINEMENT
@@ -65,9 +69,10 @@ bool ScreenSpaceRaytrace(vec3 viewPos, vec3 viewDir, float dither, uint steps, i
         for (uint i = 0u; i < SSRT_REFINEMENT_STEPS; ++i) {
             rayStep *= 0.5;
 
-            float sampleDepth = loadDepth2(uvToTexel(screenPos.xy));
+            ivec2 sampleTexel = uvToTexel(screenPos.xy);
+            float sampleDepth = loadDepth2(sampleTexel);
             #if defined LOD_MOD
-                if (sampleDepth > 1.0 - EPS) sampleDepth = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth1Lod(ivec2(screenPos.xy))));
+                if (sampleDepth > 1.0 - EPS) sampleDepth = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth1Lod(sampleTexel)));
             #endif
 
             float depthDiff = sampleDepth - screenPos.z;
