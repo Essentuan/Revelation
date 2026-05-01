@@ -118,10 +118,17 @@ void main() {
 	vec3 viewPos = ScreenToViewPos(vec3(gl_FragCoord.xy * viewPixelSize, gl_FragCoord.z));
 	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
 
+    // Compute mipmap level
+    #if RENDER_MODE == 1
+        float mipLevel = 0.5 * log2(maxOf(fwidth(texCoord * vec2(atlasSize))));
+    #else
+        const float mipLevel = 0.0;
+    #endif
+
 	vec2 realTexCoord = texCoord;
 
 	#ifdef PARALLAX
-		vec4 normalTex = textureLod(normals, realTexCoord, 0.0);
+		vec4 normalTex = textureLod(normals, realTexCoord, mipLevel);
 
 		#ifdef PARALLAX_DEPTH_WRITE
 			gl_FragDepth = gl_FragCoord.z;
@@ -136,7 +143,7 @@ void main() {
 			vec3 offsetCoord = CalculateParallax(tangentPos / worldLength, dither, parallaxFade);
 			realTexCoord = atlasCoord(offsetCoord.xy);
 
-			normalTex = textureLod(normals, realTexCoord, 0.0);
+			normalTex = textureLod(normals, realTexCoord, mipLevel);
 			DecodeNormalTex(normalTex.xyz);
 
 			if (offsetCoord.z < (1.0 - rcp255) && parallaxFade > EPS) {
@@ -172,7 +179,7 @@ void main() {
 			#ifdef AUTO_GENERATED_NORMAL
 				vec3 normalTex = AutoGenerateNormal();
 			#else
-				vec3 normalTex = textureLod(normals, realTexCoord, 0.0).xyz;
+				vec3 normalTex = textureLod(normals, realTexCoord, mipLevel).xyz;
 				DecodeNormalTex(normalTex);
 			#endif
 
@@ -182,7 +189,7 @@ void main() {
 		#endif
 	#endif
 
-	vec4 albedo = textureLod(tex, realTexCoord, 0.0);
+	vec4 albedo = textureLod(tex, realTexCoord, mipLevel);
 
 	if (albedo.a < 0.1) { discard; return; }
 

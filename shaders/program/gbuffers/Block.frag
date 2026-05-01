@@ -86,13 +86,12 @@ vec2 endPortalLayer(vec2 coord, float layer) {
 
 //======// Main //================================================================================//
 void main() {
-	vec4 albedo = texture(tex, texCoord) * vertColor;
-
     vec3 deltaPos1 = dFdx(worldPos);
     vec3 deltaPos2 = dFdy(worldPos);
 
 	vec3 geoNormal = normalize(cross(deltaPos1, deltaPos2));
 
+	// Construct TBN matrix
 	#ifdef MC_NORMAL_MAP
         vec3 deltaPos1Perp = cross(geoNormal, deltaPos1);
         vec3 deltaPos2Perp = cross(deltaPos2, geoNormal);
@@ -107,6 +106,15 @@ void main() {
 
         mat3 tbnMatrix = mat3(tangent * invmax, bitangent * invmax, geoNormal);
     #endif
+
+    // Compute mipmap level
+    #if RENDER_MODE == 1
+        float mipLevel = 0.5 * log2(maxOf(fwidth(texCoord * vec2(atlasSize))));
+    #else
+        const float mipLevel = 0.0;
+    #endif
+
+	vec4 albedo = textureLod(tex, texCoord, mipLevel) * vertColor;
 
 	if (albedo.a < 0.1) { discard; return; }
 
@@ -138,7 +146,7 @@ void main() {
 	materialOut.y = materialID;
 
 	#if defined MC_NORMAL_MAP
-        vec3 normalTex = texture(normals, texCoord).rgb;
+        vec3 normalTex = textureLod(normals, texCoord, mipLevel).rgb;
         DecodeNormalTex(normalTex);
 		vec3 normal = tbnMatrix * normalTex;
 	#else
@@ -150,7 +158,7 @@ void main() {
 	#endif
 
 	#if defined MC_SPECULAR_MAP
-		vec4 specularTex = texture(specular, texCoord);
+		vec4 specularTex = textureLod(specular, texCoord, 0.0);
 	#else
 		vec4 specularTex = vec4(0.0);
 	#endif
