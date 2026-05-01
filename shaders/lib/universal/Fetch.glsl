@@ -13,12 +13,7 @@ vec3 FetchSurfaceNormal(ivec2 texel) {
 void FetchNormalData(ivec2 texel, out vec3 geometryNormal, out vec3 surfaceNormal) {
 	vec4 pack = loadNormalPack(texel);
 	geometryNormal = OctDecodeSnorm(pack.xy);
-
-	#if defined MC_NORMAL_MAP || defined PASS_TRANSLUCENT
-		surfaceNormal = OctDecodeSnorm(pack.zw);
-	#else
-		surfaceNormal = geometryNormal;
-	#endif
+	surfaceNormal = OctDecodeSnorm(pack.zw);
 }
 
 vec4 ExtractSpecularTex(uvec4 pack) {

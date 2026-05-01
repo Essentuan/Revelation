@@ -28,7 +28,7 @@ layout (location = 3) out float parallaxShadowOut;
 //======// Input //===============================================================================//
 
 flat in uint normalPack;
-#if defined MC_NORMAL_MAP
+#if defined MC_NORMAL_MAP || defined AUTO_GENERATED_NORMAL
 flat in uvec2 tangentPack;
 #endif
 
@@ -71,33 +71,29 @@ uniform sampler2D tex;
 #endif
 
 #ifdef AUTO_GENERATED_NORMAL
-	vec2 serializeCoord(vec2 uv) {
-		return mix(1.0 - fract(uv), fract(uv), mod(floor(uv), 2.0));
-	}
+	#define loadAlbedo(uv, mipLevel) textureLod(tex, tileOffset + tileScale * fract(uv), mipLevel)
 
-	#define loadAlbedo(uv) texture(tex, tileOffset + tileScale * serializeCoord(uv))
-
-	vec3 AutoGenerateNormal() {
-		vec2 bias = (4.0 / AGN_RESOLUTION) / tileScale;
+	vec3 AutoGenerateNormal(float mipLevel) {
+		vec2 bias = (16.0 / AGN_RESOLUTION) / (tileScale * vec2(atlasSize));
 
 		// Sample albedo
-		vec4 sampleR = loadAlbedo(tileBase + vec2(bias.x, 0.0));
-		vec4 sampleL = loadAlbedo(tileBase - vec2(bias.x, 0.0));
-		vec4 sampleU = loadAlbedo(tileBase + vec2(0.0, bias.y));
-		vec4 sampleD = loadAlbedo(tileBase - vec2(0.0, bias.y));
+		vec4 sampleR = loadAlbedo(tileBase + vec2(bias.x, 0.0), mipLevel);
+		vec4 sampleL = loadAlbedo(tileBase - vec2(bias.x, 0.0), mipLevel);
+		vec4 sampleU = loadAlbedo(tileBase + vec2(0.0, bias.y), mipLevel);
+		vec4 sampleD = loadAlbedo(tileBase - vec2(0.0, bias.y), mipLevel);
 
-		// Get heights from albedo luminance
+		// Evaluate heights from albedo luminance
 		float heightR = luminance(sampleR.rgb * sampleR.a);
 		float heightL = luminance(sampleL.rgb * sampleL.a);
 		float heightU = luminance(sampleU.rgb * sampleU.a);
 		float heightD = luminance(sampleD.rgb * sampleD.a);
 
-		// Get normal from height differences
+		// Compute normal from height differences
 		float deltaX = (heightL - heightR) * AGN_STRENGTH;
 		float deltaY = (heightD - heightU) * AGN_STRENGTH;
 
 		// Normalize normal
-		return normalize(vec3(deltaX, deltaY, 0.75));
+		return normalize(vec3(deltaX, deltaY, 32.0 / AGN_RESOLUTION));
 	}
 #endif
 
@@ -109,7 +105,7 @@ void main() {
 	vec3 geoNormal = OctDecodeSnorm(normalOut.xy);
 
 	// Construct TBN matrix
-	#if defined MC_NORMAL_MAP
+	#if defined MC_NORMAL_MAP || defined AUTO_GENERATED_NORMAL
 		vec3 tangent = OctDecodeSnorm(unpackSnorm2x16(tangentPack.x));
 		vec3 bitangent = cross(tangent, geoNormal) * uintBitsToFloat(tangentPack.y);
 		mat3 tbnMatrix = mat3(tangent, bitangent, geoNormal);
@@ -177,7 +173,7 @@ void main() {
 	#else
 		#if defined MC_NORMAL_MAP || defined AUTO_GENERATED_NORMAL
 			#ifdef AUTO_GENERATED_NORMAL
-				vec3 normalTex = AutoGenerateNormal();
+				vec3 normalTex = AutoGenerateNormal(mipLevel);
 			#else
 				vec3 normalTex = textureLod(normals, realTexCoord, mipLevel).xyz;
 				DecodeNormalTex(normalTex);

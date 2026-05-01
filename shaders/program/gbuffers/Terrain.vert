@@ -21,7 +21,7 @@
 //======// Output //==============================================================================//
 
 flat out uint normalPack;
-#if defined MC_NORMAL_MAP
+#if defined MC_NORMAL_MAP || defined AUTO_GENERATED_NORMAL
 flat out uvec2 tangentPack;
 #endif
 
@@ -64,7 +64,7 @@ void main() {
 	// Encode normal and tangent
 	vec3 normal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
 	normalPack = packSnorm2x16(OctEncodeSnorm(normal));
-	#if defined MC_NORMAL_MAP
+	#if defined MC_NORMAL_MAP || defined AUTO_GENERATED_NORMAL
 		vec3 tangent = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * at_tangent.xyz);
 		tangentPack.x = packSnorm2x16(OctEncodeSnorm(tangent));
 		tangentPack.y = (floatBitsToUint(at_tangent.w) & 0x80000000u) | 0x3F800000u;

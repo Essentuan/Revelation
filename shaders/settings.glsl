@@ -169,8 +169,8 @@ const float realShadowMapRes = float(shadowMapResolution) * MC_SHADOW_QUALITY;
 
 /* Auto Generated Normal */
 	// #define AUTO_GENERATED_NORMAL
-	#define AGN_STRENGTH 5.0 // [0.2 0.5 0.7 1.0 1.5 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0 20.0]
-	#define AGN_RESOLUTION 32.0 // [4.0 8.0 16.0 32.0 64.0 128.0 256.0 512.0 1024.0]
+	#define AGN_STRENGTH 4.0 // [0.2 0.5 0.7 1.0 1.5 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0 20.0]
+	#define AGN_RESOLUTION 16.0 // [4.0 8.0 16.0 32.0 64.0 128.0 256.0 512.0 1024.0]
 
 /* Parallax */
 	#define PARALLAX
@@ -219,7 +219,6 @@ const float realShadowMapRes = float(shadowMapResolution) * MC_SHADOW_QUALITY;
 	#ifndef NORMAL_MAPPING
 		#undef MC_NORMAL_MAP
 		#undef PARALLAX
-		#undef AUTO_GENERATED_NORMAL
 	#endif
 
 	#ifndef SPECULAR_MAPPING
