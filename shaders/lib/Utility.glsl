@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -13,7 +13,7 @@
 #include "/settings.glsl"
 
 #if defined VOXY || defined DISTANT_HORIZONS
-	#define LOD_MOD
+    #define LOD_MOD
 #endif
 
 #define ApplyFog(scene, fog) ((scene) * fog[1] + fog[0])

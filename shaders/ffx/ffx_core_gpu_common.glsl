@@ -1,7 +1,7 @@
 // This file is part of the FidelityFX SDK.
 //
 // Copyright (C) 2025 Advanced Micro Devices, Inc.
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -41,7 +41,7 @@
 #define FFX_NEGATIVE_INFINITY_FLOAT ffxAsFloat(0xff800000u)
 
 /// A define value for PI.
-/// 
+///
 /// @ingroup GPUCore
 #define FFX_PI  (3.14159)
 
@@ -499,10 +499,10 @@ FfxFloat32x4 ffxSqrt(FfxFloat32x4 x)
 ///
 /// @param [in] d                   The value to copy the sign bit into.
 /// @param [in] s                   The value to copy the sign bit from.
-/// 
+///
 /// @returns
 /// The value of <c><i>d</i></c> with the sign bit from <c><i>s</i></c>.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat32 ffxCopySignBit(FfxFloat32 d, FfxFloat32 s)
 {
@@ -560,14 +560,14 @@ FfxFloat32x4 ffxCopySignBit(FfxFloat32x4 d, FfxFloat32x4 s)
 ///     saturate(+a*(-INF)==-INF) := 0
 ///     saturate( 0*(-INF)== NaN) := 0
 ///     saturate(-a*(-INF)==+INF) := 1
-/// 
+///
 /// This function is useful when creating masks for branch-free logic.
-/// 
+///
 /// @param [in] m                       The value to test against 0.
-/// 
+///
 /// @returns
 /// 1.0 when the value is negative, or 0.0 when the value is 0 or position.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat32 ffxIsSigned(FfxFloat32 m)
 {
@@ -716,19 +716,19 @@ FfxFloat32x4 ffxIsGreaterThanZero(FfxFloat32x4 m)
 }
 
 /// Convert a 32bit floating point value to sortable integer.
-/// 
+///
 ///  - If sign bit=0, flip the sign bit (positives).
 ///  - If sign bit=1, flip all bits     (negatives).
-/// 
+///
 /// The function has the side effects that:
 ///  - Larger integers are more positive values.
 ///  - Float zero is mapped to center of integers (so clear to integer zero is a nice default for atomic max usage).
-/// 
+///
 /// @param [in] value                       The floating point value to make sortable.
-/// 
+///
 /// @returns
 /// The sortable integer value.
-/// 
+///
 /// @ingroup GPUCore
 FfxUInt32 ffxFloatToSortableInteger(FfxUInt32 value)
 {
@@ -754,12 +754,12 @@ FfxUInt32 ffxSortableIntegerToFloat(FfxUInt32 value)
 
 /// Calculate a low-quality approximation for the square root of a value.
 ///
-/// For additional information on the approximation family of functions, you can refer to Michal Drobot's excellent 
+/// For additional information on the approximation family of functions, you can refer to Michal Drobot's excellent
 /// presentation materials:
-/// 
+///
 ///  - https://michaldrobot.files.wordpress.com/2014/05/gcn_alu_opt_digitaldragons2014.pdf
 ///  - https://github.com/michaldrobot/ShaderFastLibs/blob/master/ShaderFastMathLib.h
-/// 
+///
 /// @param [in] value           The value to calculate an approximate to the square root for.
 ///
 /// @returns
@@ -791,7 +791,7 @@ FfxFloat32 ffxApproximateReciprocal(FfxFloat32 value)
 }
 
 /// Calculate a medium-quality approximation for the reciprocal of a value.
-/// 
+///
 /// For additional information on the approximation family of functions, you can refer to Michal Drobot's excellent
 /// presentation materials:
 ///
@@ -802,7 +802,7 @@ FfxFloat32 ffxApproximateReciprocal(FfxFloat32 value)
 ///
 /// @returns
 /// An approximation of the reciprocal, estimated to medium quality.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat32 ffxApproximateReciprocalMedium(FfxFloat32 value)
 {
@@ -1106,7 +1106,7 @@ FfxFloat32 ffxDot4(FfxFloat32x4 a, FfxFloat32x4 b)
 /// Compute an approximate conversion from PQ to Gamma2 space.
 ///
 /// PQ is very close to x^(1/8). The functions below Use the fast FfxFloat32 approximation method to do
-/// PQ conversions to and from Gamma2 (4th power and fast 4th root), and PQ to and from Linear 
+/// PQ conversions to and from Gamma2 (4th power and fast 4th root), and PQ to and from Linear
 /// (8th power and fast 8th root). The maximum error is approximately 0.2%.
 ///
 /// @param a                    The value to convert between PQ and Gamma2.
@@ -1665,7 +1665,7 @@ FfxFloat32x4 ffxApproximateLinearToPQHigh(FfxFloat32x4 a)
 
 // An approximation of sine.
 //
-// Valid input range is {-1 to 1} representing {0 to 2 pi}, and the output range 
+// Valid input range is {-1 to 1} representing {0 to 2 pi}, and the output range
 // is {-1/4 to 1/4} representing {-1 to 1}.
 //
 // @param [in] value            The value to calculate approximate sine for.
@@ -2003,7 +2003,7 @@ FfxFloat32x3 ffxZeroOneAndOr(FfxFloat32x3 x, FfxFloat32x3 y, FfxFloat32x3 z)
     return ffxSaturate(x * y + z);
 }
 
-/// Conditional free logic AND operation using two values followed by a NOT operation 
+/// Conditional free logic AND operation using two values followed by a NOT operation
 /// using the resulting value and a third value.
 ///
 /// @param [in] x           The first value to be fed into the AND operator.
@@ -2296,18 +2296,18 @@ FfxFloat32x4 ffxZeroOneIsSigned(FfxFloat32x4 x)
 }
 
 /// Compute a Rec.709 color space.
-/// 
+///
 /// Rec.709 is used for some HDTVs.
-/// 
+///
 /// Both Rec.709 and sRGB have a linear segment which as spec'ed would intersect the curved segment 2 times.
 ///  (a.) For 8-bit sRGB, steps {0 to 10.3} are in the linear region (4% of the encoding range).
 ///  (b.) For 8-bit  709, steps {0 to 20.7} are in the linear region (8% of the encoding range).
 ///
 /// @param [in] color           The color to convert to Rec. 709.
-/// 
+///
 /// @returns
 /// The <c><i>color</i></c> in linear space.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat32 ffxRec709FromLinear(FfxFloat32 color)
 {
@@ -2406,9 +2406,9 @@ FfxFloat32x3 ffxLinearFromRec709(FfxFloat32x3 color)
 /// Compute a gamma value from a linear value.
 ///
 /// Typically 2.2 for some PC displays, or 2.4-2.5 for CRTs, or 2.2 FreeSync2 native.
-/// 
+///
 /// Note: 'rcpX' is '1/x', where the 'x' is what would be used in <c><i>ffxLinearFromGamma</i></c>.
-/// 
+///
 /// @param [in] value           The value to convert to gamma space from linear.
 /// @param [in] power           The reciprocal of power value used for the gamma curve.
 ///
@@ -2424,7 +2424,7 @@ FfxFloat32 ffxGammaFromLinear(FfxFloat32 value, FfxFloat32 power)
 /// Compute a gamma value from a linear value.
 ///
 /// Typically 2.2 for some PC displays, or 2.4-2.5 for CRTs, or 2.2 FreeSync2 native.
-/// 
+///
 /// Note: 'rcpX' is '1/x', where the 'x' is what would be used in <c><i>ffxLinearFromGamma</i></c>.
 ///
 /// @param [in] value           The value to convert to gamma space from linear.
@@ -2699,7 +2699,7 @@ FfxFloat32x3 ffxLinearFromSrgb(FfxFloat32x3 value)
 ///     ~~~~~~
 ///     ..xxx.
 ///     yy...y
-/// 
+///
 /// @param [in] a       The input 1D coordinates to remap.
 ///
 /// @returns
@@ -2714,7 +2714,7 @@ FfxUInt32x2 ffxRemapForQuad(FfxUInt32 a)
 /// A helper function performing a remap 64x1 to 8x8 remapping which is necessary for 2D wave reductions.
 ///
 /// The 64-wide lane indices to 8x8 remapping is performed as follows:
-/// 
+///
 ///     00 01 08 09 10 11 18 19
 ///     02 03 0a 0b 12 13 1a 1b
 ///     04 05 0c 0d 14 15 1c 1d
@@ -2725,10 +2725,10 @@ FfxUInt32x2 ffxRemapForQuad(FfxUInt32 a)
 ///     26 27 2e 2f 36 37 3e 3f
 ///
 /// @param [in] a       The input 1D coordinate to remap.
-/// 
+///
 /// @returns
 /// The remapped 2D coordinates.
-/// 
+///
 /// @ingroup GPUCore
 FfxUInt32x2 ffxRemapForWaveReduction(FfxUInt32 a)
 {

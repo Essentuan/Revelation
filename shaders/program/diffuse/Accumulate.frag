@@ -1,13 +1,13 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
     Pass: Accumulation and variance estimation
-	Reference:  https://research.nvidia.com/sites/default/files/pubs/2017-07_Spatiotemporal-Variance-Guided-Filtering://svgf_preprint.pdf
+    Reference:  https://research.nvidia.com/sites/default/files/pubs/2017-07_Spatiotemporal-Variance-Guided-Filtering://svgf_preprint.pdf
                 https://cescg.org/wp-content/uploads/2018/04/Dundr-Progressive-Spatiotemporal-Variance-Guided-Filtering-2.pdf
 
 --------------------------------------------------------------------------------
@@ -40,12 +40,12 @@ layout (location = 1) out vec3 encodedNormalDepth;
 #include "/lib/universal/Random.glsl"
 
 void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
-	vec3 viewPos = ScreenToViewPos(screenPos);
+    vec3 viewPos = ScreenToViewPos(screenPos);
     vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
-	vec3 prevWorldPos = worldPos + (cameraPosition - previousCameraPosition) * step(0.56, screenPos.z); // To previous frame's world space
+    vec3 prevWorldPos = worldPos + (cameraPosition - previousCameraPosition) * step(0.56, screenPos.z); // To previous frame's world space
     vec3 prevViewPos = transMAD(gbufferPreviousModelView, prevWorldPos); // To previous frame's view space
-	vec3 prevNDCPos = projMAD(gbufferPreviousProjection, prevViewPos) * rcp(-prevViewPos.z); // To previous frame's NDC space
+    vec3 prevNDCPos = projMAD(gbufferPreviousProjection, prevViewPos) * rcp(-prevViewPos.z); // To previous frame's NDC space
 
     #ifdef TAA_ENABLED
         prevNDCPos.xy += taaJitterPrev;
@@ -78,12 +78,12 @@ void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
         ivec2 texelEnd = ivec2(halfViewSize) - 1;
 
         vec3 worldDir = normalize(worldPos - gbufferModelViewInverse[3].xyz);
-		float NdotV = abs(dot(worldNormal, worldDir));
+        float NdotV = abs(dot(worldNormal, worldDir));
 
         for (uint i = 0u; i < 4u; ++i) {
             ivec2 sampleTexel = floorTexel + offset2x2[i];
             if (clamp(sampleTexel, ivec2(0), texelEnd) == sampleTexel) {
-			    vec3 sampleAux = texelFetch(colortex14, sampleTexel, 0).xyz;
+                vec3 sampleAux = texelFetch(colortex14, sampleTexel, 0).xyz;
                 vec4 sampleIrradiance = texelFetch(colortex2, sampleTexel, 0);
 
                 float weight = exp2(-8.0 * distance(encodedNormalDepth.z, sampleAux.z) * NdotV);

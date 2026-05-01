@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -43,21 +43,21 @@ uniform sampler2D tex;
 
 //======// Main //================================================================================//
 void main() {
-	if (isWater == 1u) {
-		vec3 waveNormal = CalculateWaterNormal(vectorData.xz);
-		shadowcolor1Out.xy = OctEncodeUnorm(waveNormal.xzy);
-		shadowcolor1Out.w = 1.0;
-	} else {
-		vec4 albedo = texture(tex, texCoord);
-		if (albedo.a < 0.1) discard;
+    if (isWater == 1u) {
+        vec3 waveNormal = CalculateWaterNormal(vectorData.xz);
+        shadowcolor1Out.xy = OctEncodeUnorm(waveNormal.xzy);
+        shadowcolor1Out.w = 1.0;
+    } else {
+        vec4 albedo = texture(tex, texCoord);
+        if (albedo.a < 0.1) discard;
 
         if (albedo.a > oms(rcp255)) {
-			shadowcolor0Out = albedo.rgb * vectorData;
-		} else {
-			albedo.a = approxSqrt(approxSqrt(albedo.a));
-			shadowcolor0Out = mix(vec3(albedo.a), albedo.rgb * vectorData, albedo.a);
-		}
+            shadowcolor0Out = albedo.rgb * vectorData;
+        } else {
+            albedo.a = approxSqrt(approxSqrt(albedo.a));
+            shadowcolor0Out = mix(vec3(albedo.a), albedo.rgb * vectorData, albedo.a);
+        }
 
-		shadowcolor1Out.w = 0.0;
-	}
+        shadowcolor1Out.w = 0.0;
+    }
 }

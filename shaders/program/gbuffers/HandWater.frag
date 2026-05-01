@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -33,27 +33,27 @@ uniform sampler2D tex;
 
 //======// Main //================================================================================//
 void main() {
-	vec4 albedo = texture(tex, texCoord) * vertColor;
+    vec4 albedo = texture(tex, texCoord) * vertColor;
 
-	if (albedo.a < 0.1) { discard; return; }
+    if (albedo.a < 0.1) { discard; return; }
 
-	materialOut.x = Packup2x8U(lightmap);
+    materialOut.x = Packup2x8U(lightmap);
     #if GBUFFER_PARTICLES_TRANSLUCENT
-	    materialOut.y = 500u;
+        materialOut.y = 500u;
     #else
-	    materialOut.y = 2u;
+        materialOut.y = 2u;
     #endif
 
-	materialOut.z = Packup2x8U(albedo.xy);
-	materialOut.w = Packup2x8U(albedo.zw);
+    materialOut.z = Packup2x8U(albedo.xy);
+    materialOut.w = Packup2x8U(albedo.zw);
 
     vec3 deltaPos1 = dFdx(worldPos);
     vec3 deltaPos2 = dFdy(worldPos);
 
-	vec3 geoNormal = normalize(cross(deltaPos1, deltaPos2));
-	normalOut.xy = OctEncodeSnorm(geoNormal);
+    vec3 geoNormal = normalize(cross(deltaPos1, deltaPos2));
+    normalOut.xy = OctEncodeSnorm(geoNormal);
 
-	#ifdef MC_NORMAL_MAP
+    #ifdef MC_NORMAL_MAP
         // Construct TBN matrix
         vec3 deltaPos1Perp = cross(geoNormal, deltaPos1);
         vec3 deltaPos2Perp = cross(deltaPos2, geoNormal);
@@ -69,8 +69,8 @@ void main() {
 
         vec3 normalTex = texture(normals, texCoord).rgb;
         DecodeNormalTex(normalTex);
-		normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
-	#else
-		normalOut.zw = normalOut.xy;
-	#endif
+        normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
+    #else
+        normalOut.zw = normalOut.xy;
+    #endif
 }

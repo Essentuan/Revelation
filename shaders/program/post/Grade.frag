@@ -1,12 +1,12 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
-	Pass: Post-processing compositing
+    Pass: Post-processing compositing
 
 --------------------------------------------------------------------------------
 */
@@ -56,100 +56,100 @@ out vec3 color; // Tonemapped output
 #include "/lib/universal/Random.glsl"
 
 const vec2 bloomTileOffset[6] = vec2[6](
-	vec2(0.0000, 0.0000),
-	vec2(0.0000, 0.5000),
-	vec2(0.2500, 0.5000),
-	vec2(0.2500, 0.6250),
-	vec2(0.3125, 0.6250),
-	vec2(0.3150, 0.6563)
+    vec2(0.0000, 0.0000),
+    vec2(0.0000, 0.5000),
+    vec2(0.2500, 0.5000),
+    vec2(0.2500, 0.6250),
+    vec2(0.3125, 0.6250),
+    vec2(0.3150, 0.6563)
 );
 
 void CombineBloomAndFog(inout vec3 scene, ivec2 texel, float exposure) {
-	vec3 bloomData = vec3(0.0);
-	vec2 screenCoord = texelToUv(texel);
+    vec3 bloomData = vec3(0.0);
+    vec2 screenCoord = texelToUv(texel);
 
-	float weight = 1.0;
-	float sumWeight = 0.0;
+    float weight = 1.0;
+    float sumWeight = 0.0;
 
-	vec2 upscalingCoord = screenCoord;
-	for (uint i = 0u; i < 6u; ++i) {
-		upscalingCoord *= 0.5;
-    	vec2 sampleCoord = upscalingCoord + bloomTileOffset[i];
-		sampleCoord += viewPixelSize * float(i * 8);
-		vec3 sampleTile = textureBicubic(colortex4, sampleCoord).rgb;
+    vec2 upscalingCoord = screenCoord;
+    for (uint i = 0u; i < 6u; ++i) {
+        upscalingCoord *= 0.5;
+        vec2 sampleCoord = upscalingCoord + bloomTileOffset[i];
+        sampleCoord += viewPixelSize * float(i * 8);
+        vec3 sampleTile = textureBicubic(colortex4, sampleCoord).rgb;
 
-		bloomData += sampleTile * weight;
-		sumWeight += weight;
-		weight *= 0.9;
-	}
+        bloomData += sampleTile * weight;
+        sumWeight += weight;
+        weight *= 0.9;
+    }
 
-	bloomData *= rcp(sumWeight);
+    bloomData *= rcp(sumWeight);
 
-	float bloomIntensity = BLOOM_INTENSITY * 0.1;
+    float bloomIntensity = BLOOM_INTENSITY * 0.1;
 
-	#ifdef BLOOMY_FOG
-		float fogMask = texture(colortex0, screenCoord + taaJitter * 0.5).w;
-		bloomIntensity = max(bloomIntensity, fogMask * BLOOMY_FOG_INTENSITY);
-	#endif
+    #ifdef BLOOMY_FOG
+        float fogMask = texture(colortex0, screenCoord + taaJitter * 0.5).w;
+        bloomIntensity = max(bloomIntensity, fogMask * BLOOMY_FOG_INTENSITY);
+    #endif
 
-	// Exposure adaptation
-	bloomIntensity /= max(exposure, 1.0) + 1.0;
+    // Exposure adaptation
+    bloomIntensity /= max(exposure, 1.0) + 1.0;
 
-	#if BLOOM_BLENDING_MODE == 0
-		scene += bloomData * bloomIntensity;
-	#elif BLOOM_BLENDING_MODE == 1
-		scene = mix(scene, bloomData, bloomIntensity);
-	#else
-		scene = (scene + bloomData * bloomIntensity) / (1.0 + bloomIntensity * 0.5);
-	#endif
+    #if BLOOM_BLENDING_MODE == 0
+        scene += bloomData * bloomIntensity;
+    #elif BLOOM_BLENDING_MODE == 1
+        scene = mix(scene, bloomData, bloomIntensity);
+    #else
+        scene = (scene + bloomData * bloomIntensity) / (1.0 + bloomIntensity * 0.5);
+    #endif
 
-	if (rainStrength > 1e-2) {
-		float rainAlpha = texture(colortex6, screenCoord).a;
-		rainAlpha = oms(rainAlpha) * RAIN_VISIBILITY;
-		scene = scene * oms(rainAlpha) + bloomData * rainAlpha * 1.25;
-	}
+    if (rainStrength > 1e-2) {
+        float rainAlpha = texture(colortex6, screenCoord).a;
+        rainAlpha = oms(rainAlpha) * RAIN_VISIBILITY;
+        scene = scene * oms(rainAlpha) + bloomData * rainAlpha * 1.25;
+    }
 }
 
 // See section 3.4 of http://www.diva-portal.org/smash/get/diva2:24136/FULLTEXT01.pdf
 vec3 ScotopicVision(vec3 color, float exposure) {
-	const vec3 rodResponse = vec3(0.05, 0.55, 0.60);
-	const vec3 tint = vec3(PURKINJE_SHIFT_R, PURKINJE_SHIFT_G, PURKINJE_SHIFT_B);
+    const vec3 rodResponse = vec3(0.05, 0.55, 0.60);
+    const vec3 tint = vec3(PURKINJE_SHIFT_R, PURKINJE_SHIFT_G, PURKINJE_SHIFT_B);
 
-	vec3 xyz = color * sRGB_2_XYZ;
-	vec3 scotopic = xyz * max0(1.33 * (1.0 + (xyz.y + xyz.z) / xyz.x) - 1.68);
+    vec3 xyz = color * sRGB_2_XYZ;
+    vec3 scotopic = xyz * max0(1.33 * (1.0 + (xyz.y + xyz.z) / xyz.x) - 1.68);
 
-	float rodLuminance = dot(scotopic * XYZ_2_sRGB, rodResponse);
-	float mesopicFactor = saturate(log2(1.0 + exposure) / (2.0 + 4.0 * rodLuminance));
+    float rodLuminance = dot(scotopic * XYZ_2_sRGB, rodResponse);
+    float mesopicFactor = saturate(log2(1.0 + exposure) / (2.0 + 4.0 * rodLuminance));
 
-	#ifdef PURKINJE_SHIFT_NOISE
-		rodLuminance *= 0.5 + SampleStbnVec1(ivec2(gl_GlobalInvocationID.xy), frameCounter);
-	#endif
+    #ifdef PURKINJE_SHIFT_NOISE
+        rodLuminance *= 0.5 + SampleStbnVec1(ivec2(gl_GlobalInvocationID.xy), frameCounter);
+    #endif
 
-	return mix(color, rodLuminance * tint, PURKINJE_SHIFT_STRENGTH * mesopicFactor);
+    return mix(color, rodLuminance * tint, PURKINJE_SHIFT_STRENGTH * mesopicFactor);
 }
 
 vec3 None(vec3 x) {
-	return x;
+    return x;
 }
 
 // Lottes 2016, "Advanced Techniques and Optimization of HDR Color Pipelines"
 // https://gpuopen.com/wp-content/uploads/2016/03/GdcVdrLottes.pdf
 vec3 Lottes(vec3 x) {
-	x *= 2.0;
+    x *= 2.0;
 
-	const vec3 a      = vec3(1.35);
-	const vec3 d      = vec3(0.92);
-	const vec3 hdrMax = vec3(8.0);
-	const vec3 midIn  = vec3(0.2);
-	const vec3 midOut = vec3(0.3);
+    const vec3 a      = vec3(1.35);
+    const vec3 d      = vec3(0.92);
+    const vec3 hdrMax = vec3(8.0);
+    const vec3 midIn  = vec3(0.2);
+    const vec3 midOut = vec3(0.3);
 
-	const vec3 ad = a * d;
-	const vec3 curvedMidIn = pow(midIn, a);
-	const vec3 curvedHdrMax = pow(hdrMax, a);
-	const vec3 b = -curvedMidIn + curvedHdrMax * midOut;
-	const vec3 c = pow(hdrMax, ad) * curvedMidIn - curvedHdrMax * pow(midIn, ad) * midOut;
+    const vec3 ad = a * d;
+    const vec3 curvedMidIn = pow(midIn, a);
+    const vec3 curvedHdrMax = pow(hdrMax, a);
+    const vec3 b = -curvedMidIn + curvedHdrMax * midOut;
+    const vec3 c = pow(hdrMax, ad) * curvedMidIn - curvedHdrMax * pow(midIn, ad) * midOut;
 
-	return sRGBToLinear(pow(x, a) * (pow(hdrMax, ad) - pow(midIn, ad)) * midOut / (pow(x, ad) * b + c));
+    return sRGBToLinear(pow(x, a) * (pow(hdrMax, ad) - pow(midIn, ad)) * midOut / (pow(x, ad) * b + c));
 }
 
 #include "/lib/post/ACES.glsl"
@@ -157,110 +157,110 @@ vec3 Lottes(vec3 x) {
 #include "/lib/post/GT.glsl"
 
 #ifdef HDR_ENABLED
-	#define TONE_MAPPER_ HDR_TONE_MAPPER
+    #define TONE_MAPPER_ HDR_TONE_MAPPER
 #else
-	#define TONE_MAPPER_ TONE_MAPPER
+    #define TONE_MAPPER_ TONE_MAPPER
 #endif
 
 #if TONE_MAPPER_ == TONEMAPPER_AgX_Minimal
-	#define TONEMAPPING_FN AgX_Minimal
+    #define TONEMAPPING_FN AgX_Minimal
 #elif TONE_MAPPER_ == TONEMAPPER_AgX_Full
-	#define TONEMAPPING_FN AgX_Full
+    #define TONEMAPPING_FN AgX_Full
 #elif TONE_MAPPER_ == TONEMAPPER_ACES_Fit
-	#define TONEMAPPING_FN AcademyFit
+    #define TONEMAPPING_FN AcademyFit
 #elif TONE_MAPPER_ == TONEMAPPER_ACES_2
-	#define TONEMAPPING_FN ACES2
+    #define TONEMAPPING_FN ACES2
 #elif TONE_MAPPER_ == TONEMAPPER_GT
-	#define TONEMAPPING_FN GT
+    #define TONEMAPPING_FN GT
 #elif TONE_MAPPER_ == TONEMAPPER_GT7
-	#define TONEMAPPING_FN GT7
+    #define TONEMAPPING_FN GT7
 #elif TONE_MAPPER_ == TONEMAPPER_Lottes
-	#define TONEMAPPING_FN Lottes
+    #define TONEMAPPING_FN Lottes
 #else
-	#define TONEMAPPING_FN None
+    #define TONEMAPPING_FN None
 #endif
 
 //======// Main //================================================================================//
 void main() {
     ivec2 texelPos = ivec2(gl_FragCoord.xy);
 
- 	#if EXPOSURE_MODE == MANUAL
-		float exposure = exp2(-MANUAL_EV);
-	#else
-		float exposure = exposure.value;
-	#endif
+     #if EXPOSURE_MODE == MANUAL
+        float exposure = exp2(-MANUAL_EV);
+    #else
+        float exposure = exposure.value;
+    #endif
 
-	#ifdef MOTION_BLUR
-		color = texelFetch(colortex0, texelPos, 0).rgb;
-	#else
-		color = texelFetch(colortex1, texelPos, 0).rgb;
-	#endif
+    #ifdef MOTION_BLUR
+        color = texelFetch(colortex0, texelPos, 0).rgb;
+    #else
+        color = texelFetch(colortex1, texelPos, 0).rgb;
+    #endif
 
-	// Bloom and fog
-	#ifdef BLOOM
-		CombineBloomAndFog(color, texelPos, exposure);
-	#endif
+    // Bloom and fog
+    #ifdef BLOOM
+        CombineBloomAndFog(color, texelPos, exposure);
+    #endif
 
-	// Debug sky environment map
-	#ifdef DEBUG_SKY_MAP
-		if (all(lessThan(texelPos, textureSize(skyEnvMapTex, 0)))) {
-			color = texelFetch(skyEnvMapTex, texelPos, 0).rgb;
-		}
-	#endif
+    // Debug sky environment map
+    #ifdef DEBUG_SKY_MAP
+        if (all(lessThan(texelPos, textureSize(skyEnvMapTex, 0)))) {
+            color = texelFetch(skyEnvMapTex, texelPos, 0).rgb;
+        }
+    #endif
 
-	#ifdef DEBUG_ATMOSPHERE_LUTS
-		ivec2 tempTexel = texelPos;
-		if (all(lessThan(tempTexel, textureSize(skyViewTex, 0)))) {
-			color = DecodeRGBE8(texelFetch(skyViewTex, tempTexel, 0));
-		}
-		tempTexel.x -= textureSize(skyViewTex, 0).x;
-		if (clamp(tempTexel, ivec2(0), textureSize(tLutTex, 0) - 1) == tempTexel) {
-			color = texelFetch(tLutTex, tempTexel, 0).rgb * 64.0;
-		}
-		tempTexel.x -= textureSize(tLutTex, 0).x;
-		if (clamp(tempTexel, ivec2(0), textureSize(msLutTex, 0) - 1) == tempTexel) {
-			color = texelFetch(msLutTex, tempTexel, 0).rgb * 512.0;
-		}
-	#endif
+    #ifdef DEBUG_ATMOSPHERE_LUTS
+        ivec2 tempTexel = texelPos;
+        if (all(lessThan(tempTexel, textureSize(skyViewTex, 0)))) {
+            color = DecodeRGBE8(texelFetch(skyViewTex, tempTexel, 0));
+        }
+        tempTexel.x -= textureSize(skyViewTex, 0).x;
+        if (clamp(tempTexel, ivec2(0), textureSize(tLutTex, 0) - 1) == tempTexel) {
+            color = texelFetch(tLutTex, tempTexel, 0).rgb * 64.0;
+        }
+        tempTexel.x -= textureSize(tLutTex, 0).x;
+        if (clamp(tempTexel, ivec2(0), textureSize(msLutTex, 0) - 1) == tempTexel) {
+            color = texelFetch(msLutTex, tempTexel, 0).rgb * 512.0;
+        }
+    #endif
 
-	// Apply exposure
-	color *= exposure;
+    // Apply exposure
+    color *= exposure;
 
-	// Purkinje shift
-	#ifdef PURKINJE_SHIFT
-		color = ScotopicVision(color, exposure);
-	#endif
+    // Purkinje shift
+    #ifdef PURKINJE_SHIFT
+        color = ScotopicVision(color, exposure);
+    #endif
 
-	// Vignetting
-	#ifdef VIGNETTE_ENABLED
-		vec2 ndcCoord = texelToUv(texelPos) * 2.0 - 1.0;
-		ndcCoord.x *= mix(1.0, aspectRatio, VIGNETTE_ROUNDNESS);
-		color *= exp2(-0.5 * VIGNETTE_STRENGTH * sdot(ndcCoord));
-	#endif
+    // Vignetting
+    #ifdef VIGNETTE_ENABLED
+        vec2 ndcCoord = texelToUv(texelPos) * 2.0 - 1.0;
+        ndcCoord.x *= mix(1.0, aspectRatio, VIGNETTE_ROUNDNESS);
+        color *= exp2(-0.5 * VIGNETTE_STRENGTH * sdot(ndcCoord));
+    #endif
 
-	// Apply DRT
-	{
-		// Tone mapping
-		color = TONEMAPPING_FN(color);
-		#ifndef HDR_ENABLED
-			// Working to display space
-			color *= Rec2020_2_sRGB;
-			color = saturate(pow(color, vec3(1.0 / GAMMA_CORRECTION)));
-		#else
-			// Limited in Rec2020 non negative linear value range for CAS
-			color = max0(color);
-		#endif
-	}
+    // Apply DRT
+    {
+        // Tone mapping
+        color = TONEMAPPING_FN(color);
+        #ifndef HDR_ENABLED
+            // Working to display space
+            color *= Rec2020_2_sRGB;
+            color = saturate(pow(color, vec3(1.0 / GAMMA_CORRECTION)));
+        #else
+            // Limited in Rec2020 non negative linear value range for CAS
+            color = max0(color);
+        #endif
+    }
 
-	// Debug tone mapping plot
-	#ifdef DEBUG_TONE_MAPPING_PLOT
-		const float scale = 1.5;
+    // Debug tone mapping plot
+    #ifdef DEBUG_TONE_MAPPING_PLOT
+        const float scale = 1.5;
 
-		vec2 uv = texelToUv(texelPos) * vec2(aspectRatio, 1.0) * scale;
-		float plot = smoothstep(0.0, scale * viewPixelSize.y, abs(uv.y - TONEMAPPING_FN(vec3(uv.x)).x));
+        vec2 uv = texelToUv(texelPos) * vec2(aspectRatio, 1.0) * scale;
+        float plot = smoothstep(0.0, scale * viewPixelSize.y, abs(uv.y - TONEMAPPING_FN(vec3(uv.x)).x));
 
-		// Show LDR range
-		color = vec3(0.25) * step(uv.x, 1.0);
-		color = mix(vec3(1.0), color, plot);
-	#endif
+        // Show LDR range
+        color = vec3(0.25) * step(uv.x, 1.0);
+        color = mix(vec3(1.0), color, plot);
+    #endif
 }

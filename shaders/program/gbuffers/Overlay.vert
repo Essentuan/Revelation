@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -24,13 +24,13 @@ uniform vec2 taaJitter;
 
 //======// Main //================================================================================//
 void main() {
-	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
+    vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
     gl_Position = project(gl_ProjectionMatrix, viewPos);
 
-	#ifdef TAA_ENABLED
-		gl_Position.xy += taaJitter * gl_Position.w;
-	#endif
+    #ifdef TAA_ENABLED
+        gl_Position.xy += taaJitter * gl_Position.w;
+    #endif
 
-	vertColor = gl_Color;
+    vertColor = gl_Color;
     texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 }

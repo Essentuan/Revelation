@@ -1,12 +1,12 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
-	Pass: Generate Skylight SH Coefficients
+    Pass: Generate Skylight SH Coefficients
 
 --------------------------------------------------------------------------------
 */
@@ -34,13 +34,13 @@ const ivec3 workGroups = ivec3(1, 1, 1);
 //======// Shared Memory //=======================================================================//
 
 #ifdef SUBGROUP_OPS
-	#if defined MC_GL_VENDOR_NVIDIA
-		shared vec3[9] sharedSkySH[gl_NumSubgroups];
-	#else
-		shared vec3[9] sharedSkySH[8];
-	#endif
+    #if defined MC_GL_VENDOR_NVIDIA
+        shared vec3[9] sharedSkySH[gl_NumSubgroups];
+    #else
+        shared vec3[9] sharedSkySH[8];
+    #endif
 #else
-	shared vec3[9] sharedSkySH[gl_WorkGroupSize.x];
+    shared vec3[9] sharedSkySH[gl_WorkGroupSize.x];
 #endif
 
 //======// Function //============================================================================//
@@ -50,73 +50,73 @@ const ivec3 workGroups = ivec3(1, 1, 1);
 #include "/lib/atmosphere/Common.glsl"
 
 void ParallelReduceSum(uint index, uint samples) {
-	for (uint stride = samples >> 1u; stride > 0u; stride >>= 1u) {
-		if (index < stride) {
-			for (uint band = 0u; band < 9u; ++band) {
-				sharedSkySH[index][band] += sharedSkySH[index + stride][band];
-			}
-		}
+    for (uint stride = samples >> 1u; stride > 0u; stride >>= 1u) {
+        if (index < stride) {
+            for (uint band = 0u; band < 9u; ++band) {
+                sharedSkySH[index][band] += sharedSkySH[index + stride][band];
+            }
+        }
 
-    	memoryBarrierShared();
-		barrier();
-	}
+        memoryBarrierShared();
+        barrier();
+    }
 }
 
 //======// Main //================================================================================//
 void main() {
-	const uint samples = gl_WorkGroupSize.x;
+    const uint samples = gl_WorkGroupSize.x;
 
     uint index = gl_LocalInvocationIndex;
 
-	// Sample and compute SH coefficients
-	vec3 direction = SampleUniformSphere(R2(index));
-	vec3 skyRadiance = texture(skyEnvMapTex, ProjectCubemap(direction, 96.0)).rgb;
+    // Sample and compute SH coefficients
+    vec3 direction = SampleUniformSphere(R2(index));
+    vec3 skyRadiance = texture(skyEnvMapTex, ProjectCubemap(direction, 96.0)).rgb;
 
-	#ifndef PLANET_GROUND
-		skyRadiance *= mix(atmosphere.groundAlbedo, vec3(1.0), step(0.0, direction.y));
-	#endif
+    #ifndef PLANET_GROUND
+        skyRadiance *= mix(atmosphere.groundAlbedo, vec3(1.0), step(0.0, direction.y));
+    #endif
 
-	vec3[9] shCoeff;
-	float[9] basis = BasisSH3(direction);
+    vec3[9] shCoeff;
+    float[9] basis = BasisSH3(direction);
 
-	const float normFactor = 4.0 * PI / float(samples);
-	for (uint band = 0u; band < 9u; ++band) {
-		shCoeff[band] = basis[band] * normFactor * skyRadiance;
-	}
+    const float normFactor = 4.0 * PI / float(samples);
+    for (uint band = 0u; band < 9u; ++band) {
+        shCoeff[band] = basis[band] * normFactor * skyRadiance;
+    }
 
-	#ifdef SUBGROUP_OPS
-		// Reduce SH coefficients in subgroup
-		for (uint band = 0u; band < 9u; ++band) {
-			shCoeff[band] = subgroupAdd(shCoeff[band]);
-			SCALARIZED_LOAD(sharedSkySH[gl_SubgroupID][band], shCoeff[band]);
-		}
-		barrier();
+    #ifdef SUBGROUP_OPS
+        // Reduce SH coefficients in subgroup
+        for (uint band = 0u; band < 9u; ++band) {
+            shCoeff[band] = subgroupAdd(shCoeff[band]);
+            SCALARIZED_LOAD(sharedSkySH[gl_SubgroupID][band], shCoeff[band]);
+        }
+        barrier();
 
-		if (index < gl_NumSubgroups) {
-			for (uint band = 0u; band < 9u; ++band) {
-				shCoeff[band] = subgroupAdd(sharedSkySH[index][band]);
-			}
-		}
-		barrier();
-	#else
-		// Reduce SH coefficients in shared memory
-		for (uint band = 0u; band < 9u; ++band) {
-			sharedSkySH[index][band] = shCoeff[band];
-		}
-		barrier();
+        if (index < gl_NumSubgroups) {
+            for (uint band = 0u; band < 9u; ++band) {
+                shCoeff[band] = subgroupAdd(sharedSkySH[index][band]);
+            }
+        }
+        barrier();
+    #else
+        // Reduce SH coefficients in shared memory
+        for (uint band = 0u; band < 9u; ++band) {
+            sharedSkySH[index][band] = shCoeff[band];
+        }
+        barrier();
 
-		ParallelReduceSum(index, samples);
+        ParallelReduceSum(index, samples);
 
-		for (uint band = 0u; band < 9u; ++band) {
-			shCoeff[band] = sharedSkySH[0][band];
-		}
-	#endif
+        for (uint band = 0u; band < 9u; ++band) {
+            shCoeff[band] = sharedSkySH[0][band];
+        }
+    #endif
 
-	// Store SH coefficients in thread 0
-	if (index == 0u) {
-		global.skySH = shCoeff;
+    // Store SH coefficients in thread 0
+    if (index == 0u) {
+        global.skySH = shCoeff;
 
-		// Evaluate sky up illuminance from SH coefficients
-		global.skyUpIlluminance = ReconstructSH3(shCoeff, vec3(0.0, 1.0, 0.0));
-	}
+        // Evaluate sky up illuminance from SH coefficients
+        global.skyUpIlluminance = ReconstructSH3(shCoeff, vec3(0.0, 1.0, 0.0));
+    }
 }

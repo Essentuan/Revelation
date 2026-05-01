@@ -1,12 +1,12 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
-	Pass: Compute auto exposure
+    Pass: Compute auto exposure
     Reference:  https://knarkowicz.wordpress.com/2016/01/09/automatic-exposure/
                 https://bruop.github.io/exposure/
 
@@ -101,27 +101,27 @@ void ParallelPrefixSum(uint index) {
 
 //======// Main //================================================================================//
 void main() {
-	uint index = gl_LocalInvocationIndex;
+    uint index = gl_LocalInvocationIndex;
 
     // Get cumulative histogram
-	ParallelPrefixSum(index);
+    ParallelPrefixSum(index);
 
     float sumBin = float(sharedPrefix[HISTOGRAM_BIN_COUNT - 1u]);
     uint lowerBound = uint(round(HISTOGRAM_LOWER_BOUND * sumBin));
     uint upperBound = uint(round(HISTOGRAM_UPPER_BOUND * sumBin));
 
-	sharedPrefix[index] = clamp(sharedPrefix[index], lowerBound, upperBound);
-	barrier();
+    sharedPrefix[index] = clamp(sharedPrefix[index], lowerBound, upperBound);
+    barrier();
 
     // Get weighted bin index
-	sharedPrefix[index] -= index > 0u ? sharedPrefix[index - 1u] : 0u;
+    sharedPrefix[index] -= index > 0u ? sharedPrefix[index - 1u] : 0u;
     sharedBinIndex[index] = sharedPrefix[index] * index;
 
-	ParallelSum(index);
+    ParallelSum(index);
 
     // Compute exposure value in thread 0
     if (index == 0u) {
-		float avgLuminance = float(sharedBinIndex[0]) / float(upperBound - lowerBound);
+        float avgLuminance = float(sharedBinIndex[0]) / float(upperBound - lowerBound);
         avgLuminance = avgLuminance * (autoEvRange / float(HISTOGRAM_BIN_COUNT - 1u)) + AUTO_EV_MIN;
 
         // Exposure compensation curve
@@ -135,7 +135,7 @@ void main() {
 
         float exposureRate = targetExposure > prevExposure ? EXPOSURE_SPEED_DOWN : EXPOSURE_SPEED_UP;
         exposure.value = mix(targetExposure, prevExposure, exp2(-exposureRate * frameTime));
-	}
+    }
 
     // Clear histogram bin
     exposure.histogram[index] = 0u;

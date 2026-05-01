@@ -1,12 +1,12 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
-	Pass: Compute and accumulate volumetric fog
+    Pass: Compute and accumulate volumetric fog
 
 --------------------------------------------------------------------------------
 */
@@ -49,7 +49,7 @@ uniform sampler2D shadowcolor1;
 #include "/lib/water/WaterFog.glsl"
 
 mat2x3 UnpackFogData(uvec2 data) {
-	return mat2x3(DecodeRGBE8U(data.x), DecodeRGBE8U(data.y));
+    return mat2x3(DecodeRGBE8U(data.x), DecodeRGBE8U(data.y));
 }
 
 //======// Main //================================================================================//
@@ -57,48 +57,48 @@ void main() {
     ivec2 texelPos = ivec2(gl_FragCoord.xy * 2.0);
 
     vec2 screenCoord = gl_FragCoord.xy * viewPixelSize * 2.0;
-	vec3 screenPos = vec3(screenCoord, loadDepth0(texelPos));
+    vec3 screenPos = vec3(screenCoord, loadDepth0(texelPos));
 
-	vec3 viewPos = ScreenToViewPosRaw(screenPos);
-	#if defined LOD_MOD
-		if (screenPos.z > 1.0 - EPS) {
-			screenPos.z = loadDepth0Lod(texelPos);
-			viewPos = ScreenToViewPosRawLod(screenPos);
-		}
-	#endif
+    vec3 viewPos = ScreenToViewPosRaw(screenPos);
+    #if defined LOD_MOD
+        if (screenPos.z > 1.0 - EPS) {
+            screenPos.z = loadDepth0Lod(texelPos);
+            viewPos = ScreenToViewPosRawLod(screenPos);
+        }
+    #endif
 
-	vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
+    vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
-	float dither = BlueNoise(texelPos, frameCounter);
+    float dither = BlueNoise(texelPos, frameCounter);
 
-	mat2x3 volFogData = mat2x3(vec3(0.0), vec3(1.0));
+    mat2x3 volFogData = mat2x3(vec3(0.0), vec3(1.0));
 
-	#ifdef VOLUMETRIC_FOG
-		if (isEyeInWater == 0) {
-			volFogData = RaymarchAtmosphericFog(gbufferModelViewInverse[3].xyz, worldPos, dither, VF_MAX_SAMPLES);
-		}
-	#endif
-	#ifdef UW_VOLUMETRIC_FOG
-		if (isEyeInWater == 1) {
-			volFogData = RaymarchWaterFog(worldPos - gbufferModelViewInverse[3].xyz, dither);
-		}
-	#endif
+    #ifdef VOLUMETRIC_FOG
+        if (isEyeInWater == 0) {
+            volFogData = RaymarchAtmosphericFog(gbufferModelViewInverse[3].xyz, worldPos, dither, VF_MAX_SAMPLES);
+        }
+    #endif
+    #ifdef UW_VOLUMETRIC_FOG
+        if (isEyeInWater == 1) {
+            volFogData = RaymarchWaterFog(worldPos - gbufferModelViewInverse[3].xyz, dither);
+        }
+    #endif
 
-	// Temporal reprojection
+    // Temporal reprojection
     vec2 prevCoord = ReprojectScreenPos(screenPos).xy;
 
     if (saturate(prevCoord) == prevCoord && !global.historyReset) {
         uvec3 reprojectedData = texelFetch(colortex11, uvToTexel(prevCoord) >> 1, 0).xyz;
-		mat2x3 reprojectedFog = UnpackFogData(reprojectedData.xy);
+        mat2x3 reprojectedFog = UnpackFogData(reprojectedData.xy);
 
-		float blendWeight = 0.9;
-		blendWeight *= exp2(abs(uintBitsToFloat(reprojectedData.z) + viewPos.z) * 32.0 / viewPos.z);
+        float blendWeight = 0.9;
+        blendWeight *= exp2(abs(uintBitsToFloat(reprojectedData.z) + viewPos.z) * 32.0 / viewPos.z);
 
         volFogData[0] = mix(volFogData[0], reprojectedFog[0], blendWeight);
         volFogData[1] = mix(volFogData[1], reprojectedFog[1], blendWeight);
-	}
+    }
 
-	packedFogData.x = EncodeRGBE8U(volFogData[0]);
-	packedFogData.y = EncodeRGBE8U(volFogData[1]);
-	packedFogData.z = floatBitsToUint(-viewPos.z);
+    packedFogData.x = EncodeRGBE8U(volFogData[0]);
+    packedFogData.y = EncodeRGBE8U(volFogData[1]);
+    packedFogData.z = floatBitsToUint(-viewPos.z);
 }

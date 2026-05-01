@@ -1,12 +1,12 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
-	Reference: https://www.gamedevs.org/uploads/real-shading-in-unreal-engine-4.pdf
+    Reference: https://www.gamedevs.org/uploads/real-shading-in-unreal-engine-4.pdf
                https://ggx-research.github.io/publication/2023/06/09/publication-ggx.html
 
 --------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ vec2 IntegrateBRDF(float roughness, float NdotV) {
 
         float NdotL = L.z;
         if (NdotL > 0.0) {
-			float VdotH = saturate(dot(V, H));
+            float VdotH = saturate(dot(V, H));
 
             // Geometric occlusion term
             float G_Vis = SpecularThroughputGGX(NdotL, NdotV, roughness);
@@ -70,9 +70,9 @@ vec2 IntegrateBRDF(float roughness, float NdotV) {
 
 //======// Main //================================================================================//
 void main() {
-	ivec2 tid = ivec2(gl_GlobalInvocationID.xy);
-	vec2 uv = (vec2(tid) + 0.5) / vec2(imageSize(brdfLutImg));
+    ivec2 tid = ivec2(gl_GlobalInvocationID.xy);
+    vec2 uv = (vec2(tid) + 0.5) / vec2(imageSize(brdfLutImg));
 
     vec2 brdf = IntegrateBRDF(uv.x, uv.y);
-	imageStore(brdfLutImg, tid, vec4(brdf, 0.0, 1.0));
+    imageStore(brdfLutImg, tid, vec4(brdf, 0.0, 1.0));
 }

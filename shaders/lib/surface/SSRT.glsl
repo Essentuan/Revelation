@@ -21,7 +21,7 @@ bool ScreenSpaceRaytrace(vec3 viewPos, vec3 viewDir, float dither, uint steps, i
     float invDirZ = rcp(abs(rayDir.z));
     vec3 rayStep = rayDir * rSteps;
 
-	float compareTolerance = max(abs(rayStep.z), (rayOrigin.z + gbufferProjection[2].z) * rSteps);
+    float compareTolerance = max(abs(rayStep.z), (rayOrigin.z + gbufferProjection[2].z) * rSteps);
 
     #if defined LOD_MOD
         float screenDepthSky = ViewToScreenDepth(ScreenToViewDepthLod(1.0));
@@ -29,7 +29,7 @@ bool ScreenSpaceRaytrace(vec3 viewPos, vec3 viewDir, float dither, uint steps, i
         #define screenDepthSky 1.0
     #endif
 
-	bool hit = false;
+    bool hit = false;
 
     float t = dither * rSteps;
     float stepMin = rSteps * 0.01;

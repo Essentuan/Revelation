@@ -1,15 +1,15 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
-	References:
-		Sébastien Hillaire. "A Scalable and Production Ready Sky and Atmosphere Rendering Technique". EGSR 2020.
+    References:
+        Sébastien Hillaire. "A Scalable and Production Ready Sky and Atmosphere Rendering Technique". EGSR 2020.
             https://sebh.github.io/publications/egsr2020.pdf
-		Epic Games, Inc. "Unreal Engine Sky Atmosphere Rendering Technique". 2020.
+        Epic Games, Inc. "Unreal Engine Sky Atmosphere Rendering Technique". 2020.
             https://github.com/sebh/UnrealEngineSkyAtmosphere
 
 --------------------------------------------------------------------------------
@@ -86,8 +86,8 @@ shared vec3 sharedFms[64];
 
 //======// Main //================================================================================//
 void main() {
-	ivec2 tid = ivec2(gl_WorkGroupID.xy);
-	vec2 uv = (vec2(tid) + 0.5) * rcp(imageSize(msLutImg));
+    ivec2 tid = ivec2(gl_WorkGroupID.xy);
+    vec2 uv = (vec2(tid) + 0.5) * rcp(imageSize(msLutImg));
 
     float cosTheta = uv.x * 2.0 - 1.0;
     float height = mix(atmosphere.bottomRadius, atmosphere.topRadius, uv.y);
@@ -105,44 +105,44 @@ void main() {
 
     sharedLum[i] = res[0];
     sharedFms[i] = res[1];
-	barrier();
+    barrier();
 
-	// 64 to 32
-	if (i < 32) {
-		sharedLum[i] += sharedLum[i + 32];
-		sharedFms[i] += sharedFms[i + 32];
-	}
-	barrier();
+    // 64 to 32
+    if (i < 32) {
+        sharedLum[i] += sharedLum[i + 32];
+        sharedFms[i] += sharedFms[i + 32];
+    }
+    barrier();
 
-	// 32 to 16
-	if (i < 16) {
-		sharedLum[i] += sharedLum[i + 16];
-		sharedFms[i] += sharedFms[i + 16];
-	}
-	barrier();
+    // 32 to 16
+    if (i < 16) {
+        sharedLum[i] += sharedLum[i + 16];
+        sharedFms[i] += sharedFms[i + 16];
+    }
+    barrier();
 
-	// 16 to 8 (16 is thread group min hardware size with intel, no sync required from there)
-	if (i < 8) {
-		sharedLum[i] += sharedLum[i + 8];
-		sharedFms[i] += sharedFms[i + 8];
-	}
-	barrier();
-	if (i < 4) {
-		sharedLum[i] += sharedLum[i + 4];
-		sharedFms[i] += sharedFms[i + 4];
-	}
-	barrier();
-	if (i < 2) {
-		sharedLum[i] += sharedLum[i + 2];
-		sharedFms[i] += sharedFms[i + 2];
-	}
-	barrier();
-	if (i < 1) {
-		sharedLum[i] += sharedLum[i + 1];
-		sharedFms[i] += sharedFms[i + 1];
-	}
-	barrier();
-	if (i > 0) return;
+    // 16 to 8 (16 is thread group min hardware size with intel, no sync required from there)
+    if (i < 8) {
+        sharedLum[i] += sharedLum[i + 8];
+        sharedFms[i] += sharedFms[i + 8];
+    }
+    barrier();
+    if (i < 4) {
+        sharedLum[i] += sharedLum[i + 4];
+        sharedFms[i] += sharedFms[i + 4];
+    }
+    barrier();
+    if (i < 2) {
+        sharedLum[i] += sharedLum[i + 2];
+        sharedFms[i] += sharedFms[i + 2];
+    }
+    barrier();
+    if (i < 1) {
+        sharedLum[i] += sharedLum[i + 1];
+        sharedFms[i] += sharedFms[i + 1];
+    }
+    barrier();
+    if (i > 0) return;
 
-	imageStore(msLutImg, tid, vec4(sharedLum[0] / (1.0 - sharedFms[0]), 1.0));
+    imageStore(msLutImg, tid, vec4(sharedLum[0] / (1.0 - sharedFms[0]), 1.0));
 }

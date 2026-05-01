@@ -104,14 +104,14 @@
 // Approximate guess using integer float arithmetics based on IEEE floating point standard
 float rcpSqrtIEEEIntApproximation(float inX, const int inRcpSqrtConst)
 {
-	int x = asint(inX);
-	x = inRcpSqrtConst - (x >> 1);
-	return asfloat(x);
+    int x = asint(inX);
+    x = inRcpSqrtConst - (x >> 1);
+    return asfloat(x);
 }
 
 float rcpSqrtNewtonRaphson(float inXHalf, float inRcpX)
 {
-	return inRcpX * (-inXHalf * (inRcpX * inRcpX) + 1.5f);
+    return inRcpX * (-inXHalf * (inRcpX * inRcpX) + 1.5f);
 }
 
 //
@@ -122,8 +122,8 @@ float rcpSqrtNewtonRaphson(float inXHalf, float inRcpX)
 //
 float fastRcpSqrtNR0(float inX)
 {
-	float  xRcpSqrt = rcpSqrtIEEEIntApproximation(inX, IEEE_INT_RCP_SQRT_CONST_NR0);
-	return xRcpSqrt;
+    float  xRcpSqrt = rcpSqrtIEEEIntApproximation(inX, IEEE_INT_RCP_SQRT_CONST_NR0);
+    return xRcpSqrt;
 }
 
 //
@@ -134,10 +134,10 @@ float fastRcpSqrtNR0(float inX)
 //
 float fastRcpSqrtNR1(float inX)
 {
-	float  xhalf = 0.5f * inX;
-	float  xRcpSqrt = rcpSqrtIEEEIntApproximation(inX, IEEE_INT_RCP_SQRT_CONST_NR1);
-	xRcpSqrt = rcpSqrtNewtonRaphson(xhalf, xRcpSqrt);
-	return xRcpSqrt;
+    float  xhalf = 0.5f * inX;
+    float  xRcpSqrt = rcpSqrtIEEEIntApproximation(inX, IEEE_INT_RCP_SQRT_CONST_NR1);
+    xRcpSqrt = rcpSqrtNewtonRaphson(xhalf, xRcpSqrt);
+    return xRcpSqrt;
 }
 
 //
@@ -148,11 +148,11 @@ float fastRcpSqrtNR1(float inX)
 //
 float fastRcpSqrtNR2(float inX)
 {
-	float  xhalf = 0.5f * inX;
-	float  xRcpSqrt = rcpSqrtIEEEIntApproximation(inX, IEEE_INT_RCP_SQRT_CONST_NR2);
-	xRcpSqrt = rcpSqrtNewtonRaphson(xhalf, xRcpSqrt);
-	xRcpSqrt = rcpSqrtNewtonRaphson(xhalf, xRcpSqrt);
-	return xRcpSqrt;
+    float  xhalf = 0.5f * inX;
+    float  xRcpSqrt = rcpSqrtIEEEIntApproximation(inX, IEEE_INT_RCP_SQRT_CONST_NR2);
+    xRcpSqrt = rcpSqrtNewtonRaphson(xhalf, xRcpSqrt);
+    xRcpSqrt = rcpSqrtNewtonRaphson(xhalf, xRcpSqrt);
+    return xRcpSqrt;
 }
 
 
@@ -161,9 +161,9 @@ float fastRcpSqrtNR2(float inX)
 //
 float sqrtIEEEIntApproximation(float inX, const int inSqrtConst)
 {
-	int x = asint(inX);
-	x = inSqrtConst + (x >> 1);
-	return asfloat(x);
+    int x = asint(inX);
+    x = inSqrtConst + (x >> 1);
+    return asfloat(x);
 }
 
 //
@@ -174,8 +174,8 @@ float sqrtIEEEIntApproximation(float inX, const int inSqrtConst)
 //
 float fastSqrtNR0(float inX)
 {
-	float  xRcp = sqrtIEEEIntApproximation(inX, IEEE_INT_SQRT_CONST_NR0);
-	return xRcp;
+    float  xRcp = sqrtIEEEIntApproximation(inX, IEEE_INT_SQRT_CONST_NR0);
+    return xRcp;
 }
 
 //
@@ -187,8 +187,8 @@ float fastSqrtNR0(float inX)
 //
 float fastSqrtNR1(float inX)
 {
-	// Inverse Rcp Sqrt
-	return inX * fastRcpSqrtNR1(inX);
+    // Inverse Rcp Sqrt
+    return inX * fastRcpSqrtNR1(inX);
 }
 
 //
@@ -200,8 +200,8 @@ float fastSqrtNR1(float inX)
 //
 float fastSqrtNR2(float inX)
 {
-	// Inverse Rcp Sqrt
-	return inX * fastRcpSqrtNR2(inX);
+    // Inverse Rcp Sqrt
+    return inX * fastRcpSqrtNR2(inX);
 }
 
 //
@@ -210,14 +210,14 @@ float fastSqrtNR2(float inX)
 
 float rcpIEEEIntApproximation(float inX, const int inRcpConst)
 {
-	int x = asint(inX);
-	x = inRcpConst - x;
-	return asfloat(x);
+    int x = asint(inX);
+    x = inRcpConst - x;
+    return asfloat(x);
 }
 
 float rcpNewtonRaphson(float inX, float inRcpX)
 {
-	return inRcpX * (-inRcpX * inX + 2.0f);
+    return inRcpX * (-inRcpX * inX + 2.0f);
 }
 
 //
@@ -228,8 +228,8 @@ float rcpNewtonRaphson(float inX, float inRcpX)
 //
 float fastRcpNR0(float inX)
 {
-	float  xRcp = rcpIEEEIntApproximation(inX, IEEE_INT_RCP_CONST_NR0);
-	return xRcp;
+    float  xRcp = rcpIEEEIntApproximation(inX, IEEE_INT_RCP_CONST_NR0);
+    return xRcp;
 }
 
 //
@@ -240,9 +240,9 @@ float fastRcpNR0(float inX)
 //
 float fastRcpNR1(float inX)
 {
-	float  xRcp = rcpIEEEIntApproximation(inX, IEEE_INT_RCP_CONST_NR1);
-	xRcp = rcpNewtonRaphson(inX, xRcp);
-	return xRcp;
+    float  xRcp = rcpIEEEIntApproximation(inX, IEEE_INT_RCP_CONST_NR1);
+    xRcp = rcpNewtonRaphson(inX, xRcp);
+    return xRcp;
 }
 
 //
@@ -253,10 +253,10 @@ float fastRcpNR1(float inX)
 //
 float fastRcpNR2(float inX)
 {
-	float  xRcp = rcpIEEEIntApproximation(inX, IEEE_INT_RCP_CONST_NR2);
-	xRcp = rcpNewtonRaphson(inX, xRcp);
-	xRcp = rcpNewtonRaphson(inX, xRcp);
-	return xRcp;
+    float  xRcp = rcpIEEEIntApproximation(inX, IEEE_INT_RCP_CONST_NR2);
+    xRcp = rcpNewtonRaphson(inX, xRcp);
+    xRcp = rcpNewtonRaphson(inX, xRcp);
+    return xRcp;
 }
 
 
@@ -272,19 +272,19 @@ const float fsl_HALF_PI = 0.5f * fsl_PI;
 // Reference : Handbook of Mathematical Functions (chapter : Elementary Transcendental Functions), M. Abramowitz and I.A. Stegun, Ed.
 float acosFast4(float inX)
 {
-	float x1 = abs(inX);
-	float x2 = x1 * x1;
-	float x3 = x2 * x1;
-	float s;
+    float x1 = abs(inX);
+    float x2 = x1 * x1;
+    float x3 = x2 * x1;
+    float s;
 
-	s = -0.2121144f * x1 + 1.5707288f;
-	s = 0.0742610f * x2 + s;
-	s = -0.0187293f * x3 + s;
-	s = sqrt(1.0f - x1) * s;
+    s = -0.2121144f * x1 + 1.5707288f;
+    s = 0.0742610f * x2 + s;
+    s = -0.0187293f * x3 + s;
+    s = sqrt(1.0f - x1) * s;
 
-	// acos function mirroring
-	// check per platform if compiles to a selector - no branch neeeded
-	return inX >= 0.0f ? s : fsl_PI - s;
+    // acos function mirroring
+    // check per platform if compiles to a selector - no branch neeeded
+    return inX >= 0.0f ? s : fsl_PI - s;
 }
 
 vec2 acosFast4(vec2 inX) {
@@ -296,10 +296,10 @@ vec2 acosFast4(vec2 inX) {
 // 7 * 10^-5 radians precision
 float asinFast4(float inX)
 {
-	float x = inX;
+    float x = inX;
 
-	// asin is offset of acos
-	return fsl_HALF_PI - acosFast4(x);
+    // asin is offset of acos
+    return fsl_HALF_PI - acosFast4(x);
 }
 
 // 4th order hyperbolical approximation
@@ -308,7 +308,7 @@ float asinFast4(float inX)
 // Reference : Efficient approximations for the arctangent function, Rajan, S. Sichun Wang Inkol, R. Joyal, A., May 2006
 float atanFast4(float inX)
 {
-	float  x = inX;
-	return x*(-0.1784f * abs(x) - 0.0663f * x * x + 1.0301f);
+    float  x = inX;
+    return x*(-0.1784f * abs(x) - 0.0663f * x * x + 1.0301f);
 }
 #endif //SHADER_FAST_MATH_INC_FX

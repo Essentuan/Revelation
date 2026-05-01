@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
     Pass: Temporal Reprojection Anti-Aliasing
     Reference: https://github.com/playdeadgames/temporal
@@ -105,7 +105,7 @@ vec4 TemporalReprojection(vec2 screenCoord, vec2 motionVector) {
         vec3 moment1 = currData;
         vec3 moment2 = currData * currData;
 
-	    for (uint i = 0u; i < 8u; ++i) {
+        for (uint i = 0u; i < 8u; ++i) {
             vec3 sampleData = texelFetch(colortex0, texel + offset3x3N[i], 0).rgb;
 
             moment1 += sampleData;
@@ -128,7 +128,7 @@ vec4 TemporalReprojection(vec2 screenCoord, vec2 motionVector) {
     #endif
 
     // Subpixel sharpening
-	prevData = mix(prevData, currData, sdot(fract(prevCoord * viewSize) - 0.5) * 0.5);
+    prevData = mix(prevData, currData, sdot(fract(prevCoord * viewSize) - 0.5) * 0.5);
 
     float blendWeight = min(++temporalData.a, TAA_MAX_ACCUM_FRAMES);
     blendWeight *= 1.0 + sqr(temporalContrast) * TAA_ANTIFLICKER;
@@ -141,10 +141,10 @@ vec4 TemporalReprojection(vec2 screenCoord, vec2 motionVector) {
 void main() {
     clearOut = vec3(0.0); // Clear the output buffer for bloom tiles
 
-	ivec2 screenTexel = ivec2(gl_FragCoord.xy);
+    ivec2 screenTexel = ivec2(gl_FragCoord.xy);
 
     float depth = loadDepth0(screenTexel);
-	vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
+    vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
 
     #if RENDER_MODE == 1
         vec2 motionVector;

@@ -173,12 +173,12 @@ uint updateSectors(vec2 horizon) {
 //================================================================================================//
 
 vec4 CalculateSSILVB(vec2 fragCoord, vec3 viewPos, vec3 worldNormal, float skylight) {
-	const int sliceCount = SSILVB_SLICE_COUNT;
-	const int sampleCount = SSILVB_SAMPLE_COUNT;
-	const float hitThickness = SSILVB_HIT_THICKNESS * 0.1;
+    const int sliceCount = SSILVB_SLICE_COUNT;
+    const int sampleCount = SSILVB_SAMPLE_COUNT;
+    const float hitThickness = SSILVB_HIT_THICKNESS * 0.1;
 
-	const float rSliceCount = 1.0 / float(sliceCount);
-	const float rSampleCount = 1.0 / float(sampleCount);
+    const float rSliceCount = 1.0 / float(sliceCount);
+    const float rSampleCount = 1.0 / float(sampleCount);
 
     #if defined LOD_MOD
         float screenDepthSky = ViewToScreenDepth(ScreenToViewDepthLod(1.0));
@@ -223,7 +223,7 @@ vec4 CalculateSSILVB(vec2 fragCoord, vec3 viewPos, vec3 worldNormal, float skyli
         float w0_remap_add = -w0 * w0_remap_mul;
 
         vec2 rayDir = ViewToScreenPos(smplDirVS + viewPos).xy - fragCoord;
-	    rayDir *= minOf((step(0.0, rayDir) - fragCoord) / rayDir);
+        rayDir *= minOf((step(0.0, rayDir) - fragCoord) / rayDir);
 
         float rayDirNorm = inversesqrt(sdot(rayDir * viewSize));
         float stepScale = -rSampleCount * log2(saturate(rayDirNorm));
@@ -238,7 +238,7 @@ vec4 CalculateSSILVB(vec2 fragCoord, vec3 viewPos, vec3 worldNormal, float skyli
             vec2 sampleUV = fragCoord + rayDir * stepLength;
             stepLength *= stepScale;
 
-			if (saturate(sampleUV) == sampleUV) {
+            if (saturate(sampleUV) == sampleUV) {
                 ivec2 sampleTexel = uvToTexel(sampleUV);
                 float sampleDepth = loadDepth0(sampleTexel);
 
@@ -279,7 +279,7 @@ vec4 CalculateSSILVB(vec2 fragCoord, vec3 viewPos, vec3 worldNormal, float skyli
 
                     if (bitMask == 0xFFFFFFFFu) break;
                 }
-			}
+            }
         }
 
         irradiance.a += float(bitCount(bitMask));

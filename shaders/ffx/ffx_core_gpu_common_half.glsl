@@ -1,7 +1,7 @@
 // This file is part of the FidelityFX SDK.
 //
 // Copyright (C) 2025 Advanced Micro Devices, Inc.
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -491,10 +491,10 @@ FfxFloat16x4 ffxSqrt(FfxFloat16x4 x)
 ///
 /// @param [in] d                   The value to copy the sign bit into.
 /// @param [in] s                   The value to copy the sign bit from.
-/// 
+///
 /// @returns
 /// The value of <c><i>d</i></c> with the sign bit from <c><i>s</i></c>.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat16 ffxCopySignBitHalf(FfxFloat16 d, FfxFloat16 s)
 {
@@ -505,10 +505,10 @@ FfxFloat16 ffxCopySignBitHalf(FfxFloat16 d, FfxFloat16 s)
 ///
 /// @param [in] d                   The value to copy the sign bit into.
 /// @param [in] s                   The value to copy the sign bit from.
-/// 
+///
 /// @returns
 /// The value of <c><i>d</i></c> with the sign bit from <c><i>s</i></c>.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat16x2 ffxCopySignBitHalf(FfxFloat16x2 d, FfxFloat16x2 s)
 {
@@ -519,10 +519,10 @@ FfxFloat16x2 ffxCopySignBitHalf(FfxFloat16x2 d, FfxFloat16x2 s)
 ///
 /// @param [in] d                   The value to copy the sign bit into.
 /// @param [in] s                   The value to copy the sign bit from.
-/// 
+///
 /// @returns
 /// The value of <c><i>d</i></c> with the sign bit from <c><i>s</i></c>.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat16x3 ffxCopySignBitHalf(FfxFloat16x3 d, FfxFloat16x3 s)
 {
@@ -533,10 +533,10 @@ FfxFloat16x3 ffxCopySignBitHalf(FfxFloat16x3 d, FfxFloat16x3 s)
 ///
 /// @param [in] d                   The value to copy the sign bit into.
 /// @param [in] s                   The value to copy the sign bit from.
-/// 
+///
 /// @returns
 /// The value of <c><i>d</i></c> with the sign bit from <c><i>s</i></c>.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat16x4 ffxCopySignBitHalf(FfxFloat16x4 d, FfxFloat16x4 s)
 {
@@ -552,14 +552,14 @@ FfxFloat16x4 ffxCopySignBitHalf(FfxFloat16x4 d, FfxFloat16x4 s)
 ///     saturate(+a*(-INF)==-INF) := 0
 ///     saturate( 0*(-INF)== NaN) := 0
 ///     saturate(-a*(-INF)==+INF) := 1
-/// 
+///
 /// This function is useful when creating masks for branch-free logic.
-/// 
+///
 /// @param [in] m                       The value to test against 0.
-/// 
+///
 /// @returns
 /// 1.0 when the value is negative, or 0.0 when the value is 0 or position.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat16 ffxIsSignedHalf(FfxFloat16 m)
 {
@@ -575,14 +575,14 @@ FfxFloat16 ffxIsSignedHalf(FfxFloat16 m)
 ///     saturate(+a*(-INF)==-INF) := 0
 ///     saturate( 0*(-INF)== NaN) := 0
 ///     saturate(-a*(-INF)==+INF) := 1
-/// 
+///
 /// This function is useful when creating masks for branch-free logic.
-/// 
+///
 /// @param [in] m                       The value to test against 0.
-/// 
+///
 /// @returns
 /// 1.0 when the value is negative, or 0.0 when the value is 0 or position.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat16x2 ffxIsSignedHalf(FfxFloat16x2 m)
 {
@@ -598,14 +598,14 @@ FfxFloat16x2 ffxIsSignedHalf(FfxFloat16x2 m)
 ///     saturate(+a*(-INF)==-INF) := 0
 ///     saturate( 0*(-INF)== NaN) := 0
 ///     saturate(-a*(-INF)==+INF) := 1
-/// 
+///
 /// This function is useful when creating masks for branch-free logic.
-/// 
+///
 /// @param [in] m                       The value to test against 0.
-/// 
+///
 /// @returns
 /// 1.0 when the value is negative, or 0.0 when the value is 0 or position.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat16x3 ffxIsSignedHalf(FfxFloat16x3 m)
 {
@@ -621,14 +621,14 @@ FfxFloat16x3 ffxIsSignedHalf(FfxFloat16x3 m)
 ///     saturate(+a*(-INF)==-INF) := 0
 ///     saturate( 0*(-INF)== NaN) := 0
 ///     saturate(-a*(-INF)==+INF) := 1
-/// 
+///
 /// This function is useful when creating masks for branch-free logic.
-/// 
+///
 /// @param [in] m                       The value to test against 0.
-/// 
+///
 /// @returns
 /// 1.0 when the value is negative, or 0.0 when the value is 0 or position.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat16x4 ffxIsSignedHalf(FfxFloat16x4 m)
 {
@@ -708,19 +708,19 @@ FfxFloat16x4 ffxIsGreaterThanZeroHalf(FfxFloat16x4 m)
 }
 
 /// Convert a 16bit floating point value to sortable integer.
-/// 
+///
 ///  - If sign bit=0, flip the sign bit (positives).
 ///  - If sign bit=1, flip all bits     (negatives).
-/// 
+///
 /// The function has the side effects that:
 ///  - Larger integers are more positive values.
 ///  - Float zero is mapped to center of integers (so clear to integer zero is a nice default for atomic max usage).
-/// 
+///
 /// @param [in] x                       The floating point value to make sortable.
-/// 
+///
 /// @returns
 /// The sortable integer value.
-/// 
+///
 /// @ingroup GPUCore
 FfxUInt16 ffxFloatToSortableIntegerHalf(FfxUInt16 x)
 {
@@ -745,19 +745,19 @@ FfxUInt16 ffxSortableIntegerToFloatHalf(FfxUInt16 x)
 }
 
 /// Convert a pair of 16bit floating point values to a pair of sortable integers.
-/// 
+///
 ///  - If sign bit=0, flip the sign bit (positives).
 ///  - If sign bit=1, flip all bits     (negatives).
-/// 
+///
 /// The function has the side effects that:
 ///  - Larger integers are more positive values.
 ///  - Float zero is mapped to center of integers (so clear to integer zero is a nice default for atomic max usage).
-/// 
+///
 /// @param [in] x                       The floating point values to make sortable.
-/// 
+///
 /// @returns
 /// The sortable integer values.
-/// 
+///
 /// @ingroup GPUCore
 FfxUInt16x2 ffxFloatToSortableIntegerHalf(FfxUInt16x2 x)
 {
@@ -1021,7 +1021,7 @@ FfxUInt16x2 ffxPackX0Y0X1Y1UnsignedToUint16x2(FfxFloat16x2 x, FfxFloat16x2 y)
     return FFX_UINT32_TO_UINT16X2(ffxPackBytesY2X2Y0X0(FfxUInt32x2(FFX_UINT16X2_TO_UINT32(FFX_TO_UINT16X2(x)), FFX_UINT16X2_TO_UINT32(FFX_TO_UINT16X2(y)))));
 }
 
-/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[0:7],   
+/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[0:7],
 /// d.y[0:7] into r.y[0:7], i.x[8:15] into r.x[8:15], r.y[8:15] and i.y[0:15] into r.x[16:31], r.y[16:31] using 3 ops.
 ///
 /// r=ffxPermuteUByte0Float16x2ToUint2(d,i)
@@ -1033,7 +1033,7 @@ FfxUInt16x2 ffxPackX0Y0X1Y1UnsignedToUint16x2(FfxFloat16x2 x, FfxFloat16x2 y)
 ///   V_PERM_B32 r.y,i,i,k2
 ///
 /// @param [in] d                       The FfxUInt32x2 value to be packed.
-/// @param [in] i                       The FfxFloat16x2 value to be packed. 
+/// @param [in] i                       The FfxFloat16x2 value to be packed.
 ///
 /// @returns
 /// The packed FfxUInt32x2 value.
@@ -1045,7 +1045,7 @@ FfxUInt32x2 ffxPermuteUByte0Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x2 i)
     return FfxUInt32x2(ffxPackBytesY3Y2Y1X0(FfxUInt32x2(d.x, b)), ffxPackBytesY3Y2Y1X2(FfxUInt32x2(d.y, b)));
 }
 
-/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[8:15],   
+/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[8:15],
 /// d.y[0:7] into r.y[8:15], i.x[0:7] into r.x[0:7], r.y[0:7] and i.y[0:15] into r.x[16:31], r.y[16:31] using 3 ops.
 ///
 /// r=ffxPermuteUByte1Float16x2ToUint2(d,i)
@@ -1057,7 +1057,7 @@ FfxUInt32x2 ffxPermuteUByte0Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x2 i)
 ///   V_PERM_B32 r.y,i,i,k2
 ///
 /// @param [in] d                       The FfxUInt32x2 value to be packed.
-/// @param [in] i                       The FfxFloat16x2 value to be packed. 
+/// @param [in] i                       The FfxFloat16x2 value to be packed.
 ///
 /// @returns
 /// The packed FfxUInt32x2 value.
@@ -1069,7 +1069,7 @@ FfxUInt32x2 ffxPermuteUByte1Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x2 i)
     return FfxUInt32x2(ffxPackBytesY3Y2X0Y0(FfxUInt32x2(d.x, b)), ffxPackBytesY3Y2X2Y0(FfxUInt32x2(d.y, b)));
 }
 
-/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[16:23],   
+/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[16:23],
 /// d.y[0:7] into r.y[16:23], i.x[0:15] into r.x[0:15], r.y[0:15] and i.y[8:15] into r.x[24:31], r.y[24:31] using 3 ops.
 ///
 /// r=ffxPermuteUByte2Float16x2ToUint2(d,i)
@@ -1081,7 +1081,7 @@ FfxUInt32x2 ffxPermuteUByte1Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x2 i)
 ///   V_PERM_B32 r.y,i,i,k2
 ///
 /// @param [in] d                       The FfxUInt32x2 value to be packed.
-/// @param [in] i                       The FfxFloat16x2 value to be packed. 
+/// @param [in] i                       The FfxFloat16x2 value to be packed.
 ///
 /// @returns
 /// The packed FfxUInt32x2 value.
@@ -1093,7 +1093,7 @@ FfxUInt32x2 ffxPermuteUByte2Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x2 i)
     return FfxUInt32x2(ffxPackBytesY3X0Y1Y0(FfxUInt32x2(d.x, b)), ffxPackBytesY3X2Y1Y0(FfxUInt32x2(d.y, b)));
 }
 
-/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[24:31],   
+/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[24:31],
 /// d.y[0:7] into r.y[24:31], i.x[0:15] into r.x[0:15], r.y[0:15] and i.y[0:7] into r.x[16:23], r.y[16:23] using 3 ops.
 ///
 /// r=ffxPermuteUByte3Float16x2ToUint2(d,i)
@@ -1105,7 +1105,7 @@ FfxUInt32x2 ffxPermuteUByte2Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x2 i)
 ///   V_PERM_B32 r.y,i,i,k2
 ///
 /// @param [in] d                       The FfxUInt32x2 value to be packed.
-/// @param [in] i                       The FfxFloat16x2 value to be packed. 
+/// @param [in] i                       The FfxFloat16x2 value to be packed.
 ///
 /// @returns
 /// The packed FfxUInt32x2 value.
@@ -1117,9 +1117,9 @@ FfxUInt32x2 ffxPermuteUByte3Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x2 i)
     return FfxUInt32x2(ffxPackBytesX0Y2Y1Y0(FfxUInt32x2(d.x, b)), ffxPackBytesX2Y2Y1Y0(FfxUInt32x2(d.y, b)));
 }
 
-/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[0:7] into r.x[0:7] and i.y[0:7] into r.y[0:7] using 2 ops.  
+/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[0:7] into r.x[0:7] and i.y[0:7] into r.y[0:7] using 2 ops.
 ///
-/// @param [in] i                       The FfxUInt32x2 value to be unpacked. 
+/// @param [in] i                       The FfxUInt32x2 value to be unpacked.
 ///
 /// @returns
 /// The unpacked FfxFloat16x2.
@@ -1130,9 +1130,9 @@ FfxFloat16x2 ffxPermuteUByte0Uint2ToFloat16x2(FfxUInt32x2 i)
     return FFX_TO_FLOAT16X2(FFX_UINT32_TO_UINT16X2(ffxPackBytesZeroY0ZeroX0(i))) * FFX_BROADCAST_FLOAT16X2(32768.0);
 }
 
-/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[8:15] into r.x[0:7] and i.y[8:15] into r.y[0:7] using 2 ops.  
+/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[8:15] into r.x[0:7] and i.y[8:15] into r.y[0:7] using 2 ops.
 ///
-/// @param [in] i                       The FfxUInt32x2 value to be unpacked. 
+/// @param [in] i                       The FfxUInt32x2 value to be unpacked.
 ///
 /// @returns
 /// The unpacked FfxFloat16x2.
@@ -1143,9 +1143,9 @@ FfxFloat16x2 ffxPermuteUByte1Uint2ToFloat16x2(FfxUInt32x2 i)
     return FFX_TO_FLOAT16X2(FFX_UINT32_TO_UINT16X2(ffxPackBytesZeroY1ZeroX1(i))) * FFX_BROADCAST_FLOAT16X2(32768.0);
 }
 
-/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[16:23] into r.x[0:7] and i.y[16:23] into r.y[0:7] using 2 ops.  
+/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[16:23] into r.x[0:7] and i.y[16:23] into r.y[0:7] using 2 ops.
 ///
-/// @param [in] i                       The FfxUInt32x2 value to be unpacked. 
+/// @param [in] i                       The FfxUInt32x2 value to be unpacked.
 ///
 /// @returns
 /// The unpacked FfxFloat16x2.
@@ -1156,9 +1156,9 @@ FfxFloat16x2 ffxPermuteUByte2Uint2ToFloat16x2(FfxUInt32x2 i)
     return FFX_TO_FLOAT16X2(FFX_UINT32_TO_UINT16X2(ffxPackBytesZeroY2ZeroX2(i))) * FFX_BROADCAST_FLOAT16X2(32768.0);
 }
 
-/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[24:31] into r.x[0:7] and i.y[24:31] into r.y[0:7] using 2 ops.  
+/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[24:31] into r.x[0:7] and i.y[24:31] into r.y[0:7] using 2 ops.
 ///
-/// @param [in] i                       The FfxUInt32x2 value to be unpacked. 
+/// @param [in] i                       The FfxUInt32x2 value to be unpacked.
 ///
 /// @returns
 /// The unpacked FfxFloat16x2.
@@ -1185,13 +1185,13 @@ FfxUInt16x2 ffxPackX0Y0X1Y1SignedToUint16x2(FfxFloat16x2 x, FfxFloat16x2 y)
     return FFX_UINT32_TO_UINT16X2(ffxPackBytesY2X2Y0X0(FfxUInt32x2(FFX_UINT16X2_TO_UINT32(FFX_TO_UINT16X2(x)), FFX_UINT16X2_TO_UINT32(FFX_TO_UINT16X2(y)))));
 }
 
-/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[0:7],   
+/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[0:7],
 /// d.y[0:7] into r.y[0:7], i.x[8:15] into r.x[8:15], r.y[8:15] and i.y[0:15] into r.x[16:31], r.y[16:31] using 3 ops.
 ///
 /// Handles signed byte values.
 ///
 /// @param [in] d                       The FfxUInt32x2 value to be packed.
-/// @param [in] i                       The FfxFloat16x2 value to be packed. 
+/// @param [in] i                       The FfxFloat16x2 value to be packed.
 ///
 /// @returns
 /// The packed FfxUInt32x2 value.
@@ -1203,13 +1203,13 @@ FfxUInt32x2 ffxPermuteSByte0Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x2 i)
     return FfxUInt32x2(ffxPackBytesY3Y2Y1X0(FfxUInt32x2(d.x, b)), ffxPackBytesY3Y2Y1X2(FfxUInt32x2(d.y, b)));
 }
 
-/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[8:15],   
+/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[8:15],
 /// d.y[0:7] into r.y[8:15], i.x[0:7] into r.x[0:7], r.y[0:7] and i.y[0:15] into r.x[16:31], r.y[16:31] using 3 ops.
 ///
 /// Handles signed byte values.
 ///
 /// @param [in] d                       The FfxUInt32x2 value to be packed.
-/// @param [in] i                       The FfxFloat16x2 value to be packed. 
+/// @param [in] i                       The FfxFloat16x2 value to be packed.
 ///
 /// @returns
 /// The packed FfxUInt32x2 value.
@@ -1221,13 +1221,13 @@ FfxUInt32x2 ffxPermuteSByte1Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x2 i)
     return FfxUInt32x2(ffxPackBytesY3Y2X0Y0(FfxUInt32x2(d.x, b)), ffxPackBytesY3Y2X2Y0(FfxUInt32x2(d.y, b)));
 }
 
-/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[16:23],   
+/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[16:23],
 /// d.y[0:7] into r.y[16:23], i.x[0:15] into r.x[0:15], r.y[0:15] and i.y[8:15] into r.x[24:31], r.y[24:31] using 3 ops.
 ///
 /// Handles signed byte values.
 ///
 /// @param [in] d                       The FfxUInt32x2 value to be packed.
-/// @param [in] i                       The FfxFloat16x2 value to be packed. 
+/// @param [in] i                       The FfxFloat16x2 value to be packed.
 ///
 /// @returns
 /// The packed FfxUInt32x2 value.
@@ -1239,13 +1239,13 @@ FfxUInt32x2 ffxPermuteSByte2Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x2 i)
     return FfxUInt32x2(ffxPackBytesY3X0Y1Y0(FfxUInt32x2(d.x, b)), ffxPackBytesY3X2Y1Y0(FfxUInt32x2(d.y, b)));
 }
 
-/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[24:31],   
+/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[24:31],
 /// d.y[0:7] into r.y[24:31], i.x[0:15] into r.x[0:15], r.y[0:15] and i.y[0:7] into r.x[16:23], r.y[16:23] using 3 ops.
 ///
 /// Handles signed byte values.
 ///
 /// @param [in] d                       The FfxUInt32x2 value to be packed.
-/// @param [in] i                       The FfxFloat16x2 value to be packed. 
+/// @param [in] i                       The FfxFloat16x2 value to be packed.
 ///
 /// @returns
 /// The packed FfxUInt32x2 value.
@@ -1257,7 +1257,7 @@ FfxUInt32x2 ffxPermuteSByte3Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x2 i)
     return FfxUInt32x2(ffxPackBytesX0Y2Y1Y0(FfxUInt32x2(d.x, b)), ffxPackBytesX2Y2Y1Y0(FfxUInt32x2(d.y, b)));
 }
 
-/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[0:7],   
+/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[0:7],
 /// d.y[0:7] into r.y[0:7], i.x[8:15] into r.x[8:15], r.y[8:15] and i.y[0:15] into r.x[16:31], r.y[16:31] using 3 ops.
 ///
 /// Zero-based flips the MSB bit of the byte (making 128 "exact zero" actually zero).
@@ -1266,7 +1266,7 @@ FfxUInt32x2 ffxPermuteSByte3Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x2 i)
 /// Handles signed byte values.
 ///
 /// @param [in] d                       The FfxUInt32x2 value to be packed.
-/// @param [in] i                       The FfxFloat16x2 value to be packed. 
+/// @param [in] i                       The FfxFloat16x2 value to be packed.
 ///
 /// @returns
 /// The packed FfxUInt32x2 value.
@@ -1278,7 +1278,7 @@ FfxUInt32x2 ffxPermuteZeroBasedSByte0Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x
     return FfxUInt32x2(ffxPackBytesY3Y2Y1X0(FfxUInt32x2(d.x, b)), ffxPackBytesY3Y2Y1X2(FfxUInt32x2(d.y, b)));
 }
 
-/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[8:15],   
+/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[8:15],
 /// d.y[0:7] into r.y[8:15], i.x[0:7] into r.x[0:7], r.y[0:7] and i.y[0:15] into r.x[16:31], r.y[16:31] using 3 ops.
 ///
 /// Zero-based flips the MSB bit of the byte (making 128 "exact zero" actually zero).
@@ -1287,7 +1287,7 @@ FfxUInt32x2 ffxPermuteZeroBasedSByte0Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x
 /// Handles signed byte values.
 ///
 /// @param [in] d                       The FfxUInt32x2 value to be packed.
-/// @param [in] i                       The FfxFloat16x2 value to be packed. 
+/// @param [in] i                       The FfxFloat16x2 value to be packed.
 ///
 /// @returns
 /// The packed FfxUInt32x2 value.
@@ -1299,7 +1299,7 @@ FfxUInt32x2 ffxPermuteZeroBasedSByte1Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x
     return FfxUInt32x2(ffxPackBytesY3Y2X0Y0(FfxUInt32x2(d.x, b)), ffxPackBytesY3Y2X2Y0(FfxUInt32x2(d.y, b)));
 }
 
-/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[16:23],   
+/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[16:23],
 /// d.y[0:7] into r.y[16:23], i.x[0:15] into r.x[0:15], r.y[0:15] and i.y[8:15] into r.x[24:31], r.y[24:31] using 3 ops.
 ///
 /// Zero-based flips the MSB bit of the byte (making 128 "exact zero" actually zero).
@@ -1308,7 +1308,7 @@ FfxUInt32x2 ffxPermuteZeroBasedSByte1Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x
 /// Handles signed byte values.
 ///
 /// @param [in] d                       The FfxUInt32x2 value to be packed.
-/// @param [in] i                       The FfxFloat16x2 value to be packed. 
+/// @param [in] i                       The FfxFloat16x2 value to be packed.
 ///
 /// @returns
 /// The packed FfxUInt32x2 value.
@@ -1320,7 +1320,7 @@ FfxUInt32x2 ffxPermuteZeroBasedSByte2Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x
     return FfxUInt32x2(ffxPackBytesY3X0Y1Y0(FfxUInt32x2(d.x, b)), ffxPackBytesY3X2Y1Y0(FfxUInt32x2(d.y, b)));
 }
 
-/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[24:31],   
+/// Given a FfxUInt32x2 value d, Float16x2 value i and a resulting FfxUInt32x2 value r, this function packs d.x[0:7] into r.x[24:31],
 /// d.y[0:7] into r.y[24:31], i.x[0:15] into r.x[0:15], r.y[0:15] and i.y[0:7] into r.x[16:23], r.y[16:23] using 3 ops.
 ///
 /// Zero-based flips the MSB bit of the byte (making 128 "exact zero" actually zero).
@@ -1329,7 +1329,7 @@ FfxUInt32x2 ffxPermuteZeroBasedSByte2Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x
 /// Handles signed byte values.
 ///
 /// @param [in] d                       The FfxUInt32x2 value to be packed.
-/// @param [in] i                       The FfxFloat16x2 value to be packed. 
+/// @param [in] i                       The FfxFloat16x2 value to be packed.
 ///
 /// @returns
 /// The packed FfxUInt32x2 value.
@@ -1341,11 +1341,11 @@ FfxUInt32x2 ffxPermuteZeroBasedSByte3Float16x2ToUint2(FfxUInt32x2 d, FfxFloat16x
     return FfxUInt32x2(ffxPackBytesX0Y2Y1Y0(FfxUInt32x2(d.x, b)), ffxPackBytesX2Y2Y1Y0(FfxUInt32x2(d.y, b)));
 }
 
-/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[0:7] into r.x[0:7] and i.y[0:7] into r.y[0:7] using 2 ops.  
+/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[0:7] into r.x[0:7] and i.y[0:7] into r.y[0:7] using 2 ops.
 ///
 /// Handles signed byte values.
 ///
-/// @param [in] i                       The FfxUInt32x2 value to be unpacked. 
+/// @param [in] i                       The FfxUInt32x2 value to be unpacked.
 ///
 /// @returns
 /// The unpacked FfxFloat16x2.
@@ -1356,11 +1356,11 @@ FfxFloat16x2 ffxPermuteSByte0Uint2ToFloat16x2(FfxUInt32x2 i)
     return FFX_TO_FLOAT16X2(FFX_UINT32_TO_UINT16X2(ffxPackBytesZeroY0ZeroX0(i))) * FFX_BROADCAST_FLOAT16X2(32768.0) - FFX_BROADCAST_FLOAT16X2(0.25);
 }
 
-/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[8:15] into r.x[0:7] and i.y[8:15] into r.y[0:7] using 2 ops.  
+/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[8:15] into r.x[0:7] and i.y[8:15] into r.y[0:7] using 2 ops.
 ///
 /// Handles signed byte values.
 ///
-/// @param [in] i                       The FfxUInt32x2 value to be unpacked. 
+/// @param [in] i                       The FfxUInt32x2 value to be unpacked.
 ///
 /// @returns
 /// The unpacked FfxFloat16x2.
@@ -1372,10 +1372,10 @@ FfxFloat16x2 ffxPermuteSByte1Uint2ToFloat16x2(FfxUInt32x2 i)
 }
 
 /// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[16:23] into r.x[0:7] and i.y[16:23] into r.y[0:7] using 2 ops.
-///  
+///
 /// Handles signed byte values.
 ///
-/// @param [in] i                       The FfxUInt32x2 value to be unpacked. 
+/// @param [in] i                       The FfxUInt32x2 value to be unpacked.
 ///
 /// @returns
 /// The unpacked FfxFloat16x2.
@@ -1386,11 +1386,11 @@ FfxFloat16x2 ffxPermuteSByte2Uint2ToFloat16x2(FfxUInt32x2 i)
     return FFX_TO_FLOAT16X2(FFX_UINT32_TO_UINT16X2(ffxPackBytesZeroY2ZeroX2(i))) * FFX_BROADCAST_FLOAT16X2(32768.0) - FFX_BROADCAST_FLOAT16X2(0.25);
 }
 
-/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[24:31] into r.x[0:7] and i.y[24:31] into r.y[0:7] using 2 ops.  
+/// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[24:31] into r.x[0:7] and i.y[24:31] into r.y[0:7] using 2 ops.
 ///
 /// Handles signed byte values.
 ///
-/// @param [in] i                       The FfxUInt32x2 value to be unpacked. 
+/// @param [in] i                       The FfxUInt32x2 value to be unpacked.
 ///
 /// @returns
 /// The unpacked FfxFloat16x2.
@@ -1402,10 +1402,10 @@ FfxFloat16x2 ffxPermuteSByte3Uint2ToFloat16x2(FfxUInt32x2 i)
 }
 
 /// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[0:7] into r.x[0:7] and i.y[0:7] into r.y[0:7] using 2 ops.
-///  
+///
 /// Handles signed byte values.
 ///
-/// @param [in] i                       The FfxUInt32x2 value to be unpacked. 
+/// @param [in] i                       The FfxUInt32x2 value to be unpacked.
 ///
 /// @returns
 /// The unpacked FfxFloat16x2.
@@ -1417,10 +1417,10 @@ FfxFloat16x2 ffxPermuteZeroBasedSByte0Uint2ToFloat16x2(FfxUInt32x2 i)
 }
 
 /// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[8:15] into r.x[0:7] and i.y[8:15] into r.y[0:7] using 2 ops.
-///  
+///
 /// Handles signed byte values.
 ///
-/// @param [in] i                       The FfxUInt32x2 value to be unpacked. 
+/// @param [in] i                       The FfxUInt32x2 value to be unpacked.
 ///
 /// @returns
 /// The unpacked FfxFloat16x2.
@@ -1432,10 +1432,10 @@ FfxFloat16x2 ffxPermuteZeroBasedSByte1Uint2ToFloat16x2(FfxUInt32x2 i)
 }
 
 /// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[16:23] into r.x[0:7] and i.y[16:23] into r.y[0:7] using 2 ops.
-///  
+///
 /// Handles signed byte values.
 ///
-/// @param [in] i                       The FfxUInt32x2 value to be unpacked. 
+/// @param [in] i                       The FfxUInt32x2 value to be unpacked.
 ///
 /// @returns
 /// The unpacked FfxFloat16x2.
@@ -1447,10 +1447,10 @@ FfxFloat16x2 ffxPermuteZeroBasedSByte2Uint2ToFloat16x2(FfxUInt32x2 i)
 }
 
 /// Given a FfxUInt32x2 value i and a resulting Float16x2 value r, this function packs i.x[24:31] into r.x[0:7] and i.y[24:31] into r.y[0:7] using 2 ops.
-///  
+///
 /// Handles signed byte values.
 ///
-/// @param [in] i                       The FfxUInt32x2 value to be unpacked. 
+/// @param [in] i                       The FfxUInt32x2 value to be unpacked.
 ///
 /// @returns
 /// The unpacked FfxFloat16x2.
@@ -2551,18 +2551,18 @@ FfxFloat16x4 ffxZeroOneIsSignedHalf(FfxFloat16x4 x)
 }
 
 /// Compute a Rec.709 color space.
-/// 
+///
 /// Rec.709 is used for some HDTVs.
-/// 
+///
 /// Both Rec.709 and sRGB have a linear segment which as spec'ed would intersect the curved segment 2 times.
 ///  (a.) For 8-bit sRGB, steps {0 to 10.3} are in the linear region (4% of the encoding range).
 ///  (b.) For 8-bit  709, steps {0 to 20.7} are in the linear region (8% of the encoding range).
 ///
 /// @param [in] c           The color to convert to Rec. 709.
-/// 
+///
 /// @returns
 /// The <c><i>color</i></c> in Rec.709 space.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat16 ffxRec709FromLinearHalf(FfxFloat16 c)
 {
@@ -2572,18 +2572,18 @@ FfxFloat16 ffxRec709FromLinearHalf(FfxFloat16 c)
 }
 
 /// Compute a Rec.709 color space.
-/// 
+///
 /// Rec.709 is used for some HDTVs.
-/// 
+///
 /// Both Rec.709 and sRGB have a linear segment which as spec'ed would intersect the curved segment 2 times.
 ///  (a.) For 8-bit sRGB, steps {0 to 10.3} are in the linear region (4% of the encoding range).
 ///  (b.) For 8-bit  709, steps {0 to 20.7} are in the linear region (8% of the encoding range).
 ///
 /// @param [in] c           The color to convert to Rec. 709.
-/// 
+///
 /// @returns
 /// The <c><i>color</i></c> in Rec.709 space.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat16x2 ffxRec709FromLinearHalf(FfxFloat16x2 c)
 {
@@ -2593,18 +2593,18 @@ FfxFloat16x2 ffxRec709FromLinearHalf(FfxFloat16x2 c)
 }
 
 /// Compute a Rec.709 color space.
-/// 
+///
 /// Rec.709 is used for some HDTVs.
-/// 
+///
 /// Both Rec.709 and sRGB have a linear segment which as spec'ed would intersect the curved segment 2 times.
 ///  (a.) For 8-bit sRGB, steps {0 to 10.3} are in the linear region (4% of the encoding range).
 ///  (b.) For 8-bit  709, steps {0 to 20.7} are in the linear region (8% of the encoding range).
 ///
 /// @param [in] c           The color to convert to Rec. 709.
-/// 
+///
 /// @returns
 /// The <c><i>color</i></c> in Rec.709 space.
-/// 
+///
 /// @ingroup GPUCore
 FfxFloat16x3 ffxRec709FromLinearHalf(FfxFloat16x3 c)
 {
@@ -2616,9 +2616,9 @@ FfxFloat16x3 ffxRec709FromLinearHalf(FfxFloat16x3 c)
 /// Compute a gamma value from a linear value.
 ///
 /// Typically 2.2 for some PC displays, or 2.4-2.5 for CRTs, or 2.2 FreeSync2 native.
-/// 
+///
 /// Note: 'rcpX' is '1/x', where the 'x' is what would be used in <c><i>ffxLinearFromGammaHalf</i></c>.
-/// 
+///
 /// @param [in] c              The value to convert to gamma space from linear.
 /// @param [in] rcpX           The reciprocal of power value used for the gamma curve.
 ///
@@ -2634,9 +2634,9 @@ FfxFloat16 ffxGammaFromLinearHalf(FfxFloat16 c, FfxFloat16 rcpX)
 /// Compute a gamma value from a linear value.
 ///
 /// Typically 2.2 for some PC displays, or 2.4-2.5 for CRTs, or 2.2 FreeSync2 native.
-/// 
+///
 /// Note: 'rcpX' is '1/x', where the 'x' is what would be used in <c><i>ffxLinearFromGammaHalf</i></c>.
-/// 
+///
 /// @param [in] c              The value to convert to gamma space from linear.
 /// @param [in] rcpX           The reciprocal of power value used for the gamma curve.
 ///
@@ -2652,9 +2652,9 @@ FfxFloat16x2 ffxGammaFromLinearHalf(FfxFloat16x2 c, FfxFloat16 rcpX)
 /// Compute a gamma value from a linear value.
 ///
 /// Typically 2.2 for some PC displays, or 2.4-2.5 for CRTs, or 2.2 FreeSync2 native.
-/// 
+///
 /// Note: 'rcpX' is '1/x', where the 'x' is what would be used in <c><i>ffxLinearFromGammaHalf</i></c>.
-/// 
+///
 /// @param [in] c              The value to convert to gamma space from linear.
 /// @param [in] rcpX           The reciprocal of power value used for the gamma curve.
 ///
@@ -2935,14 +2935,14 @@ FfxFloat16x3 ffxLinearFromSrgbHalf(FfxFloat16x3 c)
 }
 
 /// A remapping of 64x1 to 8x8 imposing rotated 2x2 pixel quads in quad linear.
-/// 
+///
 /// Remap illustration:
 ///
 ///     543210
 ///     ~~~~~~
 ///     ..xxx.
 ///     yy...y
-/// 
+///
 /// @param [in] a       The input 1D coordinates to remap.
 ///
 /// @returns
@@ -2957,7 +2957,7 @@ FfxUInt16x2 ffxRemapForQuadHalf(FfxUInt32 a)
 /// A helper function performing a remap 64x1 to 8x8 remapping which is necessary for 2D wave reductions.
 ///
 /// The 64-wide lane indices to 8x8 remapping is performed as follows:
-/// 
+///
 ///     00 01 08 09 10 11 18 19
 ///     02 03 0a 0b 12 13 1a 1b
 ///     04 05 0c 0d 14 15 1c 1d
@@ -2968,10 +2968,10 @@ FfxUInt16x2 ffxRemapForQuadHalf(FfxUInt32 a)
 ///     26 27 2e 2f 36 37 3e 3f
 ///
 /// @param [in] a       The input 1D coordinate to remap.
-/// 
+///
 /// @returns
 /// The remapped 2D coordinates.
-/// 
+///
 /// @ingroup GPUCore
 FfxUInt16x2 ffxRemapForWaveReductionHalf(FfxUInt32 a)
 {

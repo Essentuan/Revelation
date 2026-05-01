@@ -1,41 +1,41 @@
 #if defined MC_NORMAL_MAP
-	void DecodeNormalTex(inout vec3 normalTex) {
+    void DecodeNormalTex(inout vec3 normalTex) {
         normalTex = normalTex * 2.0 - 1.0;
         #if TEXTURE_FORMAT == 0
             normalTex.z = sqrt(saturate(oms(sdot(normalTex.xy))));
         #endif
         normalTex.xy = uintBitsToFloat(floatBitsToUint(saturate(abs(normalTex.xy) - rcp255)) ^ (floatBitsToUint(normalTex.xy) & 0x80000000u));
-	}
+    }
 #endif
 
 float Packup2x8(vec2 data) {
-	return dot(floor(data * 255.0 + 0.5), vec2(256.0 / 65535.0, 1.0 / 65535.0));
+    return dot(floor(data * 255.0 + 0.5), vec2(256.0 / 65535.0, 1.0 / 65535.0));
 }
 
 float PackupDithered2x8(vec2 data, float dither) {
-	return dot(floor(data * 255.0 + dither), vec2(256.0 / 65535.0, 1.0 / 65535.0));
+    return dot(floor(data * 255.0 + dither), vec2(256.0 / 65535.0, 1.0 / 65535.0));
 }
 
 vec2 Unpack2x8(float data) {
-	float x, y = modf(data * (65535.0 / 256.0), x) * 256.0;
-	return vec2(x, y) * rcp255;
+    float x, y = modf(data * (65535.0 / 256.0), x) * 256.0;
+    return vec2(x, y) * rcp255;
 }
 
 float Packup2x8X(float data) { return floor(data * (65535.0 / 256.0)) * rcp255; }
 float Packup2x8Y(float data) { return fract(data * (65535.0 / 256.0)) * (256.0 * rcp255); }
 
 uint Packup2x8U(vec2 data) {
-	uvec2 u = uvec2(data * 255.0 + 0.5);
-	return bitfieldInsert(u.x, u.y, 8, 8);
+    uvec2 u = uvec2(data * 255.0 + 0.5);
+    return bitfieldInsert(u.x, u.y, 8, 8);
 }
 
 uint PackupDithered2x8U(vec2 data, float dither) {
-	uvec2 u = uvec2(data * 255.0 + dither);
-	return bitfieldInsert(u.x, u.y, 8, 8);
+    uvec2 u = uvec2(data * 255.0 + dither);
+    return bitfieldInsert(u.x, u.y, 8, 8);
 }
 
 vec2 Unpack2x8U(uint data) {
-	return uvec2(bitfieldExtract(data, 0, 8), bitfieldExtract(data, 8, 8)) * rcp255;
+    return uvec2(bitfieldExtract(data, 0, 8), bitfieldExtract(data, 8, 8)) * rcp255;
 }
 
 float Unpack2x8UX(uint data) { return bitfieldExtract(data, 0, 8) * rcp255; }
@@ -63,7 +63,7 @@ vec2 OctEncodeUnorm(vec3 dir) {
 }
 
 vec3 OctDecodeUnorm(vec2 oct) {
-	return OctDecodeSnorm(oct * 2.0 - 1.0);
+    return OctDecodeSnorm(oct * 2.0 - 1.0);
 }
 
 // Mercator projection
@@ -119,8 +119,8 @@ vec3 UnprojectEquirectanglarNonlinear(vec2 uv) {
 // [-X][-Y][-Z]
 
 vec2 ProjectCubemap(vec3 dir, float tileSize) {
-	float scale = 0.5 - 1.0 / tileSize;
-	vec3 dirAbs = abs(dir);
+    float scale = 0.5 - 1.0 / tileSize;
+    vec3 dirAbs = abs(dir);
 
     vec3 mask = step(vec3(maxOf(dirAbs)), dirAbs);
     scale /= dot(mask, dirAbs);
@@ -134,32 +134,32 @@ vec2 ProjectCubemap(vec3 dir, float tileSize) {
     uv += dir.xy * scaleMasked.z;
     uv += vec2(offsetX, offsetY);
 
-	return uv * rcp(vec2(3.0, 2.0)) + 0.5 / vec2(3.0, 2.0);
+    return uv * rcp(vec2(3.0, 2.0)) + 0.5 / vec2(3.0, 2.0);
 }
 
 vec3 UnprojectCubemap(vec2 uv, float tileSize) {
     uv = uv * vec2(3.0, 2.0) - 0.5;
-	float scale = tileSize / (0.5 * tileSize - 1.0);
+    float scale = tileSize / (0.5 * tileSize - 1.0);
 
     float signAxis = step(0.5, uv.y);
     vec2 temp = vec2((uv.y - signAxis) * scale, signAxis * 2.0 - 1.0);
 
-	vec3 dir;
-	if (uv.x < 0.5) {
+    vec3 dir;
+    if (uv.x < 0.5) {
         // X
-		dir.y = uv.x * scale;
-		dir.zx = temp;
-	} else if (uv.x < 1.5) {
+        dir.y = uv.x * scale;
+        dir.zx = temp;
+    } else if (uv.x < 1.5) {
         // Y
-		dir.x = uv.x * scale - scale;
-		dir.zy = temp;
-	} else {
+        dir.x = uv.x * scale - scale;
+        dir.zy = temp;
+    } else {
         // Z
-		dir.x = uv.x * scale - scale * 2.0;
-		dir.yz = temp;
-	}
+        dir.x = uv.x * scale - scale * 2.0;
+        dir.yz = temp;
+    }
 
-	return normalize(dir);
+    return normalize(dir);
 }
 
 //================================================================================================//

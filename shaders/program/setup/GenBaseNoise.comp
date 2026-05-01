@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -259,8 +259,8 @@ float WorleyFbm(vec3 p, float freq) {
 
 //======// Main //================================================================================//
 void main() {
-	ivec3 tid = ivec3(gl_GlobalInvocationID.xyz);
-	vec3 uv = (vec3(tid) + 0.5) / vec3(imageSize(baseNoiseImg));
+    ivec3 tid = ivec3(gl_GlobalInvocationID.xyz);
+    vec3 uv = (vec3(tid) + 0.5) / vec3(imageSize(baseNoiseImg));
 
     // float hf = WorleyFbm(uv, 16.0);
     // float hf = AlligatorFbm(uv, 16.0, 4, 2.0, 0.6);
@@ -272,5 +272,5 @@ void main() {
     // Mapping perlin noise in between worley as minimum and 1.0 as maximum (as described in text of p.101 of GPU Pro 7)
     float perlinWorley = mix(PerlinFbm(uv, 6.0, 5, 2.0, 0.6), 1.0, WorleyFbm(uv, 6.0, 5, 2.0, 0.6));
 
-	imageStore(baseNoiseImg, tid, vec4(perlinWorley, 0.0, 0.0, 1.0));
+    imageStore(baseNoiseImg, tid, vec4(perlinWorley, 0.0, 0.0, 1.0));
 }

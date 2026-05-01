@@ -1,15 +1,15 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
-	References:
-		Sébastien Hillaire. "A Scalable and Production Ready Sky and Atmosphere Rendering Technique". EGSR 2020.
+    References:
+        Sébastien Hillaire. "A Scalable and Production Ready Sky and Atmosphere Rendering Technique". EGSR 2020.
             https://sebh.github.io/publications/egsr2020.pdf
-		Epic Games, Inc. "Unreal Engine Sky Atmosphere Rendering Technique". 2020.
+        Epic Games, Inc. "Unreal Engine Sky Atmosphere Rendering Technique". 2020.
             https://github.com/sebh/UnrealEngineSkyAtmosphere
 
 --------------------------------------------------------------------------------
@@ -68,8 +68,8 @@ vec3 RenderSkyView(vec2 uv) {
 
 //======// Main //================================================================================//
 void main() {
-	ivec2 tid = ivec2(gl_GlobalInvocationID.xy);
-	vec2 uv = (vec2(tid) + 0.5) * rcp(imageSize(skyViewImg));
+    ivec2 tid = ivec2(gl_GlobalInvocationID.xy);
+    vec2 uv = (vec2(tid) + 0.5) * rcp(imageSize(skyViewImg));
 
-	imageStore(skyViewImg, tid, EncodeRGBE8(RenderSkyView(uv)));
+    imageStore(skyViewImg, tid, EncodeRGBE8(RenderSkyView(uv)));
 }

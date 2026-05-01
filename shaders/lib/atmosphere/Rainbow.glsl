@@ -6,16 +6,16 @@
 //================================================================================================//
 
 vec3 RainbowPhase(float angle, vec3 angleDev) {
-	return hermite(saturate(1.0 - abs((angleDev - angle) / (angleDev.b - angleDev.r))));
+    return hermite(saturate(1.0 - abs((angleDev - angle) / (angleDev.b - angleDev.r))));
 }
 
 vec3 RenderRainbows(float mu) {
     float theta = fastAcos(saturate(-mu));
 
-	// Primary Rainbow
+    // Primary Rainbow
     vec3 phase = RainbowPhase(theta, radians(vec3(42.3, 41.5, 40.6))) * RAINBOWS_PRIMARY_INTENSITY;
 
-	// Secondary Rainbow
+    // Secondary Rainbow
     phase += RainbowPhase(theta, radians(vec3(50.1, 51.5, 53.7))) * (RAINBOWS_SECONDARY_INTENSITY * rPI);
 
     return phase;

@@ -3,87 +3,87 @@
 /*
 The following are the license terms for ACES 1
 --------------------------------------------------------------------------------
-	# License Terms for Academy Color Encoding System Components #
+    # License Terms for Academy Color Encoding System Components #
 
-	Academy Color Encoding System (ACES) software and tools are provided by the
-	Academy under the following terms and conditions: A worldwide, royalty-free,
-	non-exclusive right to copy, modify, create derivatives, and use, in source and
-	binary forms, is hereby granted, subject to acceptance of this license.
+    Academy Color Encoding System (ACES) software and tools are provided by the
+    Academy under the following terms and conditions: A worldwide, royalty-free,
+    non-exclusive right to copy, modify, create derivatives, and use, in source and
+    binary forms, is hereby granted, subject to acceptance of this license.
 
-	Copyright © 2015 Academy of Motion Picture Arts and Sciences (A.M.P.A.S.).
-	Portions contributed by others as indicated. All rights reserved.
+    Copyright © 2015 Academy of Motion Picture Arts and Sciences (A.M.P.A.S.).
+    Portions contributed by others as indicated. All rights reserved.
 
-	Performance of any of the aforementioned acts indicates acceptance to be bound
-	by the following terms and conditions:
+    Performance of any of the aforementioned acts indicates acceptance to be bound
+    by the following terms and conditions:
 
-	* Copies of source code, in whole or in part, must retain the above copyright
-	notice, this list of conditions and the Disclaimer of Warranty.
+    * Copies of source code, in whole or in part, must retain the above copyright
+    notice, this list of conditions and the Disclaimer of Warranty.
 
-	* Use in binary form must retain the above copyright notice, this list of
-	conditions and the Disclaimer of Warranty in the documentation and/or other
-	materials provided with the distribution.
+    * Use in binary form must retain the above copyright notice, this list of
+    conditions and the Disclaimer of Warranty in the documentation and/or other
+    materials provided with the distribution.
 
-	* Nothing in this license shall be deemed to grant any rights to trademarks,
-	copyrights, patents, trade secrets or any other intellectual property of
-	A.M.P.A.S. or any contributors, except as expressly stated herein.
+    * Nothing in this license shall be deemed to grant any rights to trademarks,
+    copyrights, patents, trade secrets or any other intellectual property of
+    A.M.P.A.S. or any contributors, except as expressly stated herein.
 
-	* Neither the name "A.M.P.A.S." nor the name of any other contributors to this
-	software may be used to endorse or promote products derivative of or based on
-	this software without express prior written permission of A.M.P.A.S. or the
-	contributors, as appropriate.
+    * Neither the name "A.M.P.A.S." nor the name of any other contributors to this
+    software may be used to endorse or promote products derivative of or based on
+    this software without express prior written permission of A.M.P.A.S. or the
+    contributors, as appropriate.
 
-	This license shall be construed pursuant to the laws of the State of
-	California, and any disputes related thereto shall be subject to the
-	jurisdiction of the courts therein.
+    This license shall be construed pursuant to the laws of the State of
+    California, and any disputes related thereto shall be subject to the
+    jurisdiction of the courts therein.
 
-	Disclaimer of Warranty: THIS SOFTWARE IS PROVIDED BY A.M.P.A.S. AND CONTRIBUTORS
-	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-	THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
-	NON-INFRINGEMENT ARE DISCLAIMED. IN NO EVENT SHALL A.M.P.A.S., OR ANY
-	CONTRIBUTORS OR DISTRIBUTORS, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-	SPECIAL, EXEMPLARY, RESITUTIONARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-	LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-	PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-	LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-	OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-	ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    Disclaimer of Warranty: THIS SOFTWARE IS PROVIDED BY A.M.P.A.S. AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+    THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+    NON-INFRINGEMENT ARE DISCLAIMED. IN NO EVENT SHALL A.M.P.A.S., OR ANY
+    CONTRIBUTORS OR DISTRIBUTORS, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    SPECIAL, EXEMPLARY, RESITUTIONARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+    LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+    OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-	WITHOUT LIMITING THE GENERALITY OF THE FOREGOING, THE ACADEMY SPECIFICALLY
-	DISCLAIMS ANY REPRESENTATIONS OR WARRANTIES WHATSOEVER RELATED TO PATENT OR
-	OTHER INTELLECTUAL PROPERTY RIGHTS IN THE ACADEMY COLOR ENCODING SYSTEM, OR
-	APPLICATIONS THEREOF, HELD BY PARTIES OTHER THAN A.M.P.A.S.,WHETHER DISCLOSED OR
-	UNDISCLOSED.
+    WITHOUT LIMITING THE GENERALITY OF THE FOREGOING, THE ACADEMY SPECIFICALLY
+    DISCLAIMS ANY REPRESENTATIONS OR WARRANTIES WHATSOEVER RELATED TO PATENT OR
+    OTHER INTELLECTUAL PROPERTY RIGHTS IN THE ACADEMY COLOR ENCODING SYSTEM, OR
+    APPLICATIONS THEREOF, HELD BY PARTIES OTHER THAN A.M.P.A.S.,WHETHER DISCLOSED OR
+    UNDISCLOSED.
 --------------------------------------------------------------------------------
 */
 
 float rgbToSaturation(vec3 rgb) {
-	float minC = min(min(rgb.r, rgb.g), rgb.b);
-	float maxC = max(max(rgb.r, rgb.g), rgb.b);
+    float minC = min(min(rgb.r, rgb.g), rgb.b);
+    float maxC = max(max(rgb.r, rgb.g), rgb.b);
 
-	return (max(maxC, 1e-10) - max(minC, 1e-10)) / max(maxC, 1e-2);
+    return (max(maxC, 1e-10) - max(minC, 1e-10)) / max(maxC, 1e-2);
 }
 
 // Returns a geometric hue angle in degrees (0-360) based on RGB values
 // For neutral colors, hue is undefined and the function will return zero (The reference
 // implementation returns NaN but I think that's silly)
 float rgbToHue(vec3 rgb) {
-	if (rgb.r == rgb.g && rgb.g == rgb.b) return 0.0;
+    if (rgb.r == rgb.g && rgb.g == rgb.b) return 0.0;
 
-	float hue = (360.0 / TAU) * atan(2.0 * rgb.r - rgb.g - rgb.b, sqrt(3.0) * (rgb.g - rgb.b));
+    float hue = (360.0 / TAU) * atan(2.0 * rgb.r - rgb.g - rgb.b, sqrt(3.0) * (rgb.g - rgb.b));
 
-	if (hue < 0.0) hue += 360.0;
+    if (hue < 0.0) hue += 360.0;
 
-	return hue;
+    return hue;
 }
 
 // Converts RGB to a luminance proxy, here called YC
 // YC is ~ Y + K * Chroma
 float rgbToYc(vec3 rgb) {
-	const float yc_radius_weight = 1.75;
+    const float yc_radius_weight = 1.75;
 
-	float chroma = sqrt(rgb.b * (rgb.b - rgb.g) + rgb.g * (rgb.g - rgb.r) + rgb.r * (rgb.r - rgb.b));
+    float chroma = sqrt(rgb.b * (rgb.b - rgb.g) + rgb.g * (rgb.g - rgb.r) + rgb.r * (rgb.r - rgb.b));
 
-	return (rgb.r + rgb.g + rgb.b + yc_radius_weight * chroma) * rcp(3.0);
+    return (rgb.r + rgb.g + rgb.b + yc_radius_weight * chroma) * rcp(3.0);
 }
 
 const mat3 Rec2020_2_AP0 = mat3(
@@ -111,25 +111,25 @@ const mat3 AP1_2_Rec2020 = mat3(
 );
 
 const mat3 AP0_2_XYZ = mat3(
-	 0.9525523959,  0.0000000000,  0.0000936786,
-	 0.3439664498,  0.7281660966, -0.0721325464,
-	 0.0000000000,  0.0000000000,  1.0088251844
+     0.9525523959,  0.0000000000,  0.0000936786,
+     0.3439664498,  0.7281660966, -0.0721325464,
+     0.0000000000,  0.0000000000,  1.0088251844
 );
 const mat3 XYZ_2_AP0 = mat3(
-	 1.0498110175,  0.0000000000, -0.0000974845,
-	-0.4959030231,  1.3733130458,  0.0982400361,
-	 0.0000000000,  0.0000000000,  0.9912520182
+     1.0498110175,  0.0000000000, -0.0000974845,
+    -0.4959030231,  1.3733130458,  0.0982400361,
+     0.0000000000,  0.0000000000,  0.9912520182
 );
 
 const mat3 AP1_2_XYZ = mat3(
-	 0.6624541811,  0.1340042065,  0.1561876870,
-	 0.2722287168,  0.6740817658,  0.0536895174,
-	-0.0055746495,  0.0040607335,  1.0103391003
+     0.6624541811,  0.1340042065,  0.1561876870,
+     0.2722287168,  0.6740817658,  0.0536895174,
+    -0.0055746495,  0.0040607335,  1.0103391003
 );
 const mat3 XYZ_2_AP1 = mat3(
-	 1.6410233797, -0.3248032942, -0.2364246952,
-	-0.6636628587,  1.6153315917,  0.0167563477,
-	 0.0117218943, -0.0082844420,  0.9883948585
+     1.6410233797, -0.3248032942, -0.2364246952,
+    -0.6636628587,  1.6153315917,  0.0167563477,
+     0.0117218943, -0.0082844420,  0.9883948585
 );
 
 const mat3 AP0_2_AP1 = AP0_2_XYZ * XYZ_2_AP1;
@@ -151,40 +151,40 @@ const vec3 AP1_RGB2Y = vec3(0.2722287168, 0.6740817658, 0.0536895174);
 
 //======// ACES 1 Fit //============================================================================//
 // "Glow" module constants
-const float rrtGlowGain  = 0.05;   	// Default: 0.05
-const float rrtGlowMid   = 0.08;   	// Default: 0.08
+const float rrtGlowGain  = 0.05;       // Default: 0.05
+const float rrtGlowMid   = 0.08;       // Default: 0.08
 
 // Red modifier constants
-const float rrtRedScale  = 0.82;  	// Default: 0.82
+const float rrtRedScale  = 0.82;      // Default: 0.82
 const float rrtRedPivot  = 0.03;    // Default: 0.03
 const float rrtRedHue    = 0.0;     // Default: 0.0
-const float rrtRedWidth  = 135.0; 	// Default: 135.0
+const float rrtRedWidth  = 135.0;     // Default: 135.0
 
 // Desaturation contants
-const float rrtSatFactor = 0.96; 	// Default: 0.96
-const float odtSatFactor = 0.93; 	// Default: 0.93
+const float rrtSatFactor = 0.96;     // Default: 0.96
+const float odtSatFactor = 0.93;     // Default: 0.93
 
 // ------- Glow module functions
 float GlowFwd(float yc_in, float glow_gain_in, const float glow_mid) {
-	float glow_gain_out;
+    float glow_gain_out;
 
-	if (yc_in <= 2.0 / 3.0 * glow_mid) {
-		glow_gain_out = glow_gain_in;
-	} else if (yc_in >= 2.0 * glow_mid) {
-		glow_gain_out = 0.0;
-	} else {
-		glow_gain_out = glow_gain_in * (glow_mid / yc_in - 0.5);
-	}
+    if (yc_in <= 2.0 / 3.0 * glow_mid) {
+        glow_gain_out = glow_gain_in;
+    } else if (yc_in >= 2.0 * glow_mid) {
+        glow_gain_out = 0.0;
+    } else {
+        glow_gain_out = glow_gain_in * (glow_mid / yc_in - 0.5);
+    }
 
-	return glow_gain_out;
+    return glow_gain_out;
 }
 
 float SigmoidShaper(float x) {
-	// Sigmoid function in the range 0 to 1 spanning -2 to +2
-	float t = max0(1.0 - abs(0.5 * x));
-	float y = 1.0 + signMul(oms(t * t), x);
+    // Sigmoid function in the range 0 to 1 spanning -2 to +2
+    float t = max0(1.0 - abs(0.5 * x));
+    float y = 1.0 + signMul(oms(t * t), x);
 
-	return 0.5 * y;
+    return 0.5 * y;
 }
 
 // ------- Red modifier functions
@@ -226,86 +226,86 @@ float CubicBasisShaper(float x, float w) {
 
 // https://github.com/sixthsurge/photon/blob/main/shaders/include/aces/aces.glsl
 float CubicBasisShaperFit(float x, const float width) {
-	float radius = 0.5 * width;
-	return abs(x) < radius ? sqr(hermite(1.0 - abs(x) / radius)) : 0.0;
+    float radius = 0.5 * width;
+    return abs(x) < radius ? sqr(hermite(1.0 - abs(x) / radius)) : 0.0;
 }
 
 float CenterHue(float hue, float centerH) {
-	float hueCentered = hue - centerH;
-	if (hueCentered < -180.0) hueCentered += 360.0;
-	else if (hueCentered > 180.0) hueCentered -= 360.0;
-	return hueCentered;
+    float hueCentered = hue - centerH;
+    if (hueCentered < -180.0) hueCentered += 360.0;
+    else if (hueCentered > 180.0) hueCentered -= 360.0;
+    return hueCentered;
 }
 
 #define log10(x) (log2(x) * rcp(log2(10.0)))
 
 // Textbook monomial to basis-function conversion matrix
 const mat3 M = mat3(
-	 0.5, -1.0,  0.5,
-	-1.0,  1.0,  0.5,
-	 0.5,  0.0,  0.0
+     0.5, -1.0,  0.5,
+    -1.0,  1.0,  0.5,
+     0.5,  0.0,  0.0
 );
 
 vec3 RRTSweeteners(vec3 aces) {
-	// --- Glow module --- //
-	float saturation = rgbToSaturation(aces);
-	float ycIn = rgbToYc(aces);
-	float s = SigmoidShaper(saturation * 5.0 - 2.0);
-	float addedGlow = 1.0 + GlowFwd(ycIn, rrtGlowGain * s, rrtGlowMid);
+    // --- Glow module --- //
+    float saturation = rgbToSaturation(aces);
+    float ycIn = rgbToYc(aces);
+    float s = SigmoidShaper(saturation * 5.0 - 2.0);
+    float addedGlow = 1.0 + GlowFwd(ycIn, rrtGlowGain * s, rrtGlowMid);
 
-	aces *= addedGlow;
+    aces *= addedGlow;
 
-	// --- Red modifier --- //
-	float hue = rgbToHue(aces);
-	float centeredHue = CenterHue(hue, rrtRedHue);
-	float hueWeight = CubicBasisShaperFit(centeredHue, rrtRedWidth);
+    // --- Red modifier --- //
+    float hue = rgbToHue(aces);
+    float centeredHue = CenterHue(hue, rrtRedHue);
+    float hueWeight = CubicBasisShaperFit(centeredHue, rrtRedWidth);
 
-	aces.r += hueWeight * saturation * (rrtRedPivot - aces.r) * oms(rrtRedScale);
+    aces.r += hueWeight * saturation * (rrtRedPivot - aces.r) * oms(rrtRedScale);
 
     // --- ACES to RGB rendering space --- //
-	vec3 rgbPre = max0(aces * AP0_2_AP1);
+    vec3 rgbPre = max0(aces * AP0_2_AP1);
 
-	// --- Global desaturation --- //
-	rgbPre = mix(vec3(dot(rgbPre, AP1_RGB2Y)), rgbPre, rrtSatFactor);
+    // --- Global desaturation --- //
+    rgbPre = mix(vec3(dot(rgbPre, AP1_RGB2Y)), rgbPre, rrtSatFactor);
 
-	return rgbPre;
+    return rgbPre;
 }
 
 // https://github.com/TheRealMJP/BakingLab/blob/master/BakingLab/ACES.hlsl
 vec3 RRTAndODTFit(vec3 rgb) {
-	vec3 a = rgb * (rgb + 0.0245786) - 0.000090537;
-	vec3 b = rgb * (0.983729 * rgb + 0.4329510) + 0.238081;
+    vec3 a = rgb * (rgb + 0.0245786) - 0.000090537;
+    vec3 b = rgb * (0.983729 * rgb + 0.4329510) + 0.238081;
 
-	return a / b;
+    return a / b;
 }
 
 #ifndef HDR_ENABLED
-	vec3 AcademyFit(vec3 rgb) {
-		rgb *= Rec2020_2_AP0;
+    vec3 AcademyFit(vec3 rgb) {
+        rgb *= Rec2020_2_AP0;
 
-		// Apply RRT sweeteners
-		rgb = RRTSweeteners(rgb);
+        // Apply RRT sweeteners
+        rgb = RRTSweeteners(rgb);
 
-		// Apply RRT and ODT
-		rgb = RRTAndODTFit(rgb);
+        // Apply RRT and ODT
+        rgb = RRTAndODTFit(rgb);
 
-		// Global desaturation
-		rgb = mix(vec3(dot(rgb, AP1_RGB2Y)), rgb, odtSatFactor);
+        // Global desaturation
+        rgb = mix(vec3(dot(rgb, AP1_RGB2Y)), rgb, odtSatFactor);
 
-		return rgb * AP1_2_Rec2020;
-	}
+        return rgb * AP1_2_Rec2020;
+    }
 #else
-	// Use this simpler fit for HDR as of now.
-	// https://knarkowicz.wordpress.com/2016/08/31/hdr-display-first-steps/
-	vec3 AcademyFit(vec3 x){
-		x *= 0.65;
-		const float a = 15.8f;
-		const float b = 2.12f;
-		const float c = 1.2f;
-		const float d = 5.92f;
-		const float e = 1.9f;
-		return ( x * ( a * x + b ) ) / ( x * ( c * x + d ) + e );
-	}
+    // Use this simpler fit for HDR as of now.
+    // https://knarkowicz.wordpress.com/2016/08/31/hdr-display-first-steps/
+    vec3 AcademyFit(vec3 x){
+        x *= 0.65;
+        const float a = 15.8f;
+        const float b = 2.12f;
+        const float c = 1.2f;
+        const float d = 5.92f;
+        const float e = 1.9f;
+        return ( x * ( a * x + b ) ) / ( x * ( c * x + d ) + e );
+    }
 #endif
 
 //======// ACES 2.0 //===========================================================================//

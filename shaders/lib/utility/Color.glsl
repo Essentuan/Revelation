@@ -21,15 +21,15 @@ const mat3 sRGB_2_Rec2020 = mat3(
 );
 
 const mat3 sRGB_2_XYZ = mat3(
-	0.4124564, 0.3575761, 0.1804375,
-	0.2126729, 0.7151522, 0.0721750,
-	0.0193339, 0.1191920, 0.9503041
+    0.4124564, 0.3575761, 0.1804375,
+    0.2126729, 0.7151522, 0.0721750,
+    0.0193339, 0.1191920, 0.9503041
 );
 
 const mat3 XYZ_2_sRGB = mat3(
-	 3.2409699419, -1.5373831776, -0.4986107603,
-	-0.9692436363,  1.8759675015,  0.0415550574,
-	 0.0556300797, -0.2039769589,  1.0569715142
+     3.2409699419, -1.5373831776, -0.4986107603,
+    -0.9692436363,  1.8759675015,  0.0415550574,
+     0.0556300797, -0.2039769589,  1.0569715142
 );
 
 const mat3 XYZ_2_Rec2020 = mat3(
@@ -69,22 +69,22 @@ vec3 PQToLinear(vec3 color) {
 // https://en.wikipedia.org/wiki/SRGB
 // https://github.com/tobspr/GLSL-Color-Spaces/blob/master/ColorSpaces.inc.glsl
 vec3 linearToSRGB(vec3 color) {
-	return mix(color * 12.92, 1.055 * pow(color, vec3(0.41666666)) - 0.055, step(vec3(0.0031308), color));
+    return mix(color * 12.92, 1.055 * pow(color, vec3(0.41666666)) - 0.055, step(vec3(0.0031308), color));
 }
 
 vec3 sRGBToLinear(vec3 color) {
-	return mix(color * 0.07739938, pow((color + 0.055) * 0.94786729, vec3(2.4)), step(vec3(0.04045), color));
+    return mix(color * 0.07739938, pow((color + 0.055) * 0.94786729, vec3(2.4)), step(vec3(0.04045), color));
 }
 
 // https://en.wikipedia.org/wiki/SRGB
 // https://en.wikipedia.org/wiki/ScRGB
 // -f(-x) for negative values.
 vec3 sRGBToLinearSafe(in vec3 color) {
-	return sRGBToLinear(abs(color)) * signI(color);
+    return sRGBToLinear(abs(color)) * signI(color);
 }
 
 vec3 linearToSRGBSafe(in vec3 color) {
-	return linearToSRGB(abs(color)) * signI(color);
+    return linearToSRGB(abs(color)) * signI(color);
 }
 
 // https://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
@@ -192,10 +192,10 @@ vec3 JMh_to_RGB(vec3 JMh) {
     #elif ACES_HDR_TARGET_GAMUT == 2
         #define LMS_TO_RGB mat3(5.86586046, -1.17879069, 0.0301606283, -4.48821688, 2.81135988, -0.16902554, -0.117723338, -0.372647762, 1.39878595)
     #endif
-	float h_rad = JMh.b * 0.0174532924;
+    float h_rad = JMh.b * 0.0174532924;
     float cos_hr = cos(h_rad);
     float sin_hr = sin(h_rad);
-	vec3 outColor;
+    vec3 outColor;
     vec3 Aab;
     {
         Aab.r = pow(JMh.r * 0.00999999978, 0.879464149);
@@ -302,7 +302,7 @@ vec3 RGB_to_JMh(vec3 RGB) {
         white point   = 0.3127, 0.3290
         red primary   =   0.64,   0.33
         green primary =   0.30,   0.60
-        blue primary  =   0.15,	  0.06
+        blue primary  =   0.15,      0.06
     More details can be found here https://www.desmos.com/calculator/qaxw5zb0zc
 
     T - temperature in degrees Kelvin;

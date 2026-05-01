@@ -1428,7 +1428,7 @@ FfxFloat32x2 ffxUnpackF32(FfxUInt32 u){
 }
 
 FfxUInt32x2 ffxPackF32x2(FfxFloat32x4 v){
-	return FfxUInt32x2(ffxPackF32(v.xy), ffxPackF32(v.zw));
+    return FfxUInt32x2(ffxPackF32(v.xy), ffxPackF32(v.zw));
 }
 
 FfxFloat32x4 ffxUnpackF32x2(FfxUInt32x2 a){
