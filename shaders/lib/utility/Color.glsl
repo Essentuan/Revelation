@@ -51,17 +51,19 @@ const float PQ_C1 = 3424.0 / 4096.0;
 const float PQ_C2 = 2413.0 / 4096.0 * 32.0;
 const float PQ_C3 = 2392.0 / 4096.0 * 32.0;
 
-vec3 linearToPq(vec3 c, float scaling) {
-    c *= scaling / 10000.0;
-    c = pow(c, vec3(PQ_M1));
-    c = (vec3(PQ_C1) + vec3(PQ_C2) * c) / (vec3(1.0) + vec3(PQ_C3) * c);
-    return pow(c, vec3(PQ_M2));
+const float PQ_MAX = 10000.0;
+
+vec3 linearToPQ(vec3 color) {
+    color *= 1.0 / PQ_MAX;
+    color = pow(color, vec3(PQ_M1));
+    color = (PQ_C1 + PQ_C2 * color) / (1.0 + PQ_C3 * color);
+    return pow(color, vec3(PQ_M2));
 }
 
-vec3 PqToLinear(vec3 color, float scaling) {
+vec3 PQToLinear(vec3 color) {
     vec3 e_m12 = pow(color, vec3(1.0 / PQ_M2));
     vec3 out_color = pow(max0(e_m12 - PQ_C1) / (PQ_C2 - PQ_C3 * e_m12), vec3(1.0 / PQ_M1));
-    return out_color * (10000.0 / scaling);
+    return out_color * PQ_MAX;
 }
 
 // https://en.wikipedia.org/wiki/SRGB

@@ -285,7 +285,7 @@ vec3 allenwp_curve(vec3 x) {
     #ifdef HDR_ENABLED
         float output_max_value = HdrGamePeakBrightness / HdrGamePaperWhiteBrightness;
     #else
-        float output_max_value = 1.0;
+        const float output_max_value = 1.0;
     #endif
 	// These constants must match the those in the C++ code that calculates the parameters.
 	// 18% "middle gray" is perceptually 50% of the brightness of reference white.

@@ -103,26 +103,9 @@ physicalValueToFrameBufferValue(float physical)
 // Utility functions.
 // -----------------------------------------------------------------------------
 float
-smoothStep(float x, float edge0, float edge1)
-{
-    float t = (x - edge0) / (edge1 - edge0);
-
-    if (x < edge0)
-    {
-        return 0.0f;
-    }
-    if (x > edge1)
-    {
-        return 1.0f;
-    }
-
-    return t * t * (3.0f - 2.0f * t);
-}
-
-float
 chromaCurve(float x, float a, float b)
 {
-    return 1.0f - smoothStep(x, a, b);
+    return 1.0f - smoothstep(a, b, x);
 }
 
 // -----------------------------------------------------------------------------
@@ -165,7 +148,7 @@ float evaluateCurve(float x, GTToneMappingCurveV2 curve)
         return 0.0f;
     }
 
-    float weightLinear = smoothStep(x, 0.0f, curve.midPoint_);
+    float weightLinear = smoothstep(0.0f, curve.midPoint_, x);
     float weightToe    = 1.0f - weightLinear;
 
     // Shoulder mapping for highlights.
@@ -189,21 +172,14 @@ float evaluateCurve(float x, GTToneMappingCurveV2 curve)
 float
 eotfSt2084(float n, float exponentScaleFactor)
 {
-    if (n < 0.0f)
-    {
-        n = 0.0f;
-    }
-    if (n > 1.0f)
-    {
-        n = 1.0f;
-    }
+    n = saturate(n);
 
     // Base functions from SMPTE ST 2084:2014
     // Converts from normalized PQ (0-1) to absolute luminance in cd/m^2 (linear light)
     // Assumes float input; does not handle integer encoding (Annex)
     // Assumes full-range signal (0-1)
     const float m1  = 0.1593017578125f;                // (2610 / 4096) / 4
-    float m2  = 78.84375f * exponentScaleFactor; // (2523 / 4096) * 128
+          float m2  = 78.84375f * exponentScaleFactor; // (2523 / 4096) * 128
     const float c1  = 0.8359375f;                      // 3424 / 4096
     const float c2  = 18.8515625f;                     // (2413 / 4096) * 32
     const float c3  = 18.6875f;                        // (2392 / 4096) * 32
@@ -211,12 +187,7 @@ eotfSt2084(float n, float exponentScaleFactor)
 
     // Does not handle signal range from 2084 - assumes full range (0-1)
     float np = pow(n, 1.0f / m2);
-    float l  = np - c1;
-
-    if (l < 0.0f)
-    {
-        l = 0.0f;
-    }
+    float l  = max0(np - c1);
 
     l = l / (c2 - c3 * np);
     l = pow(l, 1.0f / m1);
@@ -237,7 +208,7 @@ inverseEotfSt2084(float v, float exponentScaleFactor)
 
     // Convert the frame-buffer linear scale into absolute luminance (cd/m^2).
     float physical = frameBufferValueToPhysicalValue(v);
-    float y        = physical / pqC; // Normalize for the ST-2084 curve
+    float y        = physical * rcp(pqC); // Normalize for the ST-2084 curve
 
     float ym = pow(y, m1);
     return exp2(m2 * (log2(c1 + c2 * ym) - log2(1.0f + c3 * ym)));
@@ -248,35 +219,35 @@ inverseEotfSt2084(float v, float exponentScaleFactor)
 // Reference: ITU-T T.302 (https://www.itu.int/rec/T-REC-T.302/en)
 // -----------------------------------------------------------------------------
 void
-rgbToICtCp(vec3 rgb, inout vec3 ictCp) // Input: linear Rec.2020
+rgbToICtCp(vec3 rgb, out vec3 ictCp) // Input: linear Rec.2020
 {
-    float l = (rgb[0] * 1688.0f + rgb[1] * 2146.0f + rgb[2] * 262.0f) / 4096.0f;
-    float m = (rgb[0] * 683.0f + rgb[1] * 2951.0f + rgb[2] * 462.0f) / 4096.0f;
-    float s = (rgb[0] * 99.0f + rgb[1] * 309.0f + rgb[2] * 3688.0f) / 4096.0f;
+    float l = dot(rgb, vec3(0.4121093750000000, 0.5239257812500000, 0.0639648437500000));
+    float m = dot(rgb, vec3(0.1667480468750000, 0.7204589843750000, 0.1127929687500000));
+    float s = dot(rgb, vec3(0.0241699218750000, 0.0754394531250000, 0.9003906250000000));
 
     float lPQ = inverseEotfSt2084(l, 1.0);
     float mPQ = inverseEotfSt2084(m, 1.0);
     float sPQ = inverseEotfSt2084(s, 1.0);
 
-    ictCp[0] = (2048.0f * lPQ + 2048.0f * mPQ) / 4096.0f;
-    ictCp[1] = (6610.0f * lPQ - 13613.0f * mPQ + 7003.0f * sPQ) / 4096.0f;
-    ictCp[2] = (17933.0f * lPQ - 17390.0f * mPQ - 543.0f * sPQ) / 4096.0f;
+    ictCp[0] = 0.5 * lPQ + 0.5 * mPQ;
+    ictCp[1] = 1.613769531250000 * lPQ - 3.323486328125000 * mPQ + 1.709716796875000 * sPQ;
+    ictCp[2] = 4.378173828125000 * lPQ - 4.245605468750000 * mPQ - 0.132568359375000 * sPQ;
 }
 
 void
-iCtCpToRgb(vec3 ictCp, inout vec3 rgb) // Output: linear Rec.2020
+iCtCpToRgb(vec3 ictCp, out vec3 rgb) // Output: linear Rec.2020
 {
-    float l = ictCp[0] + 0.00860904f * ictCp[1] + 0.11103f * ictCp[2];
-    float m = ictCp[0] - 0.00860904f * ictCp[1] - 0.11103f * ictCp[2];
-    float s = ictCp[0] + 0.560031f * ictCp[1] - 0.320627f * ictCp[2];
+    float l = dot(ictCp, vec3(1.0,  0.00860903703793281,  0.11102962500302593));
+    float m = dot(ictCp, vec3(1.0, -0.00860903703793281, -0.11102962500302593));
+    float s = dot(ictCp, vec3(1.0,  0.56003133571067909, -0.32062717498731880));
 
     float lLin = eotfSt2084(l, 1.0);
     float mLin = eotfSt2084(m, 1.0);
     float sLin = eotfSt2084(s, 1.0);
 
-    rgb[0] = max(3.43661f * lLin - 2.50645f * mLin + 0.0698454f * sLin, 0.0f);
-    rgb[1] = max(-0.79133f * lLin + 1.9836f * mLin - 0.192271f * sLin, 0.0f);
-    rgb[2] = max(-0.0259499f * lLin - 0.0989137f * mLin + 1.12486f * sLin, 0.0f);
+	rgb[0] =  3.4366066943330793 * lLin - 2.5064521186562705 * mLin + 0.0698454243231915 * sLin;
+	rgb[1] = -0.7913295555989289 * lLin + 1.9836004517922909 * mLin - 0.1922708961933620 * sLin;
+    rgb[2] = -0.0259498996905927 * lLin - 0.0989137147117265 * mLin + 1.1248636144023192 * sLin;
 }
 
 // -----------------------------------------------------------------------------
@@ -292,9 +263,9 @@ iCtCpToRgb(vec3 ictCp, inout vec3 rgb) // Output: linear Rec.2020
 void
 rgbToJzazbz(vec3 rgb, inout vec3 jab) // Input: linear Rec.2020
 {
-    float l = rgb[0] * 0.530004f + rgb[1] * 0.355704f + rgb[2] * 0.086090f;
-    float m = rgb[0] * 0.289388f + rgb[1] * 0.525395f + rgb[2] * 0.157481f;
-    float s = rgb[0] * 0.091098f + rgb[1] * 0.147588f + rgb[2] * 0.734234f;
+    float l = dot(rgb, vec3(0.530004, 0.355704, 0.086090));
+    float m = dot(rgb, vec3(0.289388, 0.525395, 0.157481));
+    float s = dot(rgb, vec3(0.091098, 0.147588, 0.734234));
 
     float lPQ = inverseEotfSt2084(l, JZAZBZ_EXPONENT_SCALE_FACTOR);
     float mPQ = inverseEotfSt2084(m, JZAZBZ_EXPONENT_SCALE_FACTOR);
@@ -392,7 +363,6 @@ void initializeAsHDR(float physicalTargetLuminance, inout GT7ToneMapping tm)
 // Initialize for SDR (Standard Dynamic Range) display.
 void initializeAsSDR(inout GT7ToneMapping tm)
 {
-
     tm.sdrCorrectionFactor_ = 1.0f / physicalValueToFrameBufferValue(GRAN_TURISMO_SDR_PAPER_WHITE);
     initializeParameters(GRAN_TURISMO_SDR_PAPER_WHITE, tm);
 }
