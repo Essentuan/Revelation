@@ -11,6 +11,18 @@ const float shoulder_power = 3.25;
 const vec3 compression = vec3(0.1, 0.1, 0.15);
 const vec3 rotation = vec3(2.0, -1.0, -3.0);
 
+const mat3 agx_inset_matrix = mat3(
+    0.856627153315983, 0.137318972929847, 0.11189821299995,
+    0.0951212405381588, 0.761241990602591, 0.0767994186031903,
+    0.0482516061458583, 0.101439036467562, 0.811302368396859
+);
+
+const mat3 agx_inverse_outset_matrix = mat3(
+    1.1271005818144366432, -0.14132976349843826565, -0.14132976349843824772,
+    -0.1106066430966032116, 1.1578237022162717623, -0.11060664309660291788,
+    -0.016493938717834568157, -0.01649393871783425265, 1.2519364065950402828
+);
+
 //======// AgX Minimal //=========================================================================//
 
 // From https://iolite-engine.com/blog_posts/minimal_agx_implementation
@@ -73,12 +85,6 @@ vec3 agxDefaultContrastApprox_7th(vec3 x) {
 }
 
 vec3 agx(vec3 val) {
-    const mat3 agx_inset_matrix = mat3(
-        0.856627153315983, 0.137318972929847, 0.11189821299995,
-        0.0951212405381588, 0.761241990602591, 0.0767994186031903,
-        0.0482516061458583, 0.101439036467562, 0.811302368396859
-    );
-
     // const float min_ev = -12.47393f;
     // const float max_ev = 4.026069f;
 
@@ -96,12 +102,6 @@ vec3 agx(vec3 val) {
 }
 
 vec3 agxEotf(vec3 val) {
-    const mat3 agx_inverse_outset_matrix = mat3(
-        1.1271005818144366432, -0.14132976349843826565, -0.14132976349843824772,
-        -0.1106066430966032116, 1.1578237022162717623, -0.11060664309660291788,
-        -0.016493938717834568157, -0.01649393871783425265, 1.2519364065950402828
-    );
-
     // Inverse input transform (outset)
     val = agx_inverse_outset_matrix * val;
 
@@ -274,4 +274,91 @@ vec3 AgXConfigurable(vec3 rgb) {
 
 vec3 AgX_Full(vec3 rgb) {
     return sRGBToLinear(AgXConfigurable(rgb));
+}
+
+//======// AgX AllenWp, for HDR/SDR use //============================================================================//
+// allenwp tonemapping curve; developed for use in the Godot game engine.
+// Source and details: https://allenwp.com/blog/2025/05/29/allenwp-tonemapping-curve/
+// Input must be a non-negative linear scene value.
+vec3 allenwp_curve(vec3 x) {
+    #ifdef HDR_ENABLED
+        float output_max_value = HdrGamePeakBrightness / HdrGamePaperWhiteBrightness;
+    #else
+        float output_max_value = 1.0;
+    #endif
+	// These constants must match the those in the C++ code that calculates the parameters.
+	// 18% "middle gray" is perceptually 50% of the brightness of reference white.
+	const float awp_crossover_point = 0.1841865;
+	const float awp_shoulder_max = output_max_value - awp_crossover_point;
+    float awp_high_clip = 12.0;
+    awp_high_clip = max(awp_high_clip, output_max_value);
+	float awp_contrast = 1.5;
+	float awp_toe_a = ((1.0 / awp_crossover_point) - 1.0) * pow(awp_crossover_point, awp_contrast);
+    float awp_slope_denom = pow(awp_crossover_point, awp_contrast) + awp_toe_a;
+	float awp_slope = (awp_contrast * pow(awp_crossover_point, awp_contrast - 1.0) * awp_toe_a) / (awp_slope_denom * awp_slope_denom);
+	float awp_w = awp_high_clip - awp_crossover_point;
+	awp_w = awp_w * awp_w;
+	awp_w = awp_w / awp_shoulder_max;
+	awp_w = awp_w * awp_slope;
+
+	// Reinhard-like shoulder:
+	vec3 s = x - awp_crossover_point;
+	vec3 slope_s = awp_slope * s;
+	s = slope_s * (1.0 + s / awp_w) / (1.0 + (slope_s / awp_shoulder_max));
+	s += awp_crossover_point;
+
+	// Sigmoid power function toe:
+	vec3 t = pow(x, vec3(awp_contrast));
+	t = t / (t + awp_toe_a);
+
+	return mix(s, t, lessThan(x, vec3(awp_crossover_point)));
+}
+
+// This is an approximation and simplification of EaryChow's AgX implementation that is used by Blender.
+// This code is based off of the script that generates the AgX_Base_sRGB.cube LUT that Blender uses.
+// Source: https://github.com/EaryChow/AgX_LUT_Gen/blob/main/AgXBasesRGB.py
+// Colorspace transformation source: https://www.colour-science.org:8010/apps/rgb_colourspace_transformation_matrix
+vec3 AgX_AllenWp(vec3 color) {
+	// Input color should be non-negative!
+	// Large negative values in one channel and large positive values in other
+	// channels can result in a colour that appears darker and more saturated than
+	// desired after passing it through the inset matrix. For this reason, it is
+	// best to prevent negative input values.
+	// This is done before the Rec. 2020 transform to allow the Rec. 2020
+	// transform to be combined with the AgX inset matrix. This results in a loss
+	// of color information that could be correctly interpreted within the
+	// Rec. 2020 color space as positive RGB values, but is often not worth
+	// the performance cost of an additional matrix multiplication.
+	//
+	// Additionally, this AgX configuration was created subjectively based on
+	// output appearance in the Rec. 709 color gamut, so it is possible that these
+	// matrices will not perform well with non-Rec. 709 output (more testing with
+	// future wide-gamut displays is be needed).
+	// See this comment from the author on the decisions made to create the matrices:
+	// https://github.com/godotengine/godot-proposals/issues/12317#issuecomment-2835824250
+
+    #ifdef HDR_ENABLED
+	    float output_max_value = HdrGamePeakBrightness / HdrGamePaperWhiteBrightness;
+    #else
+        float output_max_value = 1.0;
+    #endif
+
+    // Apply inset matrix.
+	color = agx_inset_matrix * color;
+
+	// Use the allenwp tonemapping curve to match the Blender AgX curve while
+	// providing stability across all variable dyanimc range (SDR, HDR, EDR).
+	color = allenwp_curve(color);
+
+	// Clipping to output_max_value is required to address a cyan colour that occurs
+	// with very bright inputs.
+	color = min(vec3(output_max_value), color);
+
+	// Apply outset to make the result more chroma-laden and then go back to Rec. 709.
+	color = agx_inverse_outset_matrix * color;
+
+	// Blender's lusRGB.compensate_low_side is too complex for this shader, so
+	// simply return the color, even if it has negative components. These negative
+	// components may be useful for subsequent color adjustments.
+    return color;
 }

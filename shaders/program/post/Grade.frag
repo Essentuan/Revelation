@@ -15,7 +15,11 @@
 
 #include "/lib/Utility.glsl"
 
-#define TONE_MAPPER 1 // [0 1 2 16 17 32 33 48]
+#define TONE_MAPPER 1 // [0 1 2 3 16 17 32 33 48]
+#define HDR_TONE_MAPPER 33 // [0 3 16 17 32 33]
+
+// 0: disables gamut compression, 1: Rec.2020, 2: P3-D65
+#define ACES_HDR_TARGET_GAMUT 1 // [0 1 2]
 
 #define GAMMA_CORRECTION 2.2 // [1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 3.1 3.2 3.3 3.4 3.5 3.6 3.7 3.8 3.9 4.0 4.1 4.2 4.3 4.4 4.5 4.6 4.7 4.8 4.9 5.0]
 
@@ -152,19 +156,25 @@ vec3 Lottes(vec3 x) {
 #include "/lib/post/AgX.glsl"
 #include "/lib/post/GT.glsl"
 
-#if TONE_MAPPER == TONEMAPPER_AgX_Minimal
+#ifdef HDR_ENABLED
+	#define TONE_MAPPER_ HDR_TONE_MAPPER
+#else
+	#define TONE_MAPPER_ TONE_MAPPER
+#endif
+
+#if TONE_MAPPER_ == TONEMAPPER_AgX_Minimal
 	#define TONEMAPPING_FN AgX_Minimal
-#elif TONE_MAPPER == TONEMAPPER_AgX_Full
+#elif TONE_MAPPER_ == TONEMAPPER_AgX_Full
 	#define TONEMAPPING_FN AgX_Full
-#elif TONE_MAPPER == TONEMAPPER_ACES_Fit
+#elif TONE_MAPPER_ == TONEMAPPER_ACES_Fit
 	#define TONEMAPPING_FN AcademyFit
-#elif TONE_MAPPER == TONEMAPPER_ACES_Full
+#elif TONE_MAPPER_ == TONEMAPPER_ACES_2
 	#define TONEMAPPING_FN ACES2
-#elif TONE_MAPPER == TONEMAPPER_GT
+#elif TONE_MAPPER_ == TONEMAPPER_GT
 	#define TONEMAPPING_FN GT
-#elif TONE_MAPPER == TONEMAPPER_GT7
+#elif TONE_MAPPER_ == TONEMAPPER_GT7
 	#define TONEMAPPING_FN GT7
-#elif TONE_MAPPER == TONEMAPPER_Lottes
+#elif TONE_MAPPER_ == TONEMAPPER_Lottes
 	#define TONEMAPPING_FN Lottes
 #else
 	#define TONEMAPPING_FN None
@@ -232,12 +242,14 @@ void main() {
 	{
 		// Tone mapping
 		color = TONEMAPPING_FN(color);
-
-		// Working to display space
-        #if TONE_MAPPER != TONEMAPPER_ACES_Full
-            color *= Rec2020_2_sRGB;
-        #endif
-		color = saturate(pow(color, vec3(1.0 / GAMMA_CORRECTION)));
+		#ifndef HDR_ENABLED
+			// Working to display space
+			color *= Rec2020_2_sRGB;
+			color = saturate(pow(color, vec3(1.0 / GAMMA_CORRECTION)));
+		#else
+			// Limited in Rec2020 non negative linear value range for CAS
+			color = max(color, vec3(0.0));
+		#endif
 	}
 
 	// Debug tone mapping plot

@@ -49,6 +49,7 @@ screen.Bloom=泛光
 screen.Exposure=曝光
 screen.Vignette=暗角
 screen.Color=色彩
+screen.TonemappingParams=色调映射参数
 
 
 # OPTIONS
@@ -400,20 +401,37 @@ option.VIGNETTE_STRENGTH=暗角强度
 option.VIGNETTE_ROUNDNESS=暗角圆度
 
 option.TONE_MAPPER=色调映射
+option.TONE_MAPPER.comment=仅当 HDR 禁用时生效。
 value.TONE_MAPPER.0=无
 value.TONE_MAPPER.1=AgX 拟合
 value.TONE_MAPPER.2=AgX 完整
+value.TONE_MAPPER.3=AgX AllenWp
 value.TONE_MAPPER.16=ACES 拟合
 value.TONE_MAPPER.17=ACES 2.0
 value.TONE_MAPPER.32=GT
 value.TONE_MAPPER.33=GT7
 value.TONE_MAPPER.48=Lottes
 
+option.HDR_TONE_MAPPER=HDR 色调映射
+option.HDR_TONE_MAPPER.comment=仅当 HDR 启用时生效。
+value.HDR_TONE_MAPPER.0=无
+value.HDR_TONE_MAPPER.3=AgX AllenWp
+value.HDR_TONE_MAPPER.16=ACES 拟合
+value.HDR_TONE_MAPPER.17=ACES 2.0
+value.HDR_TONE_MAPPER.32=GT
+value.HDR_TONE_MAPPER.33=GT7
+
 option.AGX_LOOK=AGX预设
 value.AGX_LOOK.0=默认
 value.AGX_LOOK.1=Golden
 value.AGX_LOOK.2=Punchy
 value.AGX_LOOK.3=自定义
+
+option.ACES_HDR_TARGET_GAMUT=ACES HDR 目标色域
+option.ACES_HDR_TARGET_GAMUT.comment=仅当 HDR 色调映射设置为 ACES 2.0 时生效。
+value.ACES_HDR_TARGET_GAMUT.0=禁用色域压缩
+value.ACES_HDR_TARGET_GAMUT.1=Rec.2020
+value.ACES_HDR_TARGET_GAMUT.2=P3-D65
 
 option.GAMMA_CORRECTION=伽马校正
 

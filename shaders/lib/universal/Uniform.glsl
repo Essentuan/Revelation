@@ -204,3 +204,9 @@ uniform vec3 viewLightDir;
     #define lodProjectionInv gbufferProjectionInverse
     #define lodPrevProjection gbufferPreviousProjection
 #endif
+
+#ifdef HDR_ENABLED
+    uniform float HdrGamePeakBrightness;
+    uniform float HdrGamePaperWhiteBrightness;
+    uniform float HdrUIBrightness;
+#endif

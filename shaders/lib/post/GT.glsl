@@ -3,8 +3,12 @@
 // Uchimura 2017, "HDR theory and practice"
 // Math: https://www.desmos.com/calculator/gslcdxvipg
 // Source: https://www.slideshare.net/nikuque/hdr-theory-and-practicce-jp
-vec3 GT(vec3 x) {
-    const float maxDisplayBrightness = 1.0;
+vec3 GT(in vec3 x) {
+    #ifdef HDR_ENABLED
+        float maxDisplayBrightness = HdrGamePeakBrightness / HdrGamePaperWhiteBrightness;
+    #else
+        const float maxDisplayBrightness = 1.0;
+    #endif
     const float contrast			 = 1.0;
     const float linearStart			 = 0.2;
     const float linearLength		 = 0.1;
@@ -66,7 +70,11 @@ vec3 GT(vec3 x) {
 // -----------------------------------------------------------------------------
 // Defines the SDR reference white level used in our tone mapping (typically 250 nits).
 // -----------------------------------------------------------------------------
+#ifdef HDR_ENABLED
+#define GRAN_TURISMO_SDR_PAPER_WHITE HdrGamePaperWhiteBrightness // cd/m^2
+#else
 #define GRAN_TURISMO_SDR_PAPER_WHITE 250.0f // cd/m^2
+#endif
 
 // -----------------------------------------------------------------------------
 // Gran Turismo luminance-scale conversion helpers.
@@ -428,10 +436,12 @@ void applyToneMapping(inout vec3 rgb, GT7ToneMapping tm)
 }
 
 vec3 GT7(vec3 color) {
-    color *= 2.0;
-
     GT7ToneMapping tm;
-    initializeAsSDR(tm);
+    #ifdef HDR_ENABLED
+        initializeAsHDR(HdrGamePeakBrightness, tm);
+    #else
+        initializeAsSDR(tm);
+    #endif
 
     applyToneMapping(color, tm);
 

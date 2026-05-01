@@ -40,9 +40,13 @@ out vec3 finalOut;
 // Reference: Lou Kramer, FidelityFX CAS, AMD Developer Day 2019,
 // https://gpuopen.com/wp-content/uploads/2019/07/FidelityFX-CAS.pptx
 // https://github.com/GPUOpen-Effects/FidelityFX-CAS
-vec3 FFXCasFilter(ivec2 texel, float sharpness) {
-	#define CasLoad(offset) texelFetchOffset(colortex0, texel, 0, offset).rgb
 
+vec3 FFXCasFilter(in ivec2 texel, in float sharpness) {
+	#ifdef HDR_ENABLED
+		#define CasLoad(offset) reinhard(texelFetchOffset(colortex0, texel, 0, offset).rgb)
+	#else
+		#define CasLoad(offset) texelFetchOffset(colortex0, texel, 0, offset).rgb
+	#endif
 	#ifndef CAS_ENABLED
 		return CasLoad(ivec2(0, 0));
 	#endif
@@ -77,7 +81,12 @@ vec3 FFXCasFilter(ivec2 texel, float sharpness) {
 	//  w 1 w
 	//  0 w 0
     vec3 w = amp * -rcp(mix(8.0, 5.0, sharpness));
-	return saturate(((b + d + f + h) * w + e) / (1.0 + 4.0 * w));
+	vec3 result = saturate(((b + d + f + h) * w + e) / (1.0 + 4.0 * w));
+	#ifdef HDR_ENABLED
+		return invReinhard(result);
+	#else
+		return result;
+	#endif
 }
 
 #include "/lib/universal/TextRenderer.glsl"
@@ -93,6 +102,7 @@ void HistogramDisplay(inout vec3 color, ivec2 texel) {
 	}
 }
 
+
 //======// Main //================================================================================//
 void main() {
     ivec2 texelPos = ivec2(gl_FragCoord.xy);
@@ -103,7 +113,12 @@ void main() {
 	#ifdef DEBUG_BLOOM_TILES
 		finalOut = texelFetch(colortex4, texelPos, 0).rgb;
 	#else
-		finalOut = FFXCasFilter(texelPos, CAS_STRENGTH);
+		#ifdef HDR_ENABLED
+			// sRGB encode after CAS
+			finalOut = linearToSRGBSafe(FFXCasFilter(texelPos, CAS_STRENGTH) * Rec2020_2_sRGB * HdrGamePaperWhiteBrightness / HdrUIBrightness);
+		#else
+			finalOut = FFXCasFilter(texelPos, CAS_STRENGTH);
+		#endif
 	#endif
 
 	// Text display
@@ -139,6 +154,8 @@ void main() {
 		HistogramDisplay(finalOut, texelPos);
 	#endif
 
-	// Apply bayer dithering to reduce banding artifacts
-	finalOut += (bayer16(gl_FragCoord.xy) - 0.5) * rcp255;
+	#ifndef HDR_ENABLED
+		// Apply bayer dithering to reduce banding artifacts
+		finalOut += (bayer16(gl_FragCoord.xy) - 0.5) * rcp255;
+	#endif
 }
