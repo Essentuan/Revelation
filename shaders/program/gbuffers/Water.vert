@@ -49,7 +49,7 @@ uniform vec2 taaJitter;
 
 //======// Main //================================================================================//
 void main() {
-    texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
+	texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
 	// Nether portal
@@ -79,7 +79,7 @@ void main() {
 	#endif
 	worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
-    gl_Position = project(gl_ProjectionMatrix, viewPos);
+	gl_Position = project(gl_ProjectionMatrix, viewPos);
 	#ifdef TAA_ENABLED
 		gl_Position.xy += taaJitter * gl_Position.w;
 	#endif

@@ -53,7 +53,7 @@ in vec4 at_tangent;
 //======// Main //================================================================================//
 void main() {
 	vertColor = gl_Color.rgb;
-    texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
+	texCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 
 	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
@@ -119,7 +119,7 @@ void main() {
 	#endif
 
 	vec3 viewPos = transMAD(gbufferModelView, worldPos);
-    gl_Position = project(gl_ProjectionMatrix, viewPos);
+	gl_Position = project(gl_ProjectionMatrix, viewPos);
 
 	#ifdef TAA_ENABLED
 		gl_Position.xy += taaJitter * gl_Position.w;

@@ -63,18 +63,18 @@ uniform sampler2D cloudOriginTex;
 
 		float sigmaZ = -4.0 * NdotV;
 
-        ivec2 texelEnd = ivec2(halfViewEnd) - 1;
-        coord = coord * viewSize * 0.5 - 0.5;
+		ivec2 texelEnd = ivec2(halfViewEnd) - 1;
+		coord = coord * viewSize * 0.5 - 0.5;
 
-        ivec2 floorTexel = ivec2(floor(coord));
-        vec2 fractTexel = coord - vec2(floorTexel);
+		ivec2 floorTexel = ivec2(floor(coord));
+		vec2 fractTexel = coord - vec2(floorTexel);
 
-        float bilinearWeight[4] = {
-            oms(fractTexel.x) * oms(fractTexel.y),
-            fractTexel.x      * oms(fractTexel.y),
-            oms(fractTexel.x) * fractTexel.y,
-            fractTexel.x      * fractTexel.y
-        };
+		float bilinearWeight[4] = {
+			oms(fractTexel.x) * oms(fractTexel.y),
+			fractTexel.x      * oms(fractTexel.y),
+			oms(fractTexel.x) * fractTexel.y,
+			fractTexel.x      * fractTexel.y
+		};
 
 		for (uint i = 0u; i < 4u; ++i) {
 			ivec2 sampleTexel = clamp(floorTexel + offset2x2[i], ivec2(1), texelEnd);
@@ -83,7 +83,7 @@ uniform sampler2D cloudOriginTex;
 
 			float weight = pow4(saturate(dot(OctDecodeSnorm(sampleAux.xy), worldNormal)));
 			weight *= exp2(distance(sampleAux.z, viewDistance) * sigmaZ);
-            weight *= bilinearWeight[i];
+			weight *= bilinearWeight[i];
 
 			vec3 sampleLight = texelFetch(colortex3, sampleTexel, 0).rgb;
 
@@ -91,7 +91,7 @@ uniform sampler2D cloudOriginTex;
 			sumWeight += weight;
 		}
 
-        if (sumWeight < EPS) return vec3(0.0);
+		if (sumWeight < EPS) return vec3(0.0);
 
 		return sum * rcp(sumWeight);
 	}
@@ -100,7 +100,7 @@ uniform sampler2D cloudOriginTex;
 //======// Main //================================================================================//
 void main() {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
-    vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
+	vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
 
 	uvec4 materialPack = loadMaterialPack(texelPos);
 	uint materialID = materialPack.y;
@@ -241,14 +241,14 @@ void main() {
 		float NdotV = abs(dot(worldNormal, worldDir));
 
 		// Shadows and SSS
-        if (NdotL + sssAmount > EPS) {
+		if (NdotL + sssAmount > EPS) {
 			vec3 shadow = vec3(saturate(NdotL * FLT_MAX));
 			float surfaceDepth = 0.0;
 
 			float normalOffsetBase = (viewDist * 2e-3 + 2e-2) * (2.0 - NdotL);
 
 			// PCSS
-        	if (distanceFade < EPS) {
+			if (distanceFade < EPS) {
 				shadow *= CalculatePCSS(worldPos, geoNormal * normalOffsetBase, dither, surfaceDepth);
 			}
 
@@ -284,10 +284,10 @@ void main() {
 					#endif
 				#endif
 
-                vec3 halfway = normalize(worldLightDir - worldDir);
-                float NdotH = saturate(dot(worldNormal, halfway));
-                float LdotH = saturate(dot(worldLightDir, halfway));
-                float VdotH = saturate(-dot(worldDir, halfway));
+				vec3 halfway = normalize(worldLightDir - worldDir);
+				float NdotH = saturate(dot(worldNormal, halfway));
+				float LdotH = saturate(dot(worldLightDir, halfway));
+				float VdotH = saturate(-dot(worldDir, halfway));
 
 				diffuseRadiance += shadow * DiffuseHammon(NdotV, NdotL, VdotH, NdotH, material.roughness, albedo) * NdotL;
 				specularRadiance += shadow * SpecularGGX(LdotH, NdotV, NdotL, NdotH, material.roughness, f0) * NdotL;

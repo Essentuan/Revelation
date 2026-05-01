@@ -38,37 +38,37 @@ void main() {
 	if (albedo.a < 0.1) { discard; return; }
 
 	materialOut.x = Packup2x8U(lightmap);
-    #if GBUFFER_PARTICLES_TRANSLUCENT
-	    materialOut.y = 500u;
-    #else
-	    materialOut.y = 2u;
-    #endif
+	#if GBUFFER_PARTICLES_TRANSLUCENT
+		materialOut.y = 500u;
+	#else
+		materialOut.y = 2u;
+	#endif
 
 	materialOut.z = Packup2x8U(albedo.xy);
 	materialOut.w = Packup2x8U(albedo.zw);
 
-    vec3 deltaPos1 = dFdx(worldPos);
-    vec3 deltaPos2 = dFdy(worldPos);
+	vec3 deltaPos1 = dFdx(worldPos);
+	vec3 deltaPos2 = dFdy(worldPos);
 
 	vec3 geoNormal = normalize(cross(deltaPos1, deltaPos2));
 	normalOut.xy = OctEncodeSnorm(geoNormal);
 
 	#ifdef MC_NORMAL_MAP
-        // Construct TBN matrix
-        vec3 deltaPos1Perp = cross(geoNormal, deltaPos1);
-        vec3 deltaPos2Perp = cross(deltaPos2, geoNormal);
+		// Construct TBN matrix
+		vec3 deltaPos1Perp = cross(geoNormal, deltaPos1);
+		vec3 deltaPos2Perp = cross(deltaPos2, geoNormal);
 
-        vec2 deltaUv1 = dFdx(texCoord);
-        vec2 deltaUv2 = dFdy(texCoord);
+		vec2 deltaUv1 = dFdx(texCoord);
+		vec2 deltaUv2 = dFdy(texCoord);
 
-        vec3 tangent   = normalize(deltaPos2Perp * deltaUv1.x + deltaPos1Perp * deltaUv2.x);
-        vec3 bitangent = normalize(deltaPos2Perp * deltaUv1.y + deltaPos1Perp * deltaUv2.y);
+		vec3 tangent   = normalize(deltaPos2Perp * deltaUv1.x + deltaPos1Perp * deltaUv2.x);
+		vec3 bitangent = normalize(deltaPos2Perp * deltaUv1.y + deltaPos1Perp * deltaUv2.y);
 
-        float invmax = inversesqrt(max(sdot(tangent), sdot(bitangent)));
-        mat3 tbnMatrix = mat3(tangent * invmax, bitangent * invmax, geoNormal);
+		float invmax = inversesqrt(max(sdot(tangent), sdot(bitangent)));
+		mat3 tbnMatrix = mat3(tangent * invmax, bitangent * invmax, geoNormal);
 
-        vec3 normalTex = texture(normals, texCoord).rgb;
-        DecodeNormalTex(normalTex);
+		vec3 normalTex = texture(normals, texCoord).rgb;
+		DecodeNormalTex(normalTex);
 		normalOut.zw = OctEncodeSnorm(tbnMatrix * normalTex);
 	#else
 		normalOut.zw = normalOut.xy;

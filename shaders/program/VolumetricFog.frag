@@ -54,9 +54,9 @@ mat2x3 UnpackFogData(uvec2 data) {
 
 //======// Main //================================================================================//
 void main() {
-    ivec2 texelPos = ivec2(gl_FragCoord.xy * 2.0);
+	ivec2 texelPos = ivec2(gl_FragCoord.xy * 2.0);
 
-    vec2 screenCoord = gl_FragCoord.xy * viewPixelSize * 2.0;
+	vec2 screenCoord = gl_FragCoord.xy * viewPixelSize * 2.0;
 	vec3 screenPos = vec3(screenCoord, loadDepth0(texelPos));
 
 	vec3 viewPos = ScreenToViewPosRaw(screenPos);
@@ -85,17 +85,17 @@ void main() {
 	#endif
 
 	// Temporal reprojection
-    vec2 prevCoord = ReprojectScreenPos(screenPos).xy;
+	vec2 prevCoord = ReprojectScreenPos(screenPos).xy;
 
-    if (saturate(prevCoord) == prevCoord && !global.historyReset) {
-        uvec3 reprojectedData = texelFetch(colortex11, uvToTexel(prevCoord) >> 1, 0).xyz;
+	if (saturate(prevCoord) == prevCoord && !global.historyReset) {
+		uvec3 reprojectedData = texelFetch(colortex11, uvToTexel(prevCoord) >> 1, 0).xyz;
 		mat2x3 reprojectedFog = UnpackFogData(reprojectedData.xy);
 
 		float blendWeight = 0.9;
 		blendWeight *= exp2(abs(uintBitsToFloat(reprojectedData.z) + viewPos.z) * 32.0 / viewPos.z);
 
-        volFogData[0] = mix(volFogData[0], reprojectedFog[0], blendWeight);
-        volFogData[1] = mix(volFogData[1], reprojectedFog[1], blendWeight);
+		volFogData[0] = mix(volFogData[0], reprojectedFog[0], blendWeight);
+		volFogData[1] = mix(volFogData[1], reprojectedFog[1], blendWeight);
 	}
 
 	packedFogData.x = EncodeRGBE8U(volFogData[0]);

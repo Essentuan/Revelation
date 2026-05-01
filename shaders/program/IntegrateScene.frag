@@ -124,8 +124,8 @@ vec2 CalculateRefractedCoord(ivec2 texelPos, vec3 viewPos, vec3 screenPos, bool 
 
 //======// Main //================================================================================//
 void main() {
-    ivec2 texelPos = ivec2(gl_FragCoord.xy);
-    vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
+	ivec2 texelPos = ivec2(gl_FragCoord.xy);
+	vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
 
 	float depth = loadDepth0(texelPos);
 
@@ -150,7 +150,7 @@ void main() {
 		refractedTexel = uvToTexel(CalculateRefractedCoord(texelPos, viewPos, screenPos, waterMask));
 	}
 
-    vec3 sceneColor = loadSceneMain(refractedTexel);
+	vec3 sceneColor = loadSceneMain(refractedTexel);
 
 	float viewDist = length(viewPos);
 	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;

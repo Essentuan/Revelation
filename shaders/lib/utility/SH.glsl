@@ -30,47 +30,47 @@ float[9] BasisSH3(vec3 dir) {
 }
 
 vec3 ReconstructSH2(vec3[4] coeff, vec3 dir) {
-    float[4] basis = BasisSH2(dir);
+	float[4] basis = BasisSH2(dir);
 
 	return coeff[0] * basis[0]
-	     + coeff[1] * basis[1]
-	     + coeff[2] * basis[2]
-	     + coeff[3] * basis[3];
+		+ coeff[1] * basis[1]
+		+ coeff[2] * basis[2]
+		+ coeff[3] * basis[3];
 }
 
 vec3 ReconstructSH3(vec3[9] coeff, vec3 dir) {
-    float[9] basis = BasisSH3(dir);
+	float[9] basis = BasisSH3(dir);
 
 	return coeff[0] * basis[0]
-	     + coeff[1] * basis[1]
-	     + coeff[2] * basis[2]
-	     + coeff[3] * basis[3]
-	     + coeff[4] * basis[4]
-	     + coeff[5] * basis[5]
-	     + coeff[6] * basis[6]
-	     + coeff[7] * basis[7]
-	     + coeff[8] * basis[8];
+		+ coeff[1] * basis[1]
+		+ coeff[2] * basis[2]
+		+ coeff[3] * basis[3]
+		+ coeff[4] * basis[4]
+		+ coeff[5] * basis[5]
+		+ coeff[6] * basis[6]
+		+ coeff[7] * basis[7]
+		+ coeff[8] * basis[8];
 }
 
 vec3 ConvolvedReconstructSH3(vec3[9] coeff, vec3 dir) {
-    float[9] basis = BasisSH3(dir);
+	float[9] basis = BasisSH3(dir);
 	const vec3 zh = vec3(sqrt(PI / 4.0), sqrt(PI / 3.0), sqrt((5.0 / 64.0) * PI));
 	const vec3 kernel = zh * sqrt(4.0 * PI / vec3(1.0, 3.0, 5.0)) / PI;
 
 	return coeff[0] * basis[0] * kernel.x
-	     + coeff[1] * basis[1] * kernel.y
-	     + coeff[2] * basis[2] * kernel.y
-	     + coeff[3] * basis[3] * kernel.y
-	     + coeff[4] * basis[4] * kernel.z
-	     + coeff[5] * basis[5] * kernel.z
-	     + coeff[6] * basis[6] * kernel.z
-	     + coeff[7] * basis[7] * kernel.z
-	     + coeff[8] * basis[8] * kernel.z;
+		+ coeff[1] * basis[1] * kernel.y
+		+ coeff[2] * basis[2] * kernel.y
+		+ coeff[3] * basis[3] * kernel.y
+		+ coeff[4] * basis[4] * kernel.z
+		+ coeff[5] * basis[5] * kernel.z
+		+ coeff[6] * basis[6] * kernel.z
+		+ coeff[7] * basis[7] * kernel.z
+		+ coeff[8] * basis[8] * kernel.z;
 }
 
 struct AdhocSH2 {
-    vec4 coeff;
-    vec2 chroma;
+	vec4 coeff;
+	vec2 chroma;
 };
 
 AdhocSH2 InitAdhocSH2() {
@@ -98,20 +98,20 @@ AdhocSH2 MixAdhocSH2(AdhocSH2 a, AdhocSH2 b, float t) {
 
 vec3 SHToIrradiance(AdhocSH2 sh, vec3 dir) {
 	float L0 = sqrt(PI / 4.0) * sh.coeff.x;
-    float L1 = sqrt(PI / 3.0) * dot(sh.coeff.yzw, dir);
-    float Y = 2.0 * (L0 + L1);
+	float L1 = sqrt(PI / 3.0) * dot(sh.coeff.yzw, dir);
+	float Y = 2.0 * (L0 + L1);
 
-    sh.chroma *= Y * sqrt(1.0 / (4.0 * PI)) / (sh.coeff.x + EPS);
-    return max0(YCoCgToRGB(vec3(Y, sh.chroma)));
+	sh.chroma *= Y * sqrt(1.0 / (4.0 * PI)) / (sh.coeff.x + EPS);
+	return max0(YCoCgToRGB(vec3(Y, sh.chroma)));
 }
 
 AdhocSH2 IrradianceToSH(vec3 irradiance, vec3 dir) {
-    vec3 YCoCg = RGBToYCoCg(irradiance);
+	vec3 YCoCg = RGBToYCoCg(irradiance);
 
-    AdhocSH2 sh;
-    sh.coeff.x = sqrt(1.0 / (4.0 * PI)) * YCoCg.x;
-    sh.coeff.yzw = sqrt(3.0 / (4.0 * PI)) * YCoCg.x * dir;
-    sh.chroma = YCoCg.yz;
+	AdhocSH2 sh;
+	sh.coeff.x = sqrt(1.0 / (4.0 * PI)) * YCoCg.x;
+	sh.coeff.yzw = sqrt(3.0 / (4.0 * PI)) * YCoCg.x * dir;
+	sh.chroma = YCoCg.yz;
 
-    return sh;
+	return sh;
 }
