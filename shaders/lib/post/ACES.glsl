@@ -239,13 +239,6 @@ float CenterHue(float hue, float centerH) {
 
 #define log10(x) (log2(x) * rcp(log2(10.0)))
 
-// Textbook monomial to basis-function conversion matrix
-const mat3 M = mat3(
-	0.5, -1.0,  0.5,
-	-1.0,  1.0,  0.5,
-	0.5,  0.0,  0.0
-);
-
 vec3 RRTSweeteners(vec3 aces) {
 	// --- Glow module --- //
 	float saturation = rgbToSaturation(aces);
@@ -281,6 +274,7 @@ vec3 RRTAndODTFit(vec3 rgb) {
 
 #ifndef HDR_ENABLED
 	vec3 AcademyFit(vec3 rgb) {
+        rgb *= 1.5; // Match other tonemappers' exposure
 		rgb *= Rec2020_2_AP0;
 
 		// Apply RRT sweeteners
@@ -297,7 +291,7 @@ vec3 RRTAndODTFit(vec3 rgb) {
 #else
 	// Use this simpler fit for HDR as of now.
 	// https://knarkowicz.wordpress.com/2016/08/31/hdr-display-first-steps/
-	vec3 AcademyFit(vec3 x){
+	vec3 AcademyFit(vec3 x) {
 		x *= 0.65;
 		const float a = 15.8f;
 		const float b = 2.12f;
@@ -485,6 +479,7 @@ vec3 aces_gamut_compress0(vec3 JMh, float Jx, vec3 JMGcusp, float reachMaxM) {
 }
 
 vec3 ACES2(vec3 inPixel) {
+    inPixel *= 2.0; // Match other tonemappers' exposure
 	vec3 outColor = inPixel * Rec2020_2_AP1;
 
 	outColor = RGB_to_JMh(outColor);
