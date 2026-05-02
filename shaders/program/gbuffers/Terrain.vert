@@ -61,6 +61,11 @@ void main() {
 
 	materialID = uint(max(mc_Entity.x - 1e4, 1));
 
+	// Unlabelled foilage detection
+	#ifdef UNLABELLED_FOILAGE_DETECTION
+		if (materialID < 1u && maxOf(abs(gl_Normal)) < 0.99) materialID = 1003u;
+	#endif
+
 	// Encode normal and tangent
 	vec3 normal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
 	normalPack = packSnorm2x16(OctEncodeSnorm(normal));
@@ -104,11 +109,6 @@ void main() {
 
 			worldPos -= cameraPosition;
 		}
-	#endif
-
-	// Unlabelled foilage detection
-	#ifdef UNLABELLED_FOILAGE_DETECTION
-		if (materialID < 1u && maxOf(abs(gl_Normal)) < 0.99) materialID = 1003u;
 	#endif
 
 	#if defined PARALLAX || defined AUTO_GENERATED_NORMAL
