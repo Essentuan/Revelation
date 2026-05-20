@@ -238,11 +238,11 @@ float VisibilitySmithJointAniso(float ax, float ay, float NdotL, float NdotV, fl
 //================================================================================================//
 
 // Cook-Torrance model
-vec3 SpecularGGX(float LdotH, float NdotV, float NdotL, float NdotH, float roughness, vec3 f0) {
+vec3 SpecularGGX(float VdotH, float NdotV, float NdotL, float NdotH, float roughness, vec3 f0) {
 	float alpha2 = maxEps(roughness * roughness);
 
 	// Fresnel term
-	vec3 F = FresnelSchlick(LdotH, f0);
+	vec3 F = FresnelSchlick(VdotH, f0);
 
 	// Distribution term
 	float D = DistributionGGX(NdotH * NdotH, alpha2);
@@ -267,8 +267,8 @@ vec3 DiffuseHammon(float NdotV, float NdotL, float VdotH, float NdotH, float rou
 }
 
 // Burley 2012, "Physically-Based Shading at Disney"
-float DiffuseBurley(float LdotH, float NdotV, float NdotL, float roughness) {
-	float f90 = 0.5 + 2.0 * roughness * LdotH * LdotH;
+float DiffuseBurley(float VdotH, float NdotV, float NdotL, float roughness) {
+	float f90 = 0.5 + 2.0 * roughness * VdotH * VdotH;
 
 	return rPI * FresnelSchlick(NdotL, 1.0, f90) * FresnelSchlick(NdotV, 1.0, f90);
 }
@@ -344,12 +344,12 @@ float GetNoHSquared(float radius, float NdotL, float NdotV, float VdotL) {
 	return max0(NoH * NoH / HoH);
 }
 
-vec3 SphericalAreaGGX(float LdotH, float NdotV, float NdotL, float LdotV, float alpha, vec3 f0, float radius) {
+vec3 SphericalAreaGGX(float VdotH, float NdotV, float NdotL, float LdotV, float alpha, vec3 f0, float radius) {
 	// alpha = max(alpha, 1e-2);
 	float alpha2 = alpha * alpha;
 
 	// Fresnel term
-	vec3 F = FresnelSchlick(LdotH, f0);
+	vec3 F = FresnelSchlick(VdotH, f0);
 
 	// Distribution term
 	float NdotH2 = GetNoHSquared(radius, NdotL, NdotV, LdotV);
@@ -360,7 +360,7 @@ vec3 SphericalAreaGGX(float LdotH, float NdotV, float NdotL, float LdotV, float 
 
 	// Both Karis’ approach and our approach are not truely energy conserving as their normalization is only approximate.
 	// We’re experimenting with different formulas for the normalization to try to improve its accuracy, of which this is one:
-	float alphaSquaredLdotH = alpha2 * (LdotH + 0.001);
+	float alphaSquaredLdotH = alpha2 * (VdotH + 0.001);
 	float normalization = alphaSquaredLdotH / (alphaSquaredLdotH + 0.25 * radius * (3.0 * alpha + radius));
 
 	return F * D * Vis * normalization;
