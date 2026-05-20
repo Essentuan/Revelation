@@ -159,62 +159,80 @@ vec3 FresnelConductor(float VdotH, vec3 n, vec3 k) {
 //================================================================================================//
 
 // Beckmann 1963, "The scattering of electromagnetic waves from rough surfaces"
-float NDFBeckmann(float NdotH2, float alpha2) {
+float DistributionBeckmann(float NdotH2, float alpha2) {
 	return exp((NdotH2 - 1.0) / (alpha2 * NdotH2)) / (PI * alpha2 * NdotH2 * NdotH2);
 }
 
-float NDFGaussian(float NdotH, float alpha2) {
+float DistributionGaussian(float NdotH, float alpha2) {
 	float thetaH = fastAcos(NdotH);
 	return exp(-thetaH * thetaH / alpha2);
 }
 
 // GGX / Trowbridge-Reitz
 // Walter et al. 2007, "Microfacet models for refraction through rough surfaces"
-float NDFTrowbridgeReitz(float NdotH2, float alpha2) {
+float DistributionGGX(float NdotH2, float alpha2) {
 	return alpha2 * rPI / sqr(1.0 + (alpha2 - 1.0) * NdotH2);
 }
 
 // Anisotropic GGX
 // Burley 2012, "Physically-Based Shading at Disney"
-float NDFAnisotropicGGX(float ax, float ay, float NdotH, float XdotH, float YdotH) {
-	float a2 = ax * ay;
-	vec3 V = vec3(ay * XdotH, ax * YdotH, a2 * NdotH);
-	return rPI * a2 * sqr(a2 / dot(V, V));
+float DistributionAnisoGGX(float ax, float ay, float NdotH, float XdotH, float YdotH) {
+	float alpha2 = ax * ay;
+	vec3 V = vec3(ay * XdotH, ax * YdotH, alpha2 * NdotH);
+	return rPI * alpha2 * sqr(alpha2 / dot(V, V));
 }
 
 //================================================================================================//
 
+// Schlick 1994, "An Inexpensive BRDF Model for Physically-Based Rendering"
+float GeometrySchlick(float cosTheta, float k) {
+    return cosTheta / (cosTheta * oms(k) + k);
+}
+
+float GeometrySchlick(float NdotL, float NdotV, float alpha) {
+    float k = alpha * 0.5; // sqr(alpha + 1.0) * 0.125;
+    return GeometrySchlick(NdotL, k) * GeometrySchlick(NdotV, k);
+}
+
+float VisibilitySchlick(float cosTheta, float k) {
+	return 0.5 / (cosTheta * oms(k) + k);
+}
+
+float VisibilitySchlick(float NdotL, float NdotV, float alpha) {
+	float k = alpha * 0.5; // sqr(alpha + 1.0) * 0.125;
+	return VisibilitySchlick(NdotL, k) * VisibilitySchlick(NdotV, k);
+}
+
 // Smith 1967, "Geometrical shadowing of a random rough surface"
-float VisSmithGGX(float cosTheta, float alpha2) {
+float GeometrySmith(float cosTheta, float alpha2) {
+    return 2.0 * cosTheta * rcp(sqrt(alpha2 + oms(alpha2) * cosTheta * cosTheta) + cosTheta);
+}
+
+float GeometrySmith(float NdotL, float NdotV, float alpha2) {
+    return GeometrySmith(NdotL, alpha2) * GeometrySmith(NdotV, alpha2);
+}
+
+float VisibilitySmith(float cosTheta, float alpha2) {
 	return rcp(sqrt((cosTheta - cosTheta * alpha2) * cosTheta + alpha2) + cosTheta);
 }
 
-float VisSmithGGX(float NdotL, float NdotV, float alpha2) {
+float VisibilitySmith(float NdotL, float NdotV, float alpha2) {
 	float visL = NdotL + sqrt((NdotL - NdotL * alpha2) * NdotL + alpha2);
 	float visV = NdotV + sqrt((NdotV - NdotV * alpha2) * NdotV + alpha2);
 	return rcp(visL * visV);
 }
 
 // Heitz 2014, "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs"
-float VisSmithJoint(float NdotL, float NdotV, float alpha2) {
+float VisibilitySmithJoint(float NdotL, float NdotV, float alpha2) {
 	float visL = NdotV * sqrt((NdotL - NdotL * alpha2) * NdotL + alpha2);
 	float visV = NdotL * sqrt((NdotV - NdotV * alpha2) * NdotV + alpha2);
 	return 0.5 * rcp(visL + visV);
 }
 
-// Schlick 1994, "An Inexpensive BRDF Model for Physically-Based Rendering"
-float VisSchlick(float cosTheta, float k) {
-	return 0.5 / (cosTheta * oms(k) + k);
-}
-
-float VisSchlick(float NdotL, float NdotV, float alpha) {
-	float k = alpha * 0.5; // sqr(alpha + 1.0) * 0.125;
-	return VisSchlick(NdotL, k) * VisSchlick(NdotV, k);
-}
-
-float VisSchlickBeckman(float NdotL, float NdotV, float alpha2) {
-	float k = alpha2 * 0.797884560802865;
-	return VisSchlick(NdotL, k) * VisSchlick(NdotV, k);
+float VisibilitySmithJointAniso(float ax, float ay, float NdotL, float NdotV, float XdotV, float XdotL, float YdotV, float YdotL) {
+	float visL = NdotV * length(vec3(ax * XdotL, ay * YdotL, NdotL));
+	float visV = NdotL * length(vec3(ax * XdotV, ay * YdotV, NdotV));
+	return 0.5 * rcp(visL + visV);
 }
 
 //================================================================================================//
@@ -224,13 +242,13 @@ vec3 SpecularGGX(float LdotH, float NdotV, float NdotL, float NdotH, float rough
 	float alpha2 = maxEps(roughness * roughness);
 
 	// Fresnel term
-	vec3 F = FresnelSchlick(LdotH, f0, saturate(50.0 * f0));
+	vec3 F = FresnelSchlick(LdotH, f0);
 
 	// Distribution term
-	float D = NDFTrowbridgeReitz(NdotH * NdotH, alpha2);
+	float D = DistributionGGX(NdotH * NdotH, alpha2);
 
 	// Visibility term (= G / (4 * NdotV * NdotL))
-	float Vis = VisSmithJoint(NdotL, NdotV, alpha2);
+	float Vis = VisibilitySmithJoint(NdotL, NdotV, alpha2);
 
 	return F * D * Vis;
 }
@@ -331,14 +349,14 @@ vec3 SphericalAreaGGX(float LdotH, float NdotV, float NdotL, float LdotV, float 
 	float alpha2 = alpha * alpha;
 
 	// Fresnel term
-	vec3 F = FresnelSchlick(LdotH, f0, saturate(50.0 * f0));
+	vec3 F = FresnelSchlick(LdotH, f0);
 
 	// Distribution term
 	float NdotH2 = GetNoHSquared(radius, NdotL, NdotV, LdotV);
-	float D = NDFTrowbridgeReitz(NdotH2, alpha2);
+	float D = DistributionGGX(NdotH2, alpha2);
 
 	// Visibility term (= G / (4 * NdotV * NdotL))
-	float Vis = VisSmithJoint(NdotL, NdotV, alpha2);
+	float Vis = VisibilitySmithJoint(NdotL, NdotV, alpha2);
 
 	// Both Karis’ approach and our approach are not truely energy conserving as their normalization is only approximate.
 	// We’re experimenting with different formulas for the normalization to try to improve its accuracy, of which this is one:
