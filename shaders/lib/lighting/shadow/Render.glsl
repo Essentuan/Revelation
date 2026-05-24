@@ -51,18 +51,18 @@ vec3 CalculateWaterCaustics(vec3 worldPos, float waterDepth, float dither) {
 	float caustics = 0.0;
 	for (uint i = 0u; i < 16u; ++i) {
 		vec3 samplePos = worldPos;
-		samplePos.xz += sampleVogelDisk(i, 16, dither) * 0.15;
+		samplePos.xz += sampleVogelDisk(i, 16, dither) * 0.175;
 
 		vec2 sampleCoord = WorldToShadowScreenSpace(samplePos).xy;
-		vec3 waveNormal = OctDecodeUnorm(texture(shadowcolor1, sampleCoord).xy);
+		vec3 waveNormal = OctDecodeUnorm(texelFetch(shadowcolor1, ivec2(sampleCoord * realShadowMapRes), 0).xy);
 
 		vec3 refractDir = refract(vec3(0.0, 1.0, 0.0), waveNormal, 1.0 / WATER_IOR);
 		vec3 refractedPos = samplePos + refractDir * abs(1.0 / refractDir.y);
 
-		caustics += saturate(fma(distance(surfacePos, refractedPos), -20.0, 1.0));
+		caustics += max(fma(distance(surfacePos, refractedPos), -20.0, 1.0), 0.02);
 	}
 
-	return -smin(-caustics, -0.1, 0.15) * saturate(exp2(-rLOG2 * waterExtinction * waterDepth));
+	return caustics * saturate(exp2(-rLOG2 * waterExtinction * waterDepth));
 }
 
 vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, float blockerDepth, float distortionFactor) {
