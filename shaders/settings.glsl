@@ -102,7 +102,7 @@ const float realShadowMapRes = float(shadowMapResolution) * MC_SHADOW_QUALITY;
 	#define TRANSLUCENT_ROUGHNESS 0.005 // [0.0 0.0005 0.001 0.002 0.003 0.004 0.005 0.006 0.007 0.008 0.009 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 
 	const vec3 waterAbsorption = vec3(WATER_ABSORPTION_R, WATER_ABSORPTION_G, WATER_ABSORPTION_B) * WATER_FOG_DENSITY;
-	const vec3 waterScattering = vec3(WATER_SCATTERING_R, WATER_SCATTERING_G, WATER_SCATTERING_B) * WATER_FOG_DENSITY * 0.1;
+	const vec3 waterScattering = vec3(WATER_SCATTERING_R, WATER_SCATTERING_G, WATER_SCATTERING_B) * WATER_FOG_DENSITY * 0.05;
 	const vec3 waterExtinction = waterAbsorption + waterScattering;
 	const vec3 waterAlbedo = waterScattering / waterExtinction;
 
