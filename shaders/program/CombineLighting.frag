@@ -69,12 +69,7 @@ uniform sampler2D cloudOriginTex;
 		ivec2 floorTexel = ivec2(floor(coord));
 		vec2 fractTexel = coord - vec2(floorTexel);
 
-		float bilinearWeight[4] = {
-			oms(fractTexel.x) * oms(fractTexel.y),
-			fractTexel.x      * oms(fractTexel.y),
-			oms(fractTexel.x) * fractTexel.y,
-			fractTexel.x      * fractTexel.y
-		};
+		vec4 bilinearWeight = bilinear(fractTexel);
 
 		for (uint i = 0u; i < 4u; ++i) {
 			ivec2 sampleTexel = clamp(floorTexel + offset2x2[i], ivec2(1), texelEnd);

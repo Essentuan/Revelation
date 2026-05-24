@@ -1,3 +1,12 @@
+vec4 bilinear(vec2 fpx) {
+    vec4 w;
+    w.yw = fpx.xx;
+    w.xz = 1.0 - fpx.xx;
+    w.zw *= fpx.yy;
+    w.xy *= 1.0 - fpx.yy;
+    return w;
+}
+
 // From https://iquilezles.org/www/articles/texture/texture.htm
 vec4 textureSmoothFilter(sampler2D tex, vec2 coord) {
 	vec2 res = vec2(textureSize(tex, 0));
