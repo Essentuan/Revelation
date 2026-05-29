@@ -98,10 +98,10 @@ void main() {
 		#endif
 
         // Apply rain ripples
-		if (wetnessCustom > EPS) {
+		if (rainStrength > EPS) {
             vec2 rippleSlope = RippleSlope(minecraftPos.xz * RIPPLE_SCALE, frameTimeCounter);
             rippleSlope *= saturate(4.0 * abs(dot(geoNormal, worldDir))) * saturate(lightmap.y * 5.0 - 4.0) * 0.25;
-            worldNormal = normalize(worldNormal + vec3(rippleSlope * wetnessCustom, 0.0).xzy);
+            worldNormal = normalize(worldNormal + vec3(rippleSlope * rainStrength, 0.0).xzy);
         }
 
 		float depth1 = loadDepth1(texel);
@@ -126,13 +126,13 @@ void main() {
 		#endif
 
         // Apply rain ripples
-		if (wetnessCustom > EPS) {
+		if (rainStrength > EPS) {
 			vec3 minecraftPos = worldPos + cameraPosition;
 		    vec3 worldDir = normalize(worldPos - gbufferModelViewInverse[3].xyz);
 
             vec2 rippleSlope = RippleSlope(minecraftPos.xz * RIPPLE_SCALE, frameTimeCounter);
             rippleSlope *= saturate(4.0 * abs(dot(geoNormal, worldDir))) * saturate(lightmap.y * 5.0 - 4.0);
-            worldNormal = normalize(worldNormal + vec3(rippleSlope * wetnessCustom, 0.0).xzy);
+            worldNormal = normalize(worldNormal + vec3(rippleSlope * rainStrength, 0.0).xzy);
         }
 
 		normalOut.zw = OctEncodeSnorm(worldNormal);

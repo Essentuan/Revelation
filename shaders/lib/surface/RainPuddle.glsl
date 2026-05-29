@@ -66,7 +66,7 @@ void ApplyRainPuddleMaterial(inout vec3 albedo, inout vec3 specTex, vec3 worldPo
 	// Apply wetness to normal
     vec2 rippleSlope = RippleSlope(minecraftPos.xz * RIPPLE_SCALE, frameTimeCounter);
     rippleSlope *= saturate(4.0 * abs(dot(geoNormal, worldPos) * inversesqrt(sdot(worldPos))));
-    vec3 rippleNormal = vec3(rippleSlope * wetnessCustom, 5.0).xzy;
+    vec3 rippleNormal = vec3(rippleSlope * rainStrength, 5.0).xzy;
     normal = normalize(normal + rippleNormal * puddles);
 
 	// Apply wetness to specular
