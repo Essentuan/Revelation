@@ -46,10 +46,9 @@ float BlockerSearch(vec3 shadowScreenPos, float dither, float searchScale) {
 }
 
 vec3 CalculateWaterCaustics(vec3 worldPos, float waterDepth, float dither) {
-    float waterDepthClamped = clamp(waterDepth, 3.0, 32.0);
+    float waterDepthClamped = clamp(waterDepth, 2.0, 32.0);
 
-    const vec3 lightDir = vec3(0.0, -1.0, 0.0); // worldLightDir;
-	vec3 flatRefractDir = refract(lightDir, vec3(0.0, 1.0, 0.0), 1.0 / WATER_IOR);
+	vec3 flatRefractDir = refract(-worldLightDir, vec3(0.0, 1.0, 0.0), 1.0 / WATER_IOR);
 	vec3 surfacePos = worldPos + flatRefractDir * abs(waterDepthClamped / flatRefractDir.y);
 
 	float caustics = 0.0;
@@ -60,7 +59,7 @@ vec3 CalculateWaterCaustics(vec3 worldPos, float waterDepth, float dither) {
 		vec2 sampleCoord = WorldToShadowScreenSpace(samplePos).xy;
 		vec3 waveNormal = OctDecodeUnorm(texelFetch(shadowcolor1, ivec2(sampleCoord * realShadowMapRes), 0).xy);
 
-		vec3 refractDir = refract(lightDir, waveNormal, 1.0 / WATER_IOR);
+		vec3 refractDir = refract(-worldLightDir, waveNormal, 1.0 / WATER_IOR);
 		vec3 refractedPos = samplePos + refractDir * abs(waterDepthClamped / refractDir.y);
 
 		caustics += saturate(fma(distance(surfacePos, refractedPos), -20.0, 1.0));
