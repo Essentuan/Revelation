@@ -274,8 +274,8 @@ void main() {
 				#endif
 
                 float invLenH = inversesqrt(2.0 + 2.0 * LdotV);
-                float NdotH = saturate((NdotL + NdotV) * invLenH);
-                float VdotH = saturate(LdotV * invLenH + invLenH);
+                float NdotH = (NdotL + NdotV) * invLenH;
+                float VdotH = LdotV * invLenH + invLenH;
 
 				diffuseRadiance += shadow * DiffuseHammon(NdotV, NdotL, VdotH, NdotH, material.roughness, albedo) * NdotL;
 				specularRadiance += shadow * SpecularGGX(VdotH, NdotV, NdotL, NdotH, material.roughness, material.reflectance) * NdotL;
