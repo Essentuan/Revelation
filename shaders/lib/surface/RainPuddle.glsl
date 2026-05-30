@@ -16,17 +16,15 @@ vec2 RippleSlope(vec2 uv, float time) {
             float t = fract(time + hash12(pi));
             vec2 v = p - uv;
             float lenV = length(v);
-            float d = lenV - (float(RIPPLE_MAX_RADIUS) + 1.0) * t;
+            float d = lenV - float(RIPPLE_MAX_RADIUS + 1) * t;
 
             const float h = 1e-3;
-            float d1 = d - h;
-            float d2 = d + h;
-            float p1 = sin(32.0 * d1) * linearstep(-0.6, -0.3, d1) * linearstep(0.0, -0.3, d1);
-            float p2 = sin(32.0 * d2) * linearstep(-0.6, -0.3, d2) * linearstep(0.0, -0.3, d2);
-            circles += v * ((p2 - p1) / (lenV * h) * sqr(1.0 - t));
+            vec2 d12 = vec2(d - h, d + h);
+            vec2 p12 = sin(32.0 * d12) * smoothstep(0.3, 0.0, abs(d12 + 0.3));
+            circles += v * ((p12.x - p12.y) / (lenV * h) * sqr(1.0 - t));
         }
     }
-    circles *= -RIPPLE_INTENSITY / float((RIPPLE_MAX_RADIUS * 2 + 1) * (RIPPLE_MAX_RADIUS * 2 + 1));
+    circles *= RIPPLE_INTENSITY / float((RIPPLE_MAX_RADIUS * 2 + 1) * (RIPPLE_MAX_RADIUS * 2 + 1));
 
     return circles;
 }
@@ -43,7 +41,7 @@ void ApplyRainPuddleMaterial(inout vec3 albedo, inout vec3 specTex, vec3 worldPo
 	noise += texture(noisetex, puddlePos * 0.3).z * 2.0;
 	noise = saturate(noise * 0.2) * wetnessCustom;
 
-	float puddles = smoothstep(0.45, 0.55, noise);
+	float puddles = smoothstep(0.4, 0.6, noise);
 
 	// Normal falloff
 	puddles *= saturate(geoNormal.y * 0.5 + 0.5);
@@ -66,10 +64,10 @@ void ApplyRainPuddleMaterial(inout vec3 albedo, inout vec3 specTex, vec3 worldPo
 	// Apply wetness to normal
     vec2 rippleSlope = RippleSlope(minecraftPos.xz * RIPPLE_SCALE, frameTimeCounter);
     rippleSlope *= saturate(4.0 * abs(dot(geoNormal, worldPos) * inversesqrt(sdot(worldPos))));
-    vec3 rippleNormal = vec3(rippleSlope * rainStrength, 5.0).xzy;
+    vec3 rippleNormal = vec3(rippleSlope * noise * rainStrength, 4.0).xzy;
     normal = normalize(normal + rippleNormal * puddles);
 
 	// Apply wetness to specular
 	specTex.r = mix(specTex.r, RAIN_PUDDLE_SMOOTHNESS, puddles);
-	// specTex.g = max(specTex.g, DEFAULT_DIELECTRIC_F0 * puddles);
+	// specTex.g = mix(specTex.g, 0.02, puddles);
 }
