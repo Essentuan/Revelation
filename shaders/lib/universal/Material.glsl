@@ -25,7 +25,7 @@ struct Material {
 	float emission;
     vec3 reflectance;
 	bool specularMask;
-	bool isRough;
+	bool mirrorMask;
 };
 
 // https://shaderlabs.org/wiki/LabPBR_Material_Standard
@@ -91,7 +91,7 @@ Material GetMaterialData(vec4 specTex, vec3 albedo) {
     material.reflectance = GetMaterialF0(material.metallic, albedo);
 
 	material.specularMask = material.roughness < 0.5 || material.metallic > EPS;
-	material.isRough = material.roughness + wetnessCustom > ROUGH_REFLECTIONS_THRESHOLD;
+	material.mirrorMask = material.roughness < ROUGH_REFLECTIONS_THRESHOLD;
 
 	return material;
 }
@@ -103,7 +103,7 @@ Material GetMaterialData(vec2 specTex) {
 	material.metallic = specTex.g;
 
 	material.specularMask = material.roughness < 0.5 || material.metallic > EPS;
-	material.isRough = material.roughness + wetnessCustom > ROUGH_REFLECTIONS_THRESHOLD;
+	material.mirrorMask = material.roughness < ROUGH_REFLECTIONS_THRESHOLD;
 
 	return material;
 }

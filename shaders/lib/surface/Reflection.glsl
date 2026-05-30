@@ -6,7 +6,7 @@ vec4 CalculateSpecularReflections(Material material, vec3 worldNormal, vec3 scre
 
 	vec3 halfway = worldNormal;
 #ifdef ROUGH_REFLECTIONS
-	if (material.isRough) {
+	if (!material.mirrorMask) {
 		mat3 tbnMatrix = BuildOrthonormalBasis(worldNormal);
 
 		vec2 noise = SampleStbnVec2(ivec2(gl_FragCoord.xy), frameCounter + 3);
