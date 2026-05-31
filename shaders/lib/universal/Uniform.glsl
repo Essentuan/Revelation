@@ -26,7 +26,7 @@ uniform sampler2D tLutTex;
 uniform sampler2D msLutTex;
 uniform sampler2D skyViewTex;
 
-uniform sampler2D brdfLutTex;
+uniform sampler2D envBRDFTex;
 
 uniform sampler3D stbnVec1Tex;
 uniform sampler3D stbnVec2Tex;

@@ -360,7 +360,7 @@ void main() {
 
 		// Indirect specular
 		if (material.specularMask) {
-			vec2 brdf = texture(brdfLutTex, vec2(material.roughness, NdotV)).xy;
+			vec2 brdf = texture(envBRDFTex, vec2(material.roughness, NdotV)).xy;
 
 			vec3 specular = material.reflectance * brdf.x + brdf.y;
 			specularRadiance += loadSceneMain(texelPos) * specular;
