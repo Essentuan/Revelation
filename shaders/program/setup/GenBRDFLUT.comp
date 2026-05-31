@@ -37,7 +37,7 @@ writeonly uniform image2D envBRDFImg;
 const uint samples = 2048u;
 
 // brdf = D * G * F / (4 * NoL * NoV) = D * Vis * F
-// pdf = D * G_SmithV / (4 * NoV)
+// pdf = D * NoH / (4 * VoH)
 vec2 IntegrateEnvBRDF(float roughness, float NdotV) {
 	vec3 V; // View direction
 	V.x = sqrt(1.0 - NdotV * NdotV); // sin(theta)
@@ -49,15 +49,16 @@ vec2 IntegrateEnvBRDF(float roughness, float NdotV) {
 
 	for (uint i = 0u; i < samples; ++i) {
 		vec2 Xi = Hammersley(i, samples);
-		vec3 H = SampleVisibleGGX(V, roughness, Xi);
+		vec3 H = SampleGGX(Xi, roughness);
 		vec3 L = 2.0 * dot(V, H) * H - V;
 
 		float NdotL = L.z;
 		if (NdotL > 0.0) {
 			float VdotH = saturate(dot(V, H));
 
-			// G / G_SmithV
-			float G_Vis = SpecularThroughputGGX(NdotL, NdotV, roughness);
+			// NoL * Vis / pdf
+			float G_Vis = VisibilitySmithJoint(NdotL, NdotV, sqr(roughness));
+            G_Vis *= NdotL * 4.0 * VdotH / saturate(H.z);
 
 			// Fresnel term approximation
 			float Fc = pow5(1.0 - VdotH);
