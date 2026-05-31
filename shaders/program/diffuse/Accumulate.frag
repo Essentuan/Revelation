@@ -128,12 +128,12 @@ void main() {
 	vec2 renderCoord = texelToUv(renderTexel);
 
 	float depth = loadDepth0(renderTexel);
-	bool terrainCheck = min(GetClosestDepthN(renderTexel), depth) < 1.0;
+	bool terrainCheck = lessThanFLT1(min(GetClosestDepthN(renderTexel), depth));
 	#if defined LOD_MOD
 		bool lodMask = !terrainCheck;
 		if (lodMask) {
 			depth = loadDepth0Lod(renderTexel);
-			terrainCheck = depth < 1.0;
+			terrainCheck = lessThanFLT1(depth);
 		}
 	#endif
 

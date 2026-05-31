@@ -60,7 +60,7 @@ void main() {
 	float alpha = smoothstep(sqr(far - 32.0), sqr(far - 16.0), sdot(worldPos));
 	float dither = BlueNoise(texel, frameCounter);
 
-	if (alpha < dither || loadDepth0(texel) < 1.0) {
+	if (alpha < dither || lessThanFLT1(loadDepth0(texel))) {
 		discard;
 		return;
 	}
