@@ -1,5 +1,5 @@
 #include "/lib/atmosphere/Rainbow.glsl"
-#include "/lib/atmosphere/clouds/Shadows.glsl"
+#include "/lib/atmosphere/clouds/Common.glsl"
 
 uniform float biomeSandstorm;
 uniform float biomeSnowstorm;

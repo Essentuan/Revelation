@@ -46,7 +46,6 @@ uniform sampler2D cloudOriginTex;
 #include "/lib/atmosphere/Celestial.glsl"
 
 #include "/lib/atmosphere/clouds/Render.glsl"
-#include "/lib/atmosphere/clouds/Shadows.glsl"
 
 #include "/lib/lighting/Common.glsl"
 #include "/lib/lighting/shadow/Render.glsl"
