@@ -225,8 +225,16 @@ void main() {
 			distanceFade = saturate(distanceFade + float(lodMask));
 		#endif
 
-		float NdotL = saturate(dot(worldNormal, worldLightDir));
-		float NdotV = abs(dot(worldNormal, worldDir));
+		float NdotV = dot(worldNormal, -worldDir);
+		float NdotL = dot(worldNormal, worldLightDir);
+		float LdotV = dot(worldLightDir, -worldDir);
+
+        // Must use unclamped NdotL & NdotV
+        float invLenH = inversesqrt(2.0 + 2.0 * LdotV);
+        float NdotH = saturate((NdotL + NdotV) * invLenH);
+        float VdotH = saturate(LdotV * invLenH + invLenH);
+        NdotL = saturate(NdotL);
+        NdotV = saturate(NdotV);
 
 		// Shadows and SSS
 		if (NdotL + sssAmount > EPS) {
@@ -245,8 +253,6 @@ void main() {
 			#else
 				const float contactShadow = 1.0;
 			#endif
-
-			float LdotV = -dot(worldLightDir, worldDir);
 
 			// Subsurface scattering
 			if (sssAmount > EPS) {
@@ -271,10 +277,6 @@ void main() {
 						shadow *= oms(texelFetch(colortex12, texelPos, 0).x);
 					#endif
 				#endif
-
-                float invLenH = inversesqrt(2.0 + 2.0 * LdotV);
-                float NdotH = (NdotL + NdotV) * invLenH;
-                float VdotH = LdotV * invLenH + invLenH;
 
 				diffuseRadiance += shadow * DiffuseHammon(NdotV, NdotL, VdotH, NdotH, material.roughness, albedo) * NdotL;
 				specularRadiance += shadow * SpecularGGX(VdotH, NdotV, NdotL, NdotH, material.roughness, material.reflectance) * NdotL;
