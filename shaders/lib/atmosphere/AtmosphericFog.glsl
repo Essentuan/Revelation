@@ -31,9 +31,9 @@ vec2 CalculateFogDensity(vec3 rayPos, float uniformFog) {
 #endif
 
 	density.y *= sqr(noise) * (2.0 + biomeSandstorm * 8.0 + biomeSnowstorm * 4.0);
-	density += uniformFog;
+	density += uniformFog * linearstep(cumulusTopAltitude, cumulusBottomAltitude, rayPos.y);
 
-	return density * linearstep(cumulusTopAltitude, cumulusBottomAltitude, rayPos.y);
+	return density;
 }
 
 //================================================================================================//
@@ -153,18 +153,18 @@ mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, uint ste
 			vec2 density = CalculateFogDensity(lightPos, uniformFog);
 			opticalDepthSun += density * stepSize;
 		}
-
-		// https://zhuanlan.zhihu.com/p/457997155
-		vec2 msV = 0.9 * oms(exp2(-8.0 * stepDensity));
-		vec2 msEnergy = phase * exp(-opticalDepthSun);
-		msEnergy += uniformPhase * msV / (oms(msV) * (1.0 + opticalDepthSun * 0.25));
+        vec3 transmittanceToSun = exp(-fogExtinctionCoeff * opticalDepthSun) * sampleShadow;
 
 		vec3 stepExtinction = fogExtinctionCoeff * stepDensity;
-		vec3 stepTransmittance = exp(-2.0 * fi * stepLength * stepExtinction);
+		vec3 stepTransmittance = exp2(-rLOG2 * 2.0 * fi * stepLength * stepExtinction);
 
 		vec3 stepIntegral = transmittance * oms(stepTransmittance) / maxEps(stepExtinction);
 
-		scatteringSun += fogScatteringCoeff * (stepDensity * msEnergy) * stepIntegral * sampleShadow;
+		// https://zhuanlan.zhihu.com/p/457997155
+		float fms = 0.9 * oms(pow4(luminance(stepTransmittance)));
+		vec2 msEnergy = phase + uniformPhase * fms / oms(fms);
+
+		scatteringSun += fogScatteringCoeff * (stepDensity * msEnergy) * stepIntegral * transmittanceToSun;
 		scatteringSky += fogScatteringCoeff * stepDensity * stepIntegral;
 
 		transmittance *= stepTransmittance;
