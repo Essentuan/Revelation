@@ -42,7 +42,7 @@ void main() {
 	ivec2 tid = ivec2(gl_GlobalInvocationID.xy);
 
 	// Checkerboard render cloud shadow map
-	ivec2 offset = checkerboardOffset4x4[frameCounter & 3];
+	ivec2 offset = checkerboardOffset2x2[frameCounter & 3];
 	if ((tid & 1) == offset || global.historyReset) {
 		float dither = BlueNoise(tid, frameCounter);
 
