@@ -130,6 +130,6 @@ vec3 RenderGalaxy(vec3 worldDir) {
 	vec2 starmapCoord = 0.5 - starmapSpherical * vec2(rTAU, rPI);
 
 	// Bilinear interpolation is enough
-	vec3 starmap = LogLuvDecode(texture(starmapTex, starmapCoord));
+	vec3 starmap = texture(starmapTex, starmapCoord).rgb;
 	return starmap * sRGB_2_Rec2020 * GALAXY_INTENSITY;
 }
