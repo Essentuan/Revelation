@@ -176,6 +176,7 @@ const float realShadowMapRes = float(shadowMapResolution) * MC_SHADOW_QUALITY;
 	#define PARALLAX
 	#define PARALLAX_DEPTH_WRITE
 
+    // #define SMOOTH_PARALLAX
 	#define PARALLAX_SHADOW
 	#define PARALLAX_BASED_NORMAL
 
