@@ -83,8 +83,8 @@ float KleinNishinaPhase(float cosTheta, float e) {
 // https://www.oceanopticsbook.info/view/scattering/the-fournier-forand-phase-function
 float FournierForandPhase(float cosTheta, float n, float mu) {
 	float v = (3.0 - mu) * 0.5;
-	float u2 = oms(cosTheta) * 0.5; // = sin^2(theta / 2)
-	float delta180 = 4.0 / maxEps(3.0 * sqr(n - 1.0));
+	float u2 = oms(cosTheta) * 0.5 + EPS; // = sin^2(theta / 2)
+	float delta180 = 4.0 / (3.0 * sqr(n - 1.0));
 	float delta = delta180 * u2;
 
 	float deltaV = pow(delta, v);
