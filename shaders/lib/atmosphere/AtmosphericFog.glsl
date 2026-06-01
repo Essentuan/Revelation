@@ -69,7 +69,7 @@ mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, uint ste
 	float mieDensityMult = VF_MIE_DENSITY * 5e2 * (1.0 + wetness * VF_MIE_DENSITY_RAIN_MULT);
 
 	#ifdef VF_TIME_FADE
-		mieDensityMult *= max(wetness, 1.5 - approxSqrt(timeNoon) * 1.5 - timeSunset * 0.5);
+		mieDensityMult *= max(wetness, sqr(1.0 - timeNoon) - timeSunset * 0.25);
 	#endif
 
 	vec3 fogMieExtinction = atmosphere.mieExtinction * mieDensityMult;
@@ -91,7 +91,7 @@ mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, uint ste
 		fogMieScattering
 	);
 
-	float uniformFog = (16.0 + wetness * VF_MIE_DENSITY_RAIN_MULT * 16.0) / maxDist;
+	float uniformFog = (8.0 + wetness * VF_MIE_DENSITY_RAIN_MULT * 8.0) / maxDist;
 
 	vec3 scatteringSun = vec3(0.0);
 	vec3 scatteringSky = vec3(0.0);
