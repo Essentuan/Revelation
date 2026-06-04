@@ -44,10 +44,8 @@ void main() {
 	// Avoid the misalignment at sunrise and sunset
 	global.directIlluminance *= smoothstep(0.0, 0.01, worldLightDir.y);
 
-	// Reset history if time has changed rapidly
-	int worldTimeDiff = worldTime - global.prevWorldTime;
-	worldTimeDiff = min(abs(worldTimeDiff + 24000), abs(worldTimeDiff));
-	global.historyReset = worldTimeDiff > 64;
+	global.worldTimeDiff = worldTime - global.lastWorldTime;
+    global.lastWorldTime = worldTime;
 
 	#ifdef CLOUD_SHADOWS
 		mat4 projMat = BuildOrthoMat(CLOUD_SHADOW_DISTANCE * 32.0, CLOUD_SHADOW_DISTANCE * 32.0, 0.0, cumulusTopRadius);

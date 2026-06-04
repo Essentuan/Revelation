@@ -55,7 +55,7 @@ void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
 	vec2 currCoord = texelToUv(texelPos);
 	encodedNormalDepth = vec3(OctEncodeSnorm(worldNormal), viewPos.z);
 
-	if (saturate(prevCoord) == prevCoord && !global.historyReset) {
+	if (saturate(prevCoord) == prevCoord && !historyReset) {
 		vec4 prevDiffuse = vec4(0.0);
 		float sumWeight = 0.0;
 

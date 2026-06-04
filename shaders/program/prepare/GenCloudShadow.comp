@@ -43,7 +43,7 @@ void main() {
 
 	// Checkerboard render cloud shadow map
 	ivec2 offset = checkerboardOffset2x2[frameCounter & 3];
-	if ((tid & 1) == offset || global.historyReset) {
+	if ((tid & 1) == offset || historyReset) {
 		float dither = BlueNoise(tid, frameCounter);
 
 		vec2 uv = (vec2(tid) + dither) * rcp(textureSize(cloudShadowTex, 0));
@@ -79,7 +79,7 @@ void main() {
         float cloudShadow = oms(strength) + transmittance * strength;
 
 		// Accumulate
-		float weight = rcp(min(frameCounter, 32) * float(!global.historyReset) + 1.0);
+		float weight = rcp(min(frameCounter, 32) * float(!historyReset) + 1.0);
 		cloudShadow = mix(texelFetch(cloudShadowTex, tid, 0).x, cloudShadow, weight);
 
 		imageStore(cloudShadowImg, tid, vec4(cloudShadow));

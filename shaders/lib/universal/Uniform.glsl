@@ -149,6 +149,8 @@ uniform vec3 worldMoonDir;
 uniform vec3 worldLightDir;
 uniform vec3 viewLightDir;
 
+uniform bool historyReset;
+
 //================================================================================================//
 
 #if defined VOXY
