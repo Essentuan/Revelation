@@ -69,7 +69,7 @@ void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
 
 		vec4 bilinearWeight = bilinear(fractTexel);
 
-		float zThreshold = -0.125 * encodedNormalDepth.z;
+		float invThresholdZ = 8.0 / encodedNormalDepth.z;
 
 		for (uint i = 0u; i < 4u; ++i) {
 			ivec2 sampleTexel = floorTexel + offset2x2[i];
@@ -77,7 +77,7 @@ void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
 				vec3 sampleAux = texelFetch(colortex14, sampleTexel, 0).xyz;
 				vec4 sampleIrradiance = texelFetch(colortex2, sampleTexel, 0);
 
-				float weight = step(distance(encodedNormalDepth.z, sampleAux.z), zThreshold);
+				float weight = saturate(fma(distance(encodedNormalDepth.z, sampleAux.z), invThresholdZ, 1.0));
 				weight *= linearstep(0.5, 0.8, saturate(dot(OctDecodeSnorm(sampleAux.xy), worldNormal)));
 				weight *= bilinearWeight[i];
 
