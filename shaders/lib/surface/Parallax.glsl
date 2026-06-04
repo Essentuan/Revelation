@@ -1,48 +1,49 @@
 float SampleHeight(vec2 localCoord) {
     #ifdef SMOOTH_PARALLAX
-        vec2 quadPixelSize = rcp(tileScale * vec2(atlasSize));
+        // Bilinear interpolation
+        vec2 tilePixelSize = rcp(tileScale * vec2(atlasSize));
         vec2 atlasCoord = localToAtlas(localCoord) * vec2(atlasSize);
 
         vec2 f = fract(atlasCoord);
 
         ivec2 atlasTexel00 = ivec2(atlasCoord);
-	    ivec2 atlasTexel11 = ivec2(localToAtlas(localCoord + quadPixelSize) * vec2(atlasSize));
+	    ivec2 atlasTexel11 = ivec2(localToAtlas(localCoord + tilePixelSize) * vec2(atlasSize));
 
-        float a = texelFetch(normals, atlasTexel00, 0).a;
-        float b = texelFetch(normals, ivec2(atlasTexel11.x, atlasTexel00.y), 0).a;
-        float c = texelFetch(normals, ivec2(atlasTexel00.x, atlasTexel11.y), 0).a;
-        float d = texelFetch(normals, atlasTexel11, 0).a;
+        float h00 = texelFetch(normals, atlasTexel00, 0).a;
+        float h10 = texelFetch(normals, ivec2(atlasTexel11.x, atlasTexel00.y), 0).a;
+        float h01 = texelFetch(normals, ivec2(atlasTexel00.x, atlasTexel11.y), 0).a;
+        float h11 = texelFetch(normals, atlasTexel11, 0).a;
 
-        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+        return mix(mix(h00, h10, f.x), mix(h01, h11, f.x), f.y);
     #else
         return texelFetch(normals, ivec2(localToAtlas(localCoord) * vec2(atlasSize)), 0).a;
     #endif
 }
 
 vec3 HeightBasedNormal(vec2 localCoord) {
-    vec2 quadSize = tileScale * vec2(atlasSize);
-    vec2 quadPixelSize = rcp(quadSize);
+    vec2 tileSize = tileScale * vec2(atlasSize);
+    vec2 tilePixelSize = rcp(tileSize);
 
 	#ifdef SMOOTH_PARALLAX
         vec2 atlasCoord = localToAtlas(localCoord) * vec2(atlasSize);
 	    vec2 f = fract(atlasCoord);
 
         ivec2 atlasTexel00 = ivec2(atlasCoord);
-        ivec2 atlasTexel11 = ivec2(localToAtlas(localCoord + quadPixelSize) * vec2(atlasSize));
+        ivec2 atlasTexel11 = ivec2(localToAtlas(localCoord + tilePixelSize) * vec2(atlasSize));
 
-        float a = texelFetch(normals, atlasTexel00, 0).a;
-        float b = texelFetch(normals, ivec2(atlasTexel11.x, atlasTexel00.y), 0).a;
-        float c = texelFetch(normals, ivec2(atlasTexel00.x, atlasTexel11.y), 0).a;
-        float d = texelFetch(normals, atlasTexel11, 0).a;
+        float h00 = texelFetch(normals, atlasTexel00, 0).a;
+        float h10 = texelFetch(normals, ivec2(atlasTexel11.x, atlasTexel00.y), 0).a;
+        float h01 = texelFetch(normals, ivec2(atlasTexel00.x, atlasTexel11.y), 0).a;
+        float h11 = texelFetch(normals, atlasTexel11, 0).a;
 
-		vec3 normal = vec3(((b + c - a - d) * f.yx + vec2(a, d) - vec2(b, c)) * quadSize, 4.0 / PARALLAX_DEPTH);
+		vec3 normal = vec3(((h10 + h01 - h00 - h11) * f.yx + h00 - vec2(h10, h01)) * tileSize, 4.0 / PARALLAX_DEPTH);
 	#else
-        vec2 bias = 1e-2 * quadPixelSize;
+        vec2 bias = 1e-2 * tilePixelSize;
 
-        float heightR = textureLod(normals, localToAtlas(localCoord + vec2(bias.x, 0.0)), 0.0).a;
-        float heightL = textureLod(normals, localToAtlas(localCoord - vec2(bias.x, 0.0)), 0.0).a;
-        float heightU = textureLod(normals, localToAtlas(localCoord + vec2(0.0, bias.y)), 0.0).a;
-        float heightD = textureLod(normals, localToAtlas(localCoord - vec2(0.0, bias.y)), 0.0).a;
+        float heightR = SampleHeight(localCoord + vec2(bias.x, 0.0));
+        float heightL = SampleHeight(localCoord - vec2(bias.x, 0.0));
+        float heightU = SampleHeight(localCoord + vec2(0.0, bias.y));
+        float heightD = SampleHeight(localCoord - vec2(0.0, bias.y));
 
         float deltaX = heightL - heightR;
         float deltaY = heightD - heightU;
@@ -62,9 +63,10 @@ vec3 CalculateParallax(vec3 tangentDir, float dither, float parallaxFade) {
 	vec3 rayPos = vec3(atlasToLocal(texCoord), 1.0) + rayStep * dither;
 
 	for (uint i = 0u; i < PARALLAX_SAMPLES; ++i) {
-		rayPos += rayStep;
 		float sampleHeight = SampleHeight(rayPos.xy);
+
         if (sampleHeight > rayPos.z) break;
+		rayPos += rayStep;
 	}
 
 	// Refine the parallax mapping (binary search)

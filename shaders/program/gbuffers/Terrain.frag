@@ -126,43 +126,7 @@ void main() {
 	#endif
 
 	vec2 realTexCoord = texCoord;
-    vec3 normal;
 
-	#ifdef PARALLAX
-		#ifdef PARALLAX_DEPTH_WRITE
-			gl_FragDepth = gl_FragCoord.z;
-		#endif
-
-        float sampleHeight = SampleHeight(texCoord);
-        vec3 tangentPos = worldPos * tbnMatrix;
-
-        float worldLength = length(worldPos);
-        float parallaxFade = smoothstep(64.0, 32.0, worldLength);
-
-        if (lessThanFLT1(sampleHeight) && parallaxFade > EPS) {
-            vec3 localCoord = CalculateParallax(tangentPos / worldLength, dither, parallaxFade);
-            realTexCoord = localToAtlas(localCoord.xy);
-
-            #ifdef PARALLAX_DEPTH_WRITE
-                gl_FragDepth = ViewToScreenDepth(ScreenToViewDepth(gl_FragDepth) - oms(localCoord.z) * PARALLAX_DEPTH);
-            #elif defined PARALLAX_SHADOW
-                if (dot(geoNormal, worldLightDir) > 1e-3) {
-                    parallaxShadowOut = CalculateParallaxShadow(worldLightDir * tbnMatrix, localCoord, dither, parallaxFade);
-                }
-            #endif
-
-            vec3 normalTex = textureLod(normals, realTexCoord, mipLevel).xyz;
-            DecodeNormalTex(normalTex);
-            #ifdef PARALLAX_BASED_NORMAL
-            if (lessThanFLT1(localCoord.z)) {
-                normalTex = HeightBasedNormal(localCoord.xy);
-            }
-            #endif
-
-            normal = tbnMatrix * normalTex;
-        } else
-	#endif
-    {
     #if defined MC_NORMAL_MAP || defined AUTO_GENERATED_NORMAL
         #ifdef AUTO_GENERATED_NORMAL
             vec3 normalTex = AutoGenerateNormal(mipLevel);
@@ -171,11 +135,42 @@ void main() {
             DecodeNormalTex(normalTex);
         #endif
 
-        normal = tbnMatrix * normalTex;
+        #ifdef PARALLAX
+            #ifdef PARALLAX_DEPTH_WRITE
+                gl_FragDepth = gl_FragCoord.z;
+            #endif
+
+            float sampleHeight = SampleHeight(texCoord);
+            vec3 tangentPos = worldPos * tbnMatrix;
+
+            float worldLengthSq = sdot(worldPos);
+            float worldLengthInv = inversesqrt(worldLengthSq);
+            float parallaxFade = smoothstep(64.0, 32.0, worldLengthSq * worldLengthInv);
+
+            if (lessThanFLT1(sampleHeight) && parallaxFade > EPS) {
+                vec3 localCoord = CalculateParallax(tangentPos * worldLengthInv, dither, parallaxFade);
+                realTexCoord = localToAtlas(localCoord.xy);
+
+                #ifdef PARALLAX_DEPTH_WRITE
+                    gl_FragDepth = ViewToScreenDepth(ScreenToViewDepth(gl_FragDepth) - oms(localCoord.z) * PARALLAX_DEPTH);
+                #elif defined PARALLAX_SHADOW
+                    if (dot(geoNormal, worldLightDir) > 1e-3) {
+                        parallaxShadowOut = CalculateParallaxShadow(worldLightDir * tbnMatrix, localCoord, dither, parallaxFade);
+                    }
+                #endif
+
+                #ifdef PARALLAX_BASED_NORMAL
+                if (lessThanFLT1(localCoord.z)) {
+                    normalTex = HeightBasedNormal(localCoord.xy);
+                }
+                #endif
+            }
+        #endif
+
+        vec3 normal = tbnMatrix * normalTex;
     #else
-        normal = geoNormal;
+        vec3 normal = geoNormal;
     #endif
-    }
 
 	vec4 albedo = textureLod(tex, realTexCoord, mipLevel);
 
