@@ -156,7 +156,7 @@ vec3 CalculatePCSS(vec3 worldPos, vec3 normalOffset, float dither, out float blo
 //================================================================================================//
 
 float ScreenSpaceShadow(vec3 rayPos, vec3 viewPos, float dither, float sssAmount) {
-	vec3 rayDir = ViewToScreenPos(viewLightDir * abs(viewPos.z) + viewPos) - rayPos;
+	vec3 rayDir = ViewToScreenPos(shadowDirView * abs(viewPos.z) + viewPos) - rayPos;
 	rayDir *= minOf((step(0.0, rayDir) - rayPos) / rayDir);
 	rayDir *= inversesqrt(sdot(rayDir.xy));
 
@@ -188,7 +188,7 @@ float ScreenSpaceShadow(vec3 rayPos, vec3 viewPos, float dither, float sssAmount
 			vec2 samplePosFloor = floor(samplePos);
 			vec2 samplePosFract = samplePos - samplePosFloor;
 
-			vec4 sh = textureGather(depthtex0, samplePosFloor * viewPixelSize);
+			vec4 sh = textureGather(depthtex0, samplePosFloor * texelSize);
 			vec2 temp = mix(sh.wx, sh.zy, vec2(samplePosFract.x));
 			sampleDepth = mix(temp.x, temp.y, samplePosFract.y);
 

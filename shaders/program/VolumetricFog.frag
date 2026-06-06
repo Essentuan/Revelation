@@ -56,7 +56,7 @@ mat2x3 UnpackFogData(uvec2 data) {
 void main() {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy * 2.0);
 
-	vec2 screenCoord = gl_FragCoord.xy * viewPixelSize * 2.0;
+	vec2 screenCoord = gl_FragCoord.xy * texelSize * 2.0;
 	vec3 screenPos = vec3(screenCoord, loadDepth0(texelPos));
 
 	vec3 viewPos = ScreenToViewPosRaw(screenPos);

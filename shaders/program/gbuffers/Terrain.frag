@@ -115,7 +115,7 @@ void main() {
 		mat3 tbnMatrix = mat3(tangent, bitangent, geoNormal);
 	#endif
 
-	vec3 viewPos = ScreenToViewPos(vec3(gl_FragCoord.xy * viewPixelSize, gl_FragCoord.z));
+	vec3 viewPos = ScreenToViewPos(vec3(gl_FragCoord.xy * texelSize, gl_FragCoord.z));
 	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
 
 	// Compute mipmap level
@@ -154,8 +154,8 @@ void main() {
                 #ifdef PARALLAX_DEPTH_WRITE
                     gl_FragDepth = ViewToScreenDepth(ScreenToViewDepth(gl_FragDepth) - oms(localCoord.z) * PARALLAX_DEPTH);
                 #elif defined PARALLAX_SHADOW
-                    if (dot(geoNormal, worldLightDir) > 1e-3) {
-                        parallaxShadowOut = CalculateParallaxShadow(worldLightDir * tbnMatrix, localCoord, dither, parallaxFade);
+                    if (dot(geoNormal, shadowDirWorld) > 1e-3) {
+                        parallaxShadowOut = CalculateParallaxShadow(shadowDirWorld * tbnMatrix, localCoord, dither, parallaxFade);
                     }
                 #endif
 

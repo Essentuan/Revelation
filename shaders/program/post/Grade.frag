@@ -232,7 +232,7 @@ void main() {
 		const float scale = 1.5;
 
 		vec2 uv = texelToUv(texelPos) * vec2(aspectRatio, 1.0) * scale;
-		float plot = smoothstep(0.0, scale * viewPixelSize.y, abs(uv.y - TONEMAPPING_FN(vec3(uv.x)).x));
+		float plot = smoothstep(0.0, scale * texelSize.y, abs(uv.y - TONEMAPPING_FN(vec3(uv.x)).x));
 
 		// Show LDR range
 		color = vec3(0.25) * step(uv.x, 1.0);

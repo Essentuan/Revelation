@@ -94,7 +94,7 @@ uniform sampler2D cloudOriginTex;
 //======// Main //================================================================================//
 void main() {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
-	vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
+	vec2 screenCoord = gl_FragCoord.xy * texelSize;
 
 	uvec4 materialPack = loadMaterialPack(texelPos);
 	uint materialID = materialPack.y;
@@ -110,7 +110,7 @@ void main() {
 		vec3 worldDir = mat3(gbufferModelViewInverse) * viewDir;
 
 		vec3 transmittance = AtmosphereTransmittance(atmosphereViewPos, worldDir);
-		vec3 skyRadiance = AtmosphereSkyView(atmosphereViewPos, worldDir, worldSunDir);
+		vec3 skyRadiance = AtmosphereSkyView(atmosphereViewPos, worldDir, sunDirWorld);
 
 		sceneOut = skyRadiance;
 
@@ -120,7 +120,7 @@ void main() {
 				vec4 cloudData = texture(cloudReconstructTex, screenCoord);
 			#else
 				// Dither offset
-				screenCoord += viewPixelSize * (dither - 0.5);
+				screenCoord += texelSize * (dither - 0.5);
 				vec4 cloudData = textureBicubic(cloudOriginTex, screenCoord);
 			#endif
 
@@ -130,10 +130,10 @@ void main() {
 
 		// Celestial objects
 		if (dot(transmittance, vec3(1.0)) > EPS) {
-			vec3 celestial = RenderSun(worldDir, worldSunDir);
+			vec3 celestial = RenderSun(worldDir, sunDirWorld);
 
 			#ifdef RENDER_MOON
-				vec4 moon = RenderMoon(worldDir, worldMoonDir);
+				vec4 moon = RenderMoon(worldDir, moonDirWorld);
 			#else
 				vec4 moon = vec4(albedo, step(0.06, albedo.g));
 			#endif
@@ -226,8 +226,8 @@ void main() {
 		#endif
 
 		float NdotV = dot(worldNormal, -worldDir);
-		float NdotL = dot(worldNormal, worldLightDir);
-		float LdotV = dot(worldLightDir, -worldDir);
+		float NdotL = dot(worldNormal, shadowDirWorld);
+		float LdotV = dot(shadowDirWorld, -worldDir);
 
         // Must use unclamped NdotL & NdotV
         float invLenH = inversesqrt(2.0 + 2.0 * LdotV);

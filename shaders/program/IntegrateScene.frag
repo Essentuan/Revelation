@@ -125,7 +125,7 @@ vec2 CalculateRefractedCoord(ivec2 texelPos, vec3 viewPos, vec3 screenPos, bool 
 //======// Main //================================================================================//
 void main() {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
-	vec2 screenCoord = gl_FragCoord.xy * viewPixelSize;
+	vec2 screenCoord = gl_FragCoord.xy * texelSize;
 
 	float depth = loadDepth0(texelPos);
 
@@ -188,7 +188,7 @@ void main() {
 				float density = exp2(-0.1 * max0(worldPos.y - 63.0)) * pow8(sdot(worldPos.xz) * rcp(lodRenderDist * lodRenderDist));
 				float transmittance = exp2(-BORDER_FOG_FALLOFF * density);
 
-				vec3 skyRadiance = AtmosphereSkyView(atmosphereViewPos, worldDir, worldSunDir);
+				vec3 skyRadiance = AtmosphereSkyView(atmosphereViewPos, worldDir, sunDirWorld);
 				sceneColor = mix(skyRadiance, sceneColor, transmittance);
 			}
 		#endif
@@ -206,7 +206,7 @@ void main() {
 		}
 	#endif
 
-	float LdotV = dot(worldLightDir, worldDir);
+	float LdotV = dot(shadowDirWorld, worldDir);
 
 	// Underwater fog
 	if (isEyeInWater == 1) {
@@ -222,15 +222,15 @@ void main() {
 	// Vanilla fog
 	RenderVanillaFog(sceneColor, fogMask, viewDist);
 
-	// Convert to YCoCg for TAA clipping
-	#if defined TAA_ENABLED && RENDER_MODE == 1
-		sceneColor = RGBToYCoCg(sceneColor);
-	#endif
-
 	#if DEBUG_NORMALS == 1
 		sceneColor = FetchSurfaceNormal(texelPos) * 0.5 + 0.5;
 	#elif DEBUG_NORMALS == 2
 		sceneColor = FetchGeometryNormal(texelPos) * 0.5 + 0.5;
+	#endif
+
+	// Convert to YCoCg for TAA clipping
+	#if defined TAA_ENABLED && RENDER_MODE == 1
+		sceneColor = RGBToYCoCg(sceneColor);
 	#endif
 
 	sceneOut = vec4(sceneColor, saturate(1.0 - fogMask));
