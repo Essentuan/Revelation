@@ -115,7 +115,7 @@ void main() {
 	#if defined MC_NORMAL_MAP || defined AUTO_GENERATED_NORMAL
 		vec3 tangent = UnpackSnorm3x10(tangentPack);
 		vec3 bitangent = cross(tangent, geoNormal);
-        bitangent *= uintBitsToFloat(bitfieldExtract(tangentPack, 30, 2));
+        bitangent *= 1.0 - 2.0 * float(bitfieldExtract(tangentPack, 30, 1));
 		mat3 tbnMatrix = mat3(tangent, bitangent, geoNormal);
 	#endif
 
