@@ -169,7 +169,7 @@ void main() {
 		if (glassMask || waterMask) {
 			if (glassMask) {
 				// Absorption
-				sceneColor *= exp2(log2(albedo) * approxSqrt(translucentColor.a * 2.0));
+				sceneColor *= exp2(log2(albedo * oms(0.125 * translucentColor.a)) * approxSqrt(translucentColor.a + 0.25));
 
 				// Emissive
 				sceneColor += (2.0 * EMISSIVE_BRIGHTNESS) * Unpack2x8UX(materialPack.x) * mean(albedo) * albedo;
