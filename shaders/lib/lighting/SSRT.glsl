@@ -86,46 +86,4 @@ bool ScreenSpaceRaytrace(vec3 viewOrigin, vec3 viewDir, float dither, uint steps
 	return hit;
 }
 
-bool ScreenSpaceRaytrace(vec3 viewOrigin, vec3 viewDir, float dither, inout vec3 hitPos) {
-	float maxDist = step(viewDir.z, 0.0) * 1e23 - (viewOrigin.z + near) / viewDir.z;
-    vec3 viewEnd = viewOrigin + viewDir * maxDist;
-
-    vec3 screenOrigin = hitPos;
-    vec3 screenEnd = ViewToScreenPos(viewEnd);
-
-    vec3 rayDir = screenEnd - screenOrigin;
-    rayDir *= minOf((step(0.0, rayDir) - screenOrigin) / rayDir);
-
-    const float rSteps = 1.0 / float(SSRT_MAX_SAMPLES);
-
-    vec3 rayStep = rayDir * rSteps;
-    hitPos = screenOrigin + rayStep * dither;
-
-    float rayZMax = viewOrigin.z;
-    float rayZMin = rayZMax;
-
-	bool hit = false;
-
-    for (uint i = 0u; i < SSRT_MAX_SAMPLES; ++i) {
-		if (saturate(hitPos.xy) != hitPos.xy) break;
-
-        ivec2 sampleTexel = uvToTexel(hitPos.xy);
-        float sampleDepth = loadDepth2(sampleTexel);
-
-        float sampleViewZ = ScreenToViewDepth(sampleDepth);
-        rayZMax = ScreenToViewDepth(hitPos.z);
-
-        float hitThickness = max(1.0, abs(sampleViewZ) * 0.05);
-        if (rayZMax < sampleViewZ && (rayZMin > sampleViewZ || rayZMax > sampleViewZ - hitThickness)) {
-            hit = true;
-            break;
-        }
-
-        hitPos += rayStep;
-        rayZMin = rayZMax;
-    }
-
-    return hit;
-}
-
 #endif // INCLUDE_LIGHTING_SSRT
