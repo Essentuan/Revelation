@@ -32,10 +32,6 @@ uniform sampler2D cloudOriginTex;
 
 #include "/lib/universal/SSBO.glsl"
 
-//======// Struct //==============================================================================//
-
-#include "/lib/universal/Material.glsl"
-
 //======// Function //============================================================================//
 
 #include "/lib/universal/Transform.glsl"
@@ -44,8 +40,9 @@ uniform sampler2D cloudOriginTex;
 
 #include "/lib/atmosphere/Common.glsl"
 #include "/lib/atmosphere/Celestial.glsl"
-
 #include "/lib/atmosphere/clouds/Render.glsl"
+
+#include "/lib/surface/Material.glsl"
 
 #include "/lib/lighting/Common.glsl"
 #include "/lib/lighting/shadow/Render.glsl"

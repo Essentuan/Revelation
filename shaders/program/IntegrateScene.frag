@@ -30,10 +30,6 @@ layout (location = 0) out vec4 sceneOut;
 
 #include "/lib/universal/SSBO.glsl"
 
-//======// Struct //==============================================================================//
-
-#include "/lib/universal/Material.glsl"
-
 //======// Function //============================================================================//
 
 #include "/lib/universal/Transform.glsl"
@@ -47,8 +43,10 @@ layout (location = 0) out vec4 sceneOut;
 
 #include "/lib/water/WaterFog.glsl"
 
-#include "/lib/surface/BRDF.glsl"
-#include "/lib/surface/SSRT.glsl"
+#include "/lib/surface/Material.glsl"
+
+#include "/lib/lighting/BRDF.glsl"
+#include "/lib/lighting/SSRT.glsl"
 
 vec2 CalculateRefractedCoord(ivec2 texelPos, vec3 viewPos, vec3 screenPos, bool waterMask) {
 	vec3 viewNormal = mat3(gbufferModelView) * FetchSurfaceNormal(texelPos);
