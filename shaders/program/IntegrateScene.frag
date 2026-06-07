@@ -156,20 +156,20 @@ void main() {
 	worldPos += gbufferModelViewInverse[3].xyz;
 
 	if (lessThanFLT1(depth)) {
-		vec4 translucent = ExtractSpecularTex(materialPack);
-		vec3 albedo = sRGBToLinear(translucent.rgb);
+		vec4 translucentColor = loadAlbedo(texelPos);
+		vec3 albedo = sRGBToLinear(translucentColor.rgb) * sRGB_2_Rec2020;
 
 		// Particle translucent
 		if (materialID == 500u) {
 			vec3 diffuseLight = texelFetch(colortex3, texelPos, 0).rgb;
-			sceneColor = mix(sceneColor, albedo * diffuseLight, translucent.a);
+			sceneColor = mix(sceneColor, albedo * diffuseLight, translucentColor.a);
 		}
 
 		// Translucent
 		if (glassMask || waterMask) {
 			if (glassMask) {
 				// Absorption
-				sceneColor *= exp2(log2(albedo) * approxSqrt(translucent.a));
+				sceneColor *= exp2(log2(albedo) * approxSqrt(translucentColor.a * 2.0));
 
 				// Emissive
 				sceneColor += (2.0 * EMISSIVE_BRIGHTNESS) * Unpack2x8UX(materialPack.x) * mean(albedo) * albedo;

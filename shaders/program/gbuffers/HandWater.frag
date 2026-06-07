@@ -15,9 +15,10 @@
 
 //======// Output //==============================================================================//
 
-/* RENDERTARGETS: 7,8 */
-layout (location = 0) out uvec4 materialOut;
-layout (location = 1) out vec4 normalOut;
+/* RENDERTARGETS: 6,7,8 */
+layout (location = 0) out vec4 albedoOut;
+layout (location = 1) out uvec2 materialOut;
+layout (location = 2) out vec4 normalOut;
 
 //======// Input //===============================================================================//
 
@@ -40,9 +41,9 @@ uniform sampler2D tex;
 
 //======// Main //================================================================================//
 void main() {
-	vec4 albedo = texture(tex, texCoord) * vertColor;
+	albedoOut = texture(tex, texCoord) * vertColor;
 
-	if (albedo.a < 0.1) discard;
+	if (albedoOut.a < 0.1) discard;
 
 	materialOut.x = Pack2x8U(lightmap);
 	#if GBUFFER_PARTICLES_TRANSLUCENT
@@ -50,9 +51,6 @@ void main() {
 	#else
 		materialOut.y = 2u;
 	#endif
-
-	materialOut.z = Pack2x8U(albedo.xy);
-	materialOut.w = Pack2x8U(albedo.zw);
 
 	normalOut.xy = unpackSnorm2x16(normalPack);
 	vec3 geoNormal = OctDecodeSnorm(normalOut.xy);
