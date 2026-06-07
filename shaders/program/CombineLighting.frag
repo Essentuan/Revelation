@@ -241,8 +241,8 @@ void main() {
 			float normalOffsetBase = (viewDist * 2e-3 + 2e-2) * (2.0 - NdotL);
 
 			// PCSS
-			if (distanceFade < EPS) {
-				shadow *= CalculatePCSS(worldPos, geoNormal * normalOffsetBase, dither, surfaceDepth);
+			if (lessThanFLT1(distanceFade)) {
+				shadow *= mix(CalculatePCSS(worldPos, geoNormal * normalOffsetBase, dither, surfaceDepth), vec3(1.0), distanceFade);
 			}
 
 			#ifdef SCREEN_SPACE_SHADOWS
