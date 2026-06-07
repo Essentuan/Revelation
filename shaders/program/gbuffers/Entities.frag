@@ -55,11 +55,6 @@ in vec2 texCoord;
 in vec2 lightmap;
 flat in uint materialID;
 
-//======// Function //============================================================================//
-
-float bayer2 (vec2 a) { a = 0.5 * floor(a); return fract(1.5 * fract(a.y) + a.x); }
-#define bayer4(a) (bayer2(0.5 * (a)) * 0.25 + bayer2(a))
-
 //======// Main //================================================================================//
 void main() {
     vec2 deltaUv1 = dFdx(texCoord);
@@ -80,7 +75,7 @@ void main() {
 
 	albedoOut = albedo;
 
-	materialOut.x = Pack2x8U(lightmap, bayer4(gl_FragCoord.xy));
+	materialOut.x = Pack2x8U(lightmap);
 	#if GBUFFER_SPIDEREYES
 		materialOut.y = 20u;
 	#else
