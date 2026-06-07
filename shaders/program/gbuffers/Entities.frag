@@ -28,14 +28,8 @@ layout (location = 3) out float parallaxShadowOut;
 //======// Uniform //=============================================================================//
 
 uniform sampler2D tex;
-
-#if defined MC_NORMAL_MAP
-	uniform sampler2D normals;
-#endif
-
-#if defined MC_SPECULAR_MAP
-	uniform sampler2D specular;
-#endif
+uniform sampler2D normals;
+uniform sampler2D specular;
 
 // uniform vec3 skyColor;
 
@@ -76,7 +70,7 @@ void main() {
 	albedoOut = albedo;
 
 	materialOut.x = Pack2x8U(lightmap);
-	#if GBUFFER_SPIDEREYES
+	#if GBUFFERS_SPIDEREYES
 		materialOut.y = 20u;
 	#else
 		materialOut.y = materialID;

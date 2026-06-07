@@ -28,10 +28,7 @@ layout (location = 3) out float parallaxShadowOut;
 //======// Uniform //=============================================================================//
 
 uniform sampler2D tex;
-
-#if defined MC_SPECULAR_MAP
-	uniform sampler2D specular;
-#endif
+uniform sampler2D specular;
 
 //======// Input //===============================================================================//
 

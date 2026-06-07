@@ -37,14 +37,8 @@ in vec3 worldPos;
 //======// Uniform //=============================================================================//
 
 uniform sampler2D tex;
-
-#if defined MC_NORMAL_MAP
-	uniform sampler2D normals;
-#endif
-
-#if defined MC_SPECULAR_MAP
-	uniform sampler2D specular;
-#endif
+uniform sampler2D normals;
+uniform sampler2D specular;
 
 #include "/lib/universal/Uniform.glsl"
 
