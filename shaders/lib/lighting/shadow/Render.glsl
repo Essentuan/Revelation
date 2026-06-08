@@ -176,7 +176,7 @@ float ScreenSpaceShadow(vec3 rayPos, vec3 viewPos, float dither, float sssAmount
 		float sampleDepth = loadDepth0(sampleTexel);
 
         #if defined PARALLAX && defined PARALLAX_SHADOW
-            float sampleParallaxOffset = texelFetch(colortex12, sampleTexel, 0).x;
+            float sampleParallaxOffset = loadParallaxOffset(sampleTexel);
             sampleDepth += sampleParallaxOffset;
         #endif
 
