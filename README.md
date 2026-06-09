@@ -11,6 +11,7 @@
   * [Voxy](https://modrinth.com/mod/voxy)
   * [Distant Horizons](https://www.curseforge.com/minecraft/mc-mods/distant-horizons)
   * [Physics Mod](https://www.patreon.com/Haubna?utm_source=campaign-search-results)
+  * [Super Resolution](https://sr.187j3x1-114514.org/)
   * [rrtt217's HDR Mod](https://modrinth.com/mod/rrtt217-s-hdr-mod)
 
 ## Credits
