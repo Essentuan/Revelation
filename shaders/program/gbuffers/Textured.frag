@@ -16,19 +16,14 @@
 //======// Output //==============================================================================//
 
 /* RENDERTARGETS: 6,7,8 */
-layout (location = 0) out vec4 albedoOut;
-layout (location = 1) out uvec4 materialOut;
-layout (location = 2) out vec4 normalOut;
+layout(location = 0) out vec4 albedoOut;
+layout(location = 1) out uvec4 materialOut;
+layout(location = 2) out vec4 normalOut;
 
 #if defined PARALLAX && defined PARALLAX_SHADOW
 /* RENDERTARGETS: 6,7,8,12 */
-layout (location = 3) out float parallaxOffsetOut;
+layout(location = 3) out float parallaxOffsetOut;
 #endif
-
-//======// Uniform //=============================================================================//
-
-uniform sampler2D tex;
-uniform sampler2D specular;
 
 //======// Input //===============================================================================//
 
@@ -38,8 +33,21 @@ in vec4 vertColor;
 in vec2 texCoord;
 in vec2 lightmap;
 
+//======// Uniform //=============================================================================//
+
+uniform sampler2D tex;
+uniform sampler2D specular;
+
+uniform vec2 scaledViewSize;
+
 //======// Main //================================================================================//
 void main() {
+    #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
+        if (any(greaterThanEqual(gl_FragCoord.xy, scaledViewSize))) {
+            discard;
+        }
+    #endif
+
 	vec4 albedo = texture(tex, texCoord) * vertColor;
 
 	if (albedo.a < 0.1) discard;

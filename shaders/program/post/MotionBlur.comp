@@ -9,14 +9,14 @@
 --------------------------------------------------------------------------------
 */
 
-//======// Input //===============================================================================//
-
-layout (local_size_x = 16, local_size_y = 16) in;
-const vec2 workGroupsRender = vec2(1.0, 1.0);
-
 //======// Utility //=============================================================================//
 
 #include "/lib/Utility.glsl"
+
+//======// Input //===============================================================================//
+
+layout(local_size_x = 16, local_size_y = 16) in;
+const vec2 workGroupsRender = vec2(RENDER_SCALE, RENDER_SCALE);
 
 //======// Uniform //=============================================================================//
 
@@ -29,7 +29,7 @@ restrict writeonly uniform image2D colorimg0; // Motion blur output
 #include "/lib/universal/Random.glsl"
 
 vec3 MotionBlur(ivec2 texelPos) {
-	vec2 motionVector = texelFetch(colortex3, texelPos, 0).xy;
+	vec2 motionVector = texelFetch(colortex8, texelPos, 0).xy;
 	float motionNorm = inversesqrt(sdot(motionVector));
 
 	if (motionNorm > 1e6) return texelFetch(colortex1, texelPos, 0).rgb;
@@ -61,7 +61,7 @@ vec3 MotionBlur(ivec2 texelPos) {
 //======// Main //================================================================================//
 void main() {
 	uvec2 localPos = RemapThread16x16(gl_LocalInvocationIndex);
-	ivec2 texelPos = scaleTexelPos(ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy));
+	ivec2 texelPos = ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy);
 
 	imageStore(colorimg0, texelPos, vec4(MotionBlur(texelPos), texelFetch(colortex0, texelPos, 0).w));
 }
