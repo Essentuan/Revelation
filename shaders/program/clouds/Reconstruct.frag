@@ -7,7 +7,7 @@
 	Apache License 2.0
 
 	Reference: https://publications.lib.chalmers.se/records/fulltext/241770/241770.pdf
-			https://www.advances.realtimerendering.com/s2019/slides_public_release.pptx
+			   https://www.advances.realtimerendering.com/s2019/slides_public_release.pptx
 
 --------------------------------------------------------------------------------
 */
@@ -19,8 +19,8 @@
 //======// Output //==============================================================================//
 
 /* RENDERTARGETS: 9,13 */
-layout (location = 0) out vec4 cloudOut;
-layout (location = 1) out uint frameOut;
+layout(location = 0) out vec4 cloudOut;
+layout(location = 1) out uint frameOut;
 
 //======// Uniform //=============================================================================//
 
@@ -82,8 +82,13 @@ void main() {
 	cloudOut = vec4(0.0, 0.0, 1e6, 1.0);
 	frameOut = 0u;
 
-	vec2 screenCoord = gl_FragCoord.xy * originTexelSize;
-	vec2 currCoord = screenCoord - taaJitter * (0.5 * float(CLOUD_TAAU_SCALE));
+	#if SR_ENABLE
+		vec2 screenCoord = gl_FragCoord.xy * scaledTexelSize;
+		vec2 currCoord = screenCoord - taaJitter * 0.5;
+	#else
+		vec2 screenCoord = gl_FragCoord.xy * originTexelSize;
+		vec2 currCoord = screenCoord - taaJitter * (0.5 * float(CLOUD_TAAU_SCALE));
+	#endif
 
 	// Fetch closest cloud depth
 	float cloudDepth = minOf(textureGather(cloudOriginTex, currCoord, 2));
@@ -108,7 +113,11 @@ void main() {
 		// Return smoothed origin
 		cloudOut = textureBicubic(cloudOriginTex, currCoord);
 	} else {
-		ivec2 currTexel = uvToTexel(currCoord) / CLOUD_TAAU_SCALE;
+		#if SR_ENABLE
+			ivec2 currTexel = uvToTexelScaled(currCoord);
+		#else
+			ivec2 currTexel = uvToTexel(currCoord) / CLOUD_TAAU_SCALE;
+		#endif
 		vec4 currData = texelFetch(cloudOriginTex, currTexel, 0);
 
 		vec4 prevData = max0(textureCatmullRom(cloudReconstructTex, prevCoord));

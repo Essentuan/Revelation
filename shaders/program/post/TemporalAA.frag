@@ -19,12 +19,12 @@
 //======// Output //==============================================================================//
 
 /* RENDERTARGETS: 1,4 */
-layout (location = 0) out vec4 temporalOut;
-layout (location = 1) out vec3 clearOut;
+layout(location = 0) out vec4 temporalOut;
+layout(location = 1) out vec3 clearOut;
 
-#ifdef MOTION_BLUR
-/* RENDERTARGETS: 1,4,3 */
-layout (location = 2) out vec2 motionVectorOut;
+#if defined(MOTION_BLUR) || SR_ENABLE
+/* RENDERTARGETS: 1,4,8 */
+layout(location = 2) out vec2 motionVectorOut;
 #endif
 
 //======// Input //===============================================================================//
@@ -86,7 +86,7 @@ vec4 TemporalReprojection(vec2 screenCoord, vec2 motionVector) {
 	ivec2 texel = uvToTexelScaled(screenCoord + taaJitter * 0.5);
 
 	vec3 currData = loadSceneMain(texel);
-	vec2 prevCoord = screenCoord - motionVector;
+	vec2 prevCoord = screenCoord + motionVector;
 
 	if (saturate(prevCoord) != prevCoord) return vec4(YCoCgToRGB(currData), 1.0);
 
@@ -154,23 +154,24 @@ void main() {
 			uint materialID = loadMaterialPack(screenTexel).y;
 			if (depth > 1.0 - EPS && materialID != 0u) {
 				float lodDepth = loadDepth0Lod(screenTexel);
-				motionVector = screenCoord - ReprojectScreenPosLod(vec3(screenCoord, lodDepth)).xy;
+				motionVector = ReprojectScreenPosLod(vec3(screenCoord, lodDepth)).xy - screenCoord;
 			} else
 		#endif
 		{
 		#ifdef TAA_CLOSEST_FRAGMENT
 			vec3 closestFragment = CrossClosestFragment(screenTexel, depth);
-			motionVector = closestFragment.xy - ReprojectScreenPos(closestFragment).xy;
+			motionVector = ReprojectScreenPos(closestFragment).xy - closestFragment.xy;
 		#else
-			motionVector = screenCoord - ReprojectScreenPos(vec3(screenCoord, depth)).xy;
+			motionVector = ReprojectScreenPos(vec3(screenCoord, depth)).xy - screenCoord;
 		#endif
 		}
 
-		#ifdef MOTION_BLUR
-			motionVectorOut = depth < 0.56 ? motionVector * 0.25 : motionVector;
+		#if defined(MOTION_BLUR) || SR_ENABLE
+			// motionVectorOut = depth < 0.56 ? motionVector * 0.25 : motionVector;
+            motionVectorOut = motionVector;
 		#endif
 
-		#ifdef TAA_ENABLED
+		#if defined(TAA_ENABLED) && SR_DISABLE
 			temporalOut = TemporalReprojection(screenCoord, motionVector);
 		#else
 			temporalOut = vec4(loadSceneMain(screenTexel), 1.0);

@@ -16,10 +16,10 @@
 //======// Output //==============================================================================//
 
 /* RENDERTARGETS: 6,7,8,12 */
-layout (location = 0) out vec4 albedoOut;
-layout (location = 1) out uvec2 materialOut;
-layout (location = 2) out vec4 normalOut;
-layout (location = 3) out vec4 waterOut;
+layout(location = 0) out vec4 albedoOut;
+layout(location = 1) out uvec2 materialOut;
+layout(location = 2) out vec4 normalOut;
+layout(location = 3) out vec4 waterOut;
 
 //======// Uniform //=============================================================================//
 
@@ -62,6 +62,12 @@ in vec3 worldPos;
 
 //======// Main //================================================================================//
 void main() {
+    #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
+        if (any(greaterThanEqual(gl_FragCoord.xy, scaledViewSize))) {
+            discard;
+        }
+    #endif
+
 	// Construct TBN matrix
 	vec3 deltaPos1 = dFdx(worldPos);
 	vec3 deltaPos2 = dFdy(worldPos);

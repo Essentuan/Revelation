@@ -1,5 +1,3 @@
-#version 460 compatibility
-
 /*
 --------------------------------------------------------------------------------
 
@@ -13,26 +11,33 @@
 
 //======// Utility //=============================================================================//
 
+#define RENDER_SCALE_VERTEX
 #include "/lib/Utility.glsl"
 
 //======// Output //==============================================================================//
 
-out vec3 vertColor;
 out vec2 texCoord;
 
 //======// Uniform //=============================================================================//
+
+uniform mat4 gbufferModelView;
+uniform mat4 gbufferModelViewInverse;
+
+uniform float frameTimeCounter;
+uniform vec3 cameraPosition;
 
 uniform vec2 taaJitter;
 
 //======// Main //================================================================================//
 void main() {
-    vertColor = gl_Color.rgb;
-    texCoord = vec2(gl_TextureMatrix[0] * gl_MultiTexCoord0);
+	texCoord = vec2(gl_TextureMatrix[0] * gl_MultiTexCoord0) * vec2(RAIN_SCALE_X, RAIN_SCALE_Y);
 
-    vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
-    gl_Position = diagonal4(gl_ProjectionMatrix) * viewPos.xyzz + gl_ProjectionMatrix[3];
+	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
+    vec3 worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
-    #ifdef TAA_ENABLED
-    gl_Position.xy += taaJitter * gl_Position.w;
-    #endif
+    float windAngle = dot(worldPos + cameraPosition, vec3(1.0)) + frameTimeCounter * 0.05;
+    worldPos.xz -= worldPos.y * 0.15 * (1.0 + vec2(cos(windAngle), sin(windAngle)));
+
+    viewPos = transMAD(gbufferModelView, worldPos);
+    transformVertexPosition(gl_Position, viewPos, taaJitter);
 }
