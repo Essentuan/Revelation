@@ -57,8 +57,8 @@ uniform sampler2D cloudOriginTex;
 		vec3 sum = vec3(0.0);
 		float sumWeight = 0.0;
 
-		ivec2 texelEnd = ivec2(halfViewEnd) - 1;
-		coord = coord * viewSize * 0.5 - 0.5;
+		ivec2 texelEnd = ivec2(scaledHalfViewEnd) - 1;
+		coord = coord * scaledViewSize * 0.5 - 0.5;
 
 		ivec2 floorTexel = ivec2(floor(coord));
 		vec2 fractTexel = coord - vec2(floorTexel);
@@ -91,7 +91,7 @@ uniform sampler2D cloudOriginTex;
 //======// Main //================================================================================//
 void main() {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
-	vec2 screenCoord = gl_FragCoord.xy * texelSize;
+	vec2 screenCoord = gl_FragCoord.xy * scaledTexelSize;
 
 	uvec4 materialPack = loadMaterialPack(texelPos);
 	uint materialID = materialPack.y;
@@ -117,7 +117,7 @@ void main() {
 				vec4 cloudData = texture(cloudReconstructTex, screenCoord);
 			#else
 				// Dither offset
-				screenCoord += texelSize * (dither - 0.5);
+				screenCoord += scaledTexelSize * (dither - 0.5);
 				vec4 cloudData = textureBicubic(cloudOriginTex, screenCoord);
 			#endif
 

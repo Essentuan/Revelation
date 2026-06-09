@@ -15,7 +15,7 @@
 	const int 	colortex2Format 			= RGBA16F;
 	const int 	colortex3Format 			= RGBA16F;
 	const int 	colortex4Format 			= R11F_G11F_B10F;
-//	const int 	colortex5Format 			= ;
+	const int 	colortex5Format 			= RGBA16F;
 	const int 	colortex6Format 			= RGBA8;
 	const int 	colortex7Format 			= RGBA16UI;
 	const int 	colortex8Format 			= RGBA16_SNORM;
@@ -41,7 +41,7 @@
 	const bool  colortex5Clear				= false;
 	const bool  colortex6Clear				= true;
 	const bool	colortex7Clear				= true;
-	const bool	colortex8Clear				= false;
+	const bool	colortex8Clear				= true;
 	const bool	colortex9Clear				= false;
 	const bool 	colortex10Clear				= false;
 	const bool 	colortex11Clear				= false;
@@ -73,7 +73,7 @@
 	|	colortex2	|   rgba16f         |	Half res	|	Indirect diffuse history
 	|	colortex3	|   rgba16f         |	Full res  	|	Indirect diffuse -> Motion vector
 	|	colortex4	|   r11f_g11f_b10f  |	Full res  	|	Reprojected scene history -> Bloom tiles
-	|	colortex5	|   		  		|			   	|	Unused
+	|	colortex5	|   rgba16f	  		|	Full res   	|	Upscaled Scene Color
 	|	colortex6	|   rgba8           |	Full res  	|	Solid albedo, rain alpha
 	|	colortex7	|   rgba16ui        |	Full res  	|	Material data
 	|	colortex8	|   rgba16_snorm    |	Full res  	|	Normal data

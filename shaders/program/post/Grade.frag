@@ -56,7 +56,7 @@ out vec3 color; // Tonemapped output
 #include "/lib/universal/Random.glsl"
 
 void CombineBloomAndFog(inout vec3 scene, ivec2 texel, float exposure) {
-	vec2 screenCoord = texelToUv(texel);
+	vec2 screenCoord = texelToUvScaled(texel);
 
 	vec3 bloomData = texture(colortex4, screenCoord * 0.5).rgb;
 
@@ -208,7 +208,7 @@ void main() {
 
 	// Vignetting
 	#ifdef VIGNETTE_ENABLED
-		vec2 ndcCoord = texelToUv(texelPos) * 2.0 - 1.0;
+		vec2 ndcCoord = texelToUvScaled(texelPos) * 2.0 - 1.0;
 		ndcCoord.x *= mix(1.0, aspectRatio, VIGNETTE_ROUNDNESS);
 		color *= exp2(-0.5 * VIGNETTE_STRENGTH * sdot(ndcCoord));
 	#endif
@@ -231,8 +231,8 @@ void main() {
 	#ifdef DEBUG_TONE_MAPPING_PLOT
 		const float scale = 1.5;
 
-		vec2 uv = texelToUv(texelPos) * vec2(aspectRatio, 1.0) * scale;
-		float plot = smoothstep(0.0, scale * texelSize.y, abs(uv.y - TONEMAPPING_FN(vec3(uv.x)).x));
+		vec2 uv = texelToUvScaled(texelPos) * vec2(aspectRatio, 1.0) * scale;
+		float plot = smoothstep(0.0, scale * scaledTexelSize.y, abs(uv.y - TONEMAPPING_FN(vec3(uv.x)).x));
 
 		// Show LDR range
 		color = vec3(0.25) * step(uv.x, 1.0);

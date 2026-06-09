@@ -11,6 +11,7 @@
 
 //======// Utility //=============================================================================//
 
+#define RENDER_SCALE_VERTEX
 #include "/lib/Utility.glsl"
 
 #define WAVING_FOLIAGE
@@ -116,9 +117,5 @@ void main() {
 	#endif
 
 	vec3 viewPos = transMAD(gbufferModelView, worldPos);
-	gl_Position = project(gl_ProjectionMatrix, viewPos);
-
-	#ifdef TAA_ENABLED
-		gl_Position.xy += taaJitter * gl_Position.w;
-	#endif
+    transformVertexPosition(gl_Position, viewPos, taaJitter);
 }

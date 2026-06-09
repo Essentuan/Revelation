@@ -141,10 +141,15 @@ uniform float timeSunrise;
 uniform float timeSunset;
 uniform float cameraVelocity;
 
-uniform vec2 viewSize;
-uniform vec2 texelSize;
-uniform vec2 halfViewSize;
-uniform vec2 halfViewEnd;
+uniform vec2 originViewSize;
+uniform vec2 originTexelSize;
+uniform vec2 scaledViewSize;
+uniform vec2 scaledTexelSize;
+uniform vec2 originHalfViewSize;
+uniform vec2 scaledHalfViewSize;
+uniform vec2 originHalfViewEnd;
+uniform vec2 scaledHalfViewEnd;
+
 uniform vec2 taaJitter;
 uniform vec2 taaJitterPrev;
 

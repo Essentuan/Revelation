@@ -11,6 +11,7 @@
 
 //======// Utility //=============================================================================//
 
+#define RENDER_SCALE_VERTEX
 #include "/lib/Utility.glsl"
 
 //======// Output //==============================================================================//
@@ -69,8 +70,5 @@ void main() {
 	#endif
 	worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
-	gl_Position = project(gl_ProjectionMatrix, viewPos);
-	#ifdef TAA_ENABLED
-		gl_Position.xy += taaJitter * gl_Position.w;
-	#endif
+    transformVertexPosition(gl_Position, viewPos, taaJitter);
 }

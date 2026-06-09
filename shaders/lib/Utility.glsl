@@ -31,3 +31,4 @@
 #include "/lib/utility/Offset.glsl"
 #include "/lib/utility/Load.glsl"
 #include "/lib/utility/Compute.glsl"
+#include "/lib/utility/RenderScale.glsl"

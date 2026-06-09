@@ -85,7 +85,7 @@ vec2 CalculateRefractedCoord(ivec2 texelPos, vec3 viewPos, vec3 screenPos, bool 
 		vec2 refractedCoord = ViewToScreenPos(viewPos + refractedDir).xy;
 	#endif
 
-	float refractedDepth = loadDepth1(uvToTexel(refractedCoord));
+	float refractedDepth = loadDepth1(uvToTexelScaled(refractedCoord));
 	refractedCoord = mix(refractedCoord, screenPos.xy, step(refractedDepth, screenPos.z));
 
 	vec2 edgeFade = smoothstep(0.8, 1.0, abs(refractedCoord * 2.0 - 1.0));
@@ -123,7 +123,7 @@ vec2 CalculateRefractedCoord(ivec2 texelPos, vec3 viewPos, vec3 screenPos, bool 
 //======// Main //================================================================================//
 void main() {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
-	vec2 screenCoord = gl_FragCoord.xy * texelSize;
+	vec2 screenCoord = gl_FragCoord.xy * scaledTexelSize;
 
 	float depth = loadDepth0(texelPos);
 
@@ -145,7 +145,7 @@ void main() {
 	// Process refraction
 	ivec2 refractedTexel = texelPos;
 	if (glassMask || waterMask) {
-		refractedTexel = uvToTexel(CalculateRefractedCoord(texelPos, viewPos, screenPos, waterMask));
+		refractedTexel = uvToTexelScaled(CalculateRefractedCoord(texelPos, viewPos, screenPos, waterMask));
 	}
 
 	vec3 sceneColor = loadSceneMain(refractedTexel);

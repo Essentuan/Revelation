@@ -11,6 +11,7 @@
 
 //======// Utility //=============================================================================//
 
+#define RENDER_SCALE_VERTEX
 #include "/lib/Utility.glsl"
 
 //======// Output //==============================================================================//
@@ -42,16 +43,13 @@ void main() {
 	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
 	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
-	gl_Position = project(gl_ProjectionMatrix, viewPos);
+    transformVertexPosition(gl_Position, viewPos, taaJitter);
 
+	// Encode normal and tangent
 	vec3 normal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);
 	normalPack = packSnorm2x16(OctEncodeSnorm(normal));
 	#if defined MC_NORMAL_MAP
 		vec3 tangent = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * at_tangent.xyz);
 		tangentPack = bitfieldInsert(PackSnorm3x10(tangent), uint(at_tangent.w < 0.0), 30, 1);
-	#endif
-
-	#ifdef TAA_ENABLED
-		gl_Position.xy += taaJitter * gl_Position.w;
 	#endif
 }

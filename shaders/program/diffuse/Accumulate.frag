@@ -52,7 +52,7 @@ void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
 	#endif
 	vec2 prevCoord = prevNDCPos.xy * 0.5 + 0.5;
 
-	vec2 currCoord = texelToUv(texelPos);
+	vec2 currCoord = texelToUvScaled(texelPos);
 	encodedNormalDepth = vec3(OctEncodeSnorm(worldNormal), viewPos.z);
 
 	if (saturate(prevCoord) == prevCoord && !historyReset) {
@@ -60,7 +60,7 @@ void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
 		float sumWeight = 0.0;
 
 		// Custom bilinear filter
-		vec2 prevTexel = (prevCoord * viewSize
+		vec2 prevTexel = (prevCoord * scaledViewSize
 		- checkerboardOffset2x2[(frameCounter - 1) & 3u]
 		- 0.5) * 0.5;
 
@@ -73,7 +73,7 @@ void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
 
 		for (uint i = 0u; i < 4u; ++i) {
 			ivec2 sampleTexel = floorTexel + offset2x2[i];
-			if (clamp(sampleTexel, ivec2(0), ivec2(halfViewSize) - 1) == sampleTexel) {
+			if (clamp(sampleTexel, ivec2(0), ivec2(scaledHalfViewSize) - 1) == sampleTexel) {
 				vec3 sampleAux = texelFetch(colortex14, sampleTexel, 0).xyz;
 				vec4 sampleIrradiance = texelFetch(colortex2, sampleTexel, 0);
 
@@ -125,7 +125,7 @@ void main() {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
 
 	ivec2 renderTexel = texelPos * 2 + checkerboardOffset2x2[frameCounter & 3u];
-	vec2 renderCoord = texelToUv(renderTexel);
+	vec2 renderCoord = texelToUvScaled(renderTexel);
 
 	float depth = loadDepth0(renderTexel);
 	bool terrainCheck = lessThanFLT1(min(GetClosestDepthN(renderTexel), depth));

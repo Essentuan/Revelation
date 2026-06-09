@@ -11,6 +11,7 @@
 
 //======// Utility //=============================================================================//
 
+#define RENDER_SCALE_VERTEX
 #include "/lib/Utility.glsl"
 
 //======// Output //==============================================================================//
@@ -45,10 +46,7 @@ void main() {
 	materialID = uint(blockEntityId - 10000);
 
 	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
-	gl_Position = project(gl_ProjectionMatrix, viewPos);
 	worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
-	#ifdef TAA_ENABLED
-		gl_Position.xy += taaJitter * gl_Position.w;
-	#endif
+    transformVertexPosition(gl_Position, viewPos, taaJitter);
 }

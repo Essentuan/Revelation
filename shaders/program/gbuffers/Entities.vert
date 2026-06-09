@@ -11,6 +11,7 @@
 
 //======// Utility //=============================================================================//
 
+#define RENDER_SCALE_VERTEX
 #include "/lib/Utility.glsl"
 
 //======// Output //==============================================================================//
@@ -54,12 +55,7 @@ void main() {
 	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
 	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
-	// worldPos = transMAD(gbufferModelViewInverse, viewPos);
-	gl_Position = project(gl_ProjectionMatrix, viewPos);
-
-	#ifdef TAA_ENABLED
-		gl_Position.xy += taaJitter * gl_Position.w;
-	#endif
+    transformVertexPosition(gl_Position, viewPos, taaJitter);
 
 	#if defined MC_NORMAL_MAP
 		tbnMatrix[2] = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);

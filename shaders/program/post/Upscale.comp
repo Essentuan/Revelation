@@ -6,14 +6,12 @@
 	Copyright (C) 2026 HaringPro
 	Apache License 2.0
 
-	Pass: Reproject scene history
-
 --------------------------------------------------------------------------------
 */
 
 //======// Input //===============================================================================//
 
-layout (local_size_x = 16, local_size_y = 16) in;
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 const vec2 workGroupsRender = vec2(1.0, 1.0);
 
 //======// Utility //=============================================================================//
@@ -22,24 +20,17 @@ const vec2 workGroupsRender = vec2(1.0, 1.0);
 
 //======// Uniform //=============================================================================//
 
-writeonly restrict uniform image2D colorimg4;
+restrict writeonly uniform image2D colorimg5; // Upscaled scene color
 
 #include "/lib/universal/Uniform.glsl"
 
 //======// Function //============================================================================//
 
-#include "/lib/universal/Transform.glsl"
+#define FSR1_EASU_IN colortex0
+#define FSR1_EASU_OUT colorimg5
+#include "/ffx/fsr1/ffx_fsr1.glsl"
 
 //======// Main //================================================================================//
 void main() {
-	uvec2 localPos = RemapThread16x16(gl_LocalInvocationIndex);
-	ivec2 texelPos = scaleTexelPos(ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy));
-
-	float depth = loadDepth0(texelPos);
-	vec2 previousCoord = ReprojectScreenPos(vec3(texelToUvScaled(texelPos), depth)).xy;
-
-	if (saturate(previousCoord) == previousCoord && depth > 0.56) {
-		vec3 reprojectedHistory = texture(colortex1, previousCoord).rgb;
-		imageStore(colorimg4, texelPos, vec4(reprojectedHistory, 1.0));
-	}
+    fsr1Easu(scaledViewSize, scaledViewSize, originViewSize);
 }

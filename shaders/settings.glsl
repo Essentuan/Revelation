@@ -233,6 +233,27 @@ const float realShadowMapRes = float(shadowMapResolution) * MC_SHADOW_QUALITY;
 
 //======// Post-Processing //=====================================================================//
 
+	#define RENDER_SCALE_1000X 1000 // [500 588 600 667 750 850 900 1000]
+	#if RENDER_SCALE_1000X == 500
+		#define RENDER_SCALE 0.5
+	#elif RENDER_SCALE_1000X == 588
+		#define RENDER_SCALE 0.588
+	#elif RENDER_SCALE_1000X == 600
+		#define RENDER_SCALE 0.600
+	#elif RENDER_SCALE_1000X == 667
+		#define RENDER_SCALE 0.667
+	#elif RENDER_SCALE_1000X == 750
+		#define RENDER_SCALE 0.75
+	#elif RENDER_SCALE_1000X == 850
+		#define RENDER_SCALE 0.85
+	#elif RENDER_SCALE_1000X == 900
+		#define RENDER_SCALE 0.9
+	#elif RENDER_SCALE_1000X == 1000
+		#define RENDER_SCALE 1.0
+	#endif
+
+    #define UPSCALE_MODE 0 // [0 1]
+
 /* Depth of Field */
 	// #define DEPTH_OF_FIELD
 	#define CAMERA_FOCUS_MODE 0 // [0 1]

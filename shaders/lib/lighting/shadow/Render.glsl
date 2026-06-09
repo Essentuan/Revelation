@@ -172,7 +172,7 @@ float ScreenSpaceShadow(vec3 rayPos, vec3 viewPos, float dither, float sssAmount
 	for (uint i = 0u; i < SCREEN_SPACE_SHADOWS_SAMPLES; ++i, rayPos += rayStep) {
 		if (saturate(rayPos.xy) != rayPos.xy || result < 1e-2) break;
 
-		ivec2 sampleTexel = uvToTexel(rayPos.xy);
+		ivec2 sampleTexel = uvToTexelScaled(rayPos.xy);
 		float sampleDepth = loadDepth0(sampleTexel);
 
         #if defined PARALLAX && defined PARALLAX_SHADOW
@@ -193,11 +193,12 @@ float ScreenSpaceShadow(vec3 rayPos, vec3 viewPos, float dither, float sssAmount
 			} else
 		#endif
 		if (hit) {
-			vec2 samplePos = rayPos.xy * viewSize + 0.5;
+			vec2 samplePos = rayPos.xy * originViewSize + 0.5;
+			samplePos *= RENDER_SCALE;
 			vec2 samplePosFloor = floor(samplePos);
 			vec2 samplePosFract = samplePos - samplePosFloor;
 
-			vec4 sh = textureGather(depthtex0, samplePosFloor * texelSize);
+			vec4 sh = textureGather(depthtex0, samplePosFloor * originTexelSize);
 			vec2 temp = mix(sh.wx, sh.zy, vec2(samplePosFract.x));
 			sampleDepth = mix(temp.x, temp.y, samplePosFract.y);
             #if defined PARALLAX && defined PARALLAX_SHADOW

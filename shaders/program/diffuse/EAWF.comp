@@ -93,7 +93,7 @@ void main() {
 	// SharedPreload();
 
 	uvec2 localPos = RemapThread16x16(gl_LocalInvocationIndex);
-	ivec2 texelPos = ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy);
+	ivec2 texelPos = scaleTexelPos(ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy));
 
 	f16vec3 normalDepthData = f16vec3(texelFetch(colortex14, texelPos, 0).rgb);
 	// vec2 depthGradient = vec2(dFdx(normalDepthData.w), dFdy(normalDepthData.w));
@@ -111,7 +111,7 @@ void main() {
 	float frameIndex = texelFetch(colortex2, texelPos, 0).a;
 	float historyFactor = saturate(frameIndex * 0.1 - 0.125);
 
-	vec3 viewDir  = ScreenToViewDirRaw(texelToUv(texelPos));
+	vec3 viewDir  = ScreenToViewDirRaw(texelToUvScaled(texelPos));
 	vec3 geoNormal = mat3(gbufferModelView) * FetchGeometryNormal(texelPos);
 
 	float NdotV = abs(dot(geoNormal, viewDir));
@@ -132,7 +132,7 @@ void main() {
 
 	for (uint i = 0u; i < 9u; ++i) {
 		ivec2 sampleTexel = ivec2(round(sampleTexelBase + offset3x3[i] * offsetScale));
-		if (clamp(sampleTexel, ivec2(1), ivec2(halfViewEnd) - 1) == sampleTexel) {
+		if (clamp(sampleTexel, ivec2(1), ivec2(scaledHalfViewEnd) - 1) == sampleTexel) {
 			f16vec3 sampleAux = f16vec3(texelFetch(colortex14, sampleTexel, 0).rgb);
 
 			f16vec4 sampleColVar = f16vec4(imageLoad(colorimg3, sampleTexel));
