@@ -144,6 +144,15 @@ vec3 InverseTonemapRadiance(vec3 v, float e) {
 	return v * pow(luminance(v) + EPS, rcp(e) - 1.0);
 }
 
+// From UE MegaLights
+vec3 TonemapLighting(vec3 lighting, float disocclusionFactor) {
+	return lighting / (1.0 + disocclusionFactor * luminance(lighting));
+}
+
+vec3 InverseTonemapLighting(vec3 lighting, float disocclusionFactor) {
+	return lighting / (1.0 - disocclusionFactor * luminance(lighting));
+}
+
 //======// ACES 2.0 //===========================================================================//
 
 #ifndef HDR_ENABLED
