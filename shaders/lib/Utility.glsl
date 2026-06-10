@@ -29,6 +29,8 @@
 #if SR_ENABLE
     #undef RENDER_SCALE
     #define RENDER_SCALE SR_RENDER_SCALE_FACTOR
+    #undef RENDER_SCALE_HALF
+    #define RENDER_SCALE_HALF SR_RENDER_SCALE_FACTOR_HALF
 #endif
 
 #define ApplyFog(scene, fog) ((scene) * fog[1] + fog[0])

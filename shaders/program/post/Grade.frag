@@ -41,9 +41,10 @@
 //======// Output //==============================================================================//
 
 #if SR_ENABLE
-// When super resolution is enabled, this pass will be running at the original resolution
+// Screen resolution
 /* RENDERTARGETS: 5 */
 #else
+// Render resolution
 /* RENDERTARGETS: 0 */
 #endif
 out vec3 color; // Tonemapped output
