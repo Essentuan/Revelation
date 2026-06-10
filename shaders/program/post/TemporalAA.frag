@@ -171,7 +171,7 @@ void main() {
             motionVectorOut = motionVector;
 		#endif
 
-		#if defined(TAA_ENABLED) && SR_DISABLE
+		#ifdef TAA_ENABLED
 			temporalOut = TemporalReprojection(screenCoord, motionVector);
 		#else
 			temporalOut = vec4(loadSceneMain(screenTexel), 1.0);
