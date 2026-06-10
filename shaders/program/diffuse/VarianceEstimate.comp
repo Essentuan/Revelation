@@ -94,6 +94,9 @@ void main() {
 	blocklight = pow5(blocklight) * exp2(-16.0 * integratedDiffuse.x * exposure.value);
 	integratedDiffuse.rgb += RGBToYCoCg(blocklightColor) * saturate(blocklight) * SSILVB_BLENDED_LIGHTMAP;
 
+    // Tonemapping for spatial filter to suppress fireflies
+    integratedDiffuse.rgb *= rcp(1.0 + integratedDiffuse.x);
+
 	float variance = 16.0 * max0(moments.y - moments.x * moments.x);
 	imageStore(colorimg3, texelPos, vec4(integratedDiffuse.rgb, variance));
 }
