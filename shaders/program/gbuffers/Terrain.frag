@@ -126,10 +126,10 @@ void main() {
 
     #if defined MC_NORMAL_MAP || defined AUTO_GENERATED_NORMAL
         #ifdef AUTO_GENERATED_NORMAL
-            vec3 normalTex = AutoGenerateNormal(deltaUv1, deltaUv2);
+            vec3 tangentNormal = AutoGenerateNormal(deltaUv1, deltaUv2);
         #else
-            vec3 normalTex = textureGrad(normals, realTexCoord, deltaUv1, deltaUv2).xyz;
-            DecodeNormalTex(normalTex);
+            vec3 tangentNormal = textureGrad(normals, realTexCoord, deltaUv1, deltaUv2).xyz;
+            DecodeNormalTex(tangentNormal);
         #endif
 
         #ifdef PARALLAX
@@ -148,20 +148,25 @@ void main() {
                 vec3 localCoord = CalculateParallax(tangentPos * worldLengthInv, dither, parallaxFade);
                 realTexCoord = localToAtlas(localCoord.xy);
 
+                vec4 normalTex = textureGrad(normals, realTexCoord, deltaUv1, deltaUv2);
+                tangentNormal = normalTex.xyz;
+                DecodeNormalTex(tangentNormal);
+
                 #ifdef PARALLAX_SHADOW
+                    // Store offset between parallaxed screen depth and original depth
                     viewPos.z += viewPos.z / maxEps(-dot(worldPos, geoNormal)) * oms(localCoord.z) * PARALLAX_DEPTH;
                     parallaxOffsetOut = ViewToScreenDepth(viewPos.z) - gl_FragCoord.z;
                 #endif
 
                 #ifdef PARALLAX_BASED_NORMAL
-                if (lessThanFLT1(localCoord.z)) {
-                    normalTex = HeightBasedNormal(localCoord.xy);
+                if (normalTex.w > localCoord.z + rcp255) {
+                    tangentNormal = HeightBasedNormal(localCoord.xy);
                 }
                 #endif
             }
         #endif
 
-        vec3 normal = tbnMatrix * normalTex;
+        vec3 normal = tbnMatrix * tangentNormal;
     #else
         vec3 normal = geoNormal;
     #endif
