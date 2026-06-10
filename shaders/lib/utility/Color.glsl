@@ -146,11 +146,11 @@ vec3 InverseTonemapRadiance(vec3 v, float e) {
 
 // From UE MegaLights
 vec3 TonemapLighting(vec3 lighting, float disocclusionFactor) {
-	return lighting / (1.0 + disocclusionFactor * luminance(lighting));
+	return lighting * rcp(1.0 + disocclusionFactor * luminance(lighting));
 }
 
 vec3 InverseTonemapLighting(vec3 lighting, float disocclusionFactor) {
-	return lighting / (1.0 - disocclusionFactor * luminance(lighting));
+	return lighting * rcp(1.0 - disocclusionFactor * luminance(lighting));
 }
 
 //======// ACES 2.0 //===========================================================================//
