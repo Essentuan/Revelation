@@ -42,7 +42,7 @@
 
 #if SR_ENABLE
 // Screen resolution
-/* RENDERTARGETS: 5 */
+/* RENDERTARGETS: 10 */
 #else
 // Render resolution
 /* RENDERTARGETS: 0 */
