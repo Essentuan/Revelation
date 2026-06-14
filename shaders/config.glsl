@@ -15,12 +15,12 @@
 	const int 	colortex2Format 			= RGBA16F;
 	const int 	colortex3Format 			= RGBA16F;
 	const int 	colortex4Format 			= R11F_G11F_B10F;
-	const int 	colortex5Format 			= RGBA16F;
+//	const int 	colortex5Format 			= ;
 	const int 	colortex6Format 			= RGBA8;
 	const int 	colortex7Format 			= RGBA16UI;
 	const int 	colortex8Format 			= RGBA16_SNORM;
 	const int 	colortex9Format 			= RGBA16F;
-//	const int 	colortex10Format 			= ;
+	const int 	colortex10Format 			= RGBA16F;
 	const int 	colortex11Format 			= RGB32UI;
 	const int 	colortex12Format 			= RG16;
 	const int 	colortex13Format 			= R8I;
@@ -73,12 +73,12 @@
 	|	colortex2	|   rgba16f         |	Half res	|	Indirect diffuse history
 	|	colortex3	|   rgba16f         |	Full res  	|	Indirect diffuse [-> SR input color]
 	|	colortex4	|   r11f_g11f_b10f  |	Full res  	|	Reprojected scene history -> Bloom tiles
-	|	colortex5	|   rgba16f	  		|	Full res   	|	Upscaled Scene Color
+	|	colortex5	|                   |				|	Unused
 	|	colortex6	|   rgba8           |	Full res  	|	Solid albedo, rain alpha
 	|	colortex7	|   rgba16ui        |	Full res  	|	Material data
 	|	colortex8	|   rgba16_snorm    |	Full res  	|	Normal data -> Motion vector
 	|	colortex9	|   rgba16f     	|	Full res	|	Cloud history
-	|	colortex10	|                   |				|	Unused
+	|	colortex10	|   rgba16f	  		|	Screen res  |	Upscaled Scene Color
 	|	colortex11	|   rgb32ui         |	Half res  	|	Volumetric fog, linear depth
 	|	colortex12	|   rg16          	|	Full res	|	Parallax offset -> Water data
 	|	colortex13	|   r8i	        	|	Full res  	|	Cloud frame index

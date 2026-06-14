@@ -36,7 +36,7 @@
                 "outputs": {
                     "upscaled_color": {
                         "enabled": true,
-                        "target": ["colortex5"],
+                        "target": ["colortex10"],
                         "region": [0, 0, -2, -2]
                     }
                 }

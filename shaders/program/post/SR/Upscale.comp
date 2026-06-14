@@ -22,14 +22,14 @@ const vec2 workGroupsRender = vec2(1.0, 1.0);
 
 //======// Uniform //=============================================================================//
 
-restrict writeonly uniform image2D colorimg5; // Upscaled scene color
+restrict writeonly uniform image2D colorimg10; // Upscaled scene color
 
 #include "/lib/universal/Uniform.glsl"
 
 //======// Function //============================================================================//
 
 #define FSR1_EASU_IN colortex0
-#define FSR1_EASU_OUT colorimg5
+#define FSR1_EASU_OUT colorimg10
 #include "/ffx/fsr1/ffx_fsr1.glsl"
 
 //======// Main //================================================================================//

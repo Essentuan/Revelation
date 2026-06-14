@@ -1,3 +1,3 @@
 #version 460 compatibility
 
-#include "/program/post/Upscale.comp"
+#include "/program/post/SR/Upscale.comp"

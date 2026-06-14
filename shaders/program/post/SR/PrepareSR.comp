@@ -65,15 +65,15 @@ C:
         colortex8 -> motion vector buffer
         # colortex21 -> exposure buffer
     Epic Pro Max Giga Ultra`s Upscaling Technology:
-        Upscaled Color -> colortex5
+        Upscaled Color -> colortex10
 D:
     Grade:
         There are apply bloom,but i don`t know the effect of bloom on SR,hope it can be ignored
-        1.Use colortex5 instead of colortex0 or colortex1
-        2.Output to colortex5
+        1.Use colortex10 instead of colortex0 or colortex1
+        2.Output to colortex10
 E:
     Final:
-        Use colortex5 as input buffer
+        Use colortex10 as input buffer
 
 SR Disabled:
 -0:
@@ -88,5 +88,5 @@ B:
         2.Output to colortex0 (always)
 C:
     Final:
-        Use colortex5(when enabled render scale) or colortex0 as input buffer
+        Use colortex10(when enabled render scale) or colortex0 as input buffer
 */

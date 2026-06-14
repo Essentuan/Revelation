@@ -46,7 +46,7 @@ vec3 FFXCasFilter(in ivec2 texel, in float sharpness) {
     #endif
 
     #if SR_ENABLE || (RENDER_SCALE_1000X != 1000 && UPSCALE_MODE != 0)
-	    #define loadBuffer colortex5 // Screen resolution
+	    #define loadBuffer colortex10 // Screen resolution
     #else
 	    #define loadBuffer colortex0 // Render resolution
     #endif

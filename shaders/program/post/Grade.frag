@@ -175,7 +175,7 @@ void main() {
 		float exposure = exposure.value;
 	#endif
     #if SR_ENABLE
-        color = texelFetch(colortex5, texelPos, 0).rgb;
+        color = texelFetch(colortex10, texelPos, 0).rgb;
     #else
 	    #ifdef MOTION_BLUR
 	    	color = texelFetch(colortex0, texelPos, 0).rgb;
