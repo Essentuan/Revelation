@@ -173,7 +173,7 @@ void main() {
 
 	vec4 albedo = textureGrad(tex, realTexCoord, deltaUv1, deltaUv2);
 
-	if (albedo.a < 0.1) discard;
+	if (albedo.a < alphaTestRef) discard;
 
 	albedoOut = vec4(albedo.rgb * vertColor, 1.0);
 

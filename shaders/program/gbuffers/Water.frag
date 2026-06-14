@@ -123,7 +123,7 @@ void main() {
 	} else {
 		albedoOut = textureGrad(tex, texCoord, deltaUv1, deltaUv2) * vertColor;
 
-		if (albedoOut.a < 0.1) discard;
+		if (albedoOut.a < alphaTestRef) discard;
 
 		#if defined MC_NORMAL_MAP
 			vec3 normalTex = textureGrad(normals, texCoord, deltaUv1, deltaUv2).rgb;

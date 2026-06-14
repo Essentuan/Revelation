@@ -26,6 +26,8 @@ in vec2 texCoord;
 
 uniform sampler2D tex;
 
+uniform float alphaTestRef;
+
 uniform vec2 scaledViewSize;
 
 //======// Main //================================================================================//
@@ -38,7 +40,7 @@ void main() {
 
 	float albedoAlpha = texture(tex, texCoord).a;
 
-	if (albedoAlpha < 0.1) discard;
+	if (albedoAlpha < alphaTestRef) discard;
 
 	albedoOut.a = albedoAlpha;
 }

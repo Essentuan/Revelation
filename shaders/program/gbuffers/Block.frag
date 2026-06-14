@@ -112,7 +112,7 @@ void main() {
 
 	vec4 albedo = textureGrad(tex, texCoord, deltaUv1, deltaUv2) * vertColor;
 
-	if (albedo.a < 0.1) discard;
+	if (albedo.a < alphaTestRef) discard;
 
 	#ifdef WHITE_WORLD
 		albedo.rgb = vec3(1.0);

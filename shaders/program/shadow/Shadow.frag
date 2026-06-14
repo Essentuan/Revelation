@@ -47,7 +47,7 @@ void main() {
 		shadowcolor1Out.w = 1.0;
 	} else {
 		vec4 albedo = texture(tex, texCoord);
-		if (albedo.a < 0.1) discard;
+		if (albedo.a < max(0.01, alphaTestRef)) discard;
 
 		if (albedo.a < 254.5 / 255.0) {
             albedo.rgb *= 1.0 - 0.125 * albedo.a;

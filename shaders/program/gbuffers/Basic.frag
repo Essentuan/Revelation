@@ -26,6 +26,8 @@ in vec2 lightmap;
 
 //======// Uniform //=============================================================================//
 
+uniform float alphaTestRef;
+
 uniform vec2 scaledViewSize;
 
 //======// Main //================================================================================//
@@ -36,7 +38,7 @@ void main() {
         }
     #endif
 
-	if (vertColor.a < 0.1) discard;
+	if (vertColor.a < alphaTestRef) discard;
 
 	albedoOut = vec4(vertColor.rgb, 1.0);
 

@@ -38,6 +38,8 @@ in vec2 lightmap;
 uniform sampler2D tex;
 uniform sampler2D specular;
 
+uniform float alphaTestRef;
+
 uniform vec2 scaledViewSize;
 
 //======// Main //================================================================================//
@@ -50,7 +52,7 @@ void main() {
 
 	vec4 albedo = texture(tex, texCoord) * vertColor;
 
-	if (albedo.a < 0.1) discard;
+	if (albedo.a < alphaTestRef) discard;
 
 	#ifdef WHITE_WORLD
 		albedo.rgb = vec3(1.0);

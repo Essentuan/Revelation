@@ -1,35 +1,3 @@
 #version 460 compatibility
 
-/*
---------------------------------------------------------------------------------
-
-	Revelation Shaders
-
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
-
---------------------------------------------------------------------------------
-*/
-
-//======// Output //==============================================================================//
-
-/* RENDERTARGETS: 6 */
-out vec4 albedoOut;
-
-//======// Input //===============================================================================//
-
-in vec3 vertColor;
-in vec2 texCoord;
-
-//======// Uniform //=============================================================================//
-
-uniform sampler2D tex;
-
-//======// Main //================================================================================//
-void main() {
-	vec4 albedo = texture(tex, texCoord);
-
-	if (albedo.a < 0.1) discard;
-
-	albedoOut = vec4(albedo.rgb * vertColor, 1.0);
-}
+#include "/program/gbuffers/Overlay.frag"

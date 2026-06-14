@@ -35,6 +35,8 @@ uniform sampler2D specular;
 
 uniform vec4 entityColor;
 
+uniform float alphaTestRef;
+
 uniform vec2 scaledViewSize;
 
 //======// Input //===============================================================================//
@@ -67,7 +69,7 @@ void main() {
 	// if (materialID == 2000u) albedo = vec4(skyColor, 1.0);
 	if (materialID == 2000u) albedo.rgb = vec3(0.7, 0.675, 1.0);
 
-	if (albedo.a < 0.1) discard;
+	if (albedo.a < alphaTestRef) discard;
 
 	#ifdef WHITE_WORLD
 		albedo.rgb = vec3(1.0);

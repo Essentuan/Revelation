@@ -27,6 +27,8 @@ in vec2 texCoord;
 
 uniform sampler2D tex;
 
+uniform float alphaTestRef;
+
 uniform vec2 scaledViewSize;
 
 //======// Main //================================================================================//
@@ -39,7 +41,7 @@ void main() {
 
 	vec4 albedo = texture(tex, texCoord) * vertColor;
 
-	if (albedo.a < 0.1) discard;
+	if (albedo.a < alphaTestRef) discard;
 
 	albedoOut = albedo;
 }
