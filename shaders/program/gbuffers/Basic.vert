@@ -11,7 +11,6 @@
 
 //======// Utility //=============================================================================//
 
-#define RENDER_SCALE_VERTEX
 #include "/lib/Utility.glsl"
 
 #define SELECTION_BOX_COLOR_R 0.1 // [0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0]
@@ -27,6 +26,7 @@ out vec2 lightmap;
 
 uniform int renderStage;
 uniform vec2 taaJitter;
+uniform vec2 renderScale;
 
 //======// Main //================================================================================//
 void main() {
@@ -39,5 +39,11 @@ void main() {
 	}
 
 	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
-    transformVertexPosition(gl_Position, viewPos, taaJitter);
+    gl_Position = project(gl_ProjectionMatrix, viewPos);
+    #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
+        gl_Position.xy = gl_Position.xy * renderScale + (renderScale - 1.0) * gl_Position.w;
+    #endif
+    #ifdef SHOULD_APPLY_JITTER
+        gl_Position.xy += taaJitter * gl_Position.w;
+    #endif
 }

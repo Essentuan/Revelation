@@ -11,7 +11,6 @@
 
 //======// Utility //=============================================================================//
 
-#define RENDER_SCALE_VERTEX
 #include "/lib/Utility.glsl"
 
 //======// Output //==============================================================================//
@@ -34,6 +33,7 @@ in vec4 at_tangent;
 uniform mat4 gbufferModelViewInverse;
 
 uniform vec2 taaJitter;
+uniform vec2 renderScale;
 
 //======// Main //================================================================================//
 void main() {
@@ -43,7 +43,13 @@ void main() {
 	lightmap = saturate((gl_MultiTexCoord1.xy - 8.0) * rcp(232.0));
 
 	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
-    transformVertexPosition(gl_Position, viewPos, taaJitter);
+    gl_Position = project(gl_ProjectionMatrix, viewPos);
+    #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
+        gl_Position.xy = gl_Position.xy * renderScale + (renderScale - 1.0) * gl_Position.w;
+    #endif
+    #ifdef SHOULD_APPLY_JITTER
+        gl_Position.xy += taaJitter * gl_Position.w;
+    #endif
 
 	// Encode normal and tangent
 	vec3 normal = mat3(gbufferModelViewInverse) * normalize(gl_NormalMatrix * gl_Normal);

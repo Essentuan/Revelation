@@ -193,8 +193,7 @@ float ScreenSpaceShadow(vec3 rayPos, vec3 viewPos, float dither, float sssAmount
 			} else
 		#endif
 		if (hit) {
-			vec2 samplePos = rayPos.xy * originViewSize + 0.5;
-			samplePos *= RENDER_SCALE;
+			vec2 samplePos = rayPos.xy * scaledViewSize + 0.5;
 			vec2 samplePosFloor = floor(samplePos);
 			vec2 samplePosFract = samplePos - samplePosFloor;
 

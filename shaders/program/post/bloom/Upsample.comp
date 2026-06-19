@@ -36,10 +36,7 @@ const vec2 workGroupsRender = vec2(0.03125, 0.03125);
 
 layout(r11f_g11f_b10f) restrict uniform image2D colorimg4;
 
-uniform sampler2D colortex4; // Bloom tiles
-
-uniform vec2 originViewSize;
-uniform vec2 originTexelSize;
+#include "/lib/universal/Uniform.glsl"
 
 //======// Function //============================================================================//
 

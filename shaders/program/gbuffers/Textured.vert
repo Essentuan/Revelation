@@ -11,7 +11,6 @@
 
 //======// Utility //=============================================================================//
 
-#define RENDER_SCALE_VERTEX
 #include "/lib/Utility.glsl"
 
 //======// Output //==============================================================================//
@@ -27,6 +26,7 @@ out vec2 lightmap;
 uniform mat4 gbufferModelViewInverse;
 
 uniform vec2 taaJitter;
+uniform vec2 renderScale;
 
 //======// Main //================================================================================//
 void main() {
@@ -42,5 +42,11 @@ void main() {
 	vec3 viewPos = transMAD(gl_ModelViewMatrix, gl_Vertex.xyz);
 	worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
-    transformVertexPosition(gl_Position, viewPos, taaJitter);
+    gl_Position = project(gl_ProjectionMatrix, viewPos);
+    #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
+        gl_Position.xy = gl_Position.xy * renderScale + (renderScale - 1.0) * gl_Position.w;
+    #endif
+    #ifdef SHOULD_APPLY_JITTER
+        gl_Position.xy += taaJitter * gl_Position.w;
+    #endif
 }

@@ -11,7 +11,6 @@
 
 //======// Utility //=============================================================================//
 
-#define RENDER_SCALE_VERTEX
 #include "/lib/Utility.glsl"
 
 //======// Output //==============================================================================//
@@ -27,6 +26,7 @@ uniform float frameTimeCounter;
 uniform vec3 cameraPosition;
 
 uniform vec2 taaJitter;
+uniform vec2 renderScale;
 
 //======// Main //================================================================================//
 void main() {
@@ -39,5 +39,11 @@ void main() {
     worldPos.xz -= worldPos.y * 0.15 * (1.0 + vec2(cos(windAngle), sin(windAngle)));
 
     viewPos = transMAD(gbufferModelView, worldPos);
-    transformVertexPosition(gl_Position, viewPos, taaJitter);
+    gl_Position = project(gl_ProjectionMatrix, viewPos);
+    #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
+        gl_Position.xy = gl_Position.xy * renderScale + (renderScale - 1.0) * gl_Position.w;
+    #endif
+    #ifdef SHOULD_APPLY_JITTER
+        gl_Position.xy += taaJitter * gl_Position.w;
+    #endif
 }

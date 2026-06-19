@@ -38,11 +38,7 @@ const vec2 workGroupsRender = vec2(0.015625, 0.015625);
 
 writeonly uniform image2D colorimg4;
 
-uniform sampler2D colortex1; // TAA image output
-uniform sampler2D colortex4; // Bloom tile input
-
-uniform vec2 originViewSize;
-uniform vec2 originTexelSize;
+#include "/lib/universal/Uniform.glsl"
 
 //======// Function //============================================================================//
 
