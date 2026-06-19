@@ -71,10 +71,10 @@ void main() {
 	worldPos = transMAD(gbufferModelViewInverse, viewPos);
 
     gl_Position = project(gl_ProjectionMatrix, viewPos);
-    #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
-        gl_Position.xy = gl_Position.xy * renderScale + (renderScale - 1.0) * gl_Position.w;
-    #endif
     #ifdef SHOULD_APPLY_JITTER
         gl_Position.xy += taaJitter * gl_Position.w;
+    #endif
+    #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
+        gl_Position.xy = gl_Position.xy * renderScale + (renderScale - 1.0) * gl_Position.w;
     #endif
 }
