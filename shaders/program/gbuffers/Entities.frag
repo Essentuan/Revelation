@@ -31,8 +31,6 @@ uniform sampler2D tex;
 uniform sampler2D normals;
 uniform sampler2D specular;
 
-// uniform vec3 skyColor;
-
 uniform vec4 entityColor;
 
 uniform float alphaTestRef;
@@ -64,12 +62,12 @@ void main() {
     vec2 deltaUv1 = dFdx(texCoord);
     vec2 deltaUv2 = dFdy(texCoord);
 
-	vec4 albedo = textureGrad(tex, texCoord, deltaUv1, deltaUv2) * vertColor;
-
-	// if (materialID == 2000u) albedo = vec4(skyColor, 1.0);
-	if (materialID == 2000u) albedo.rgb = vec3(0.7, 0.675, 1.0);
-
-	if (albedo.a < alphaTestRef) discard;
+	#if GBUFFERS_LIGHTNING
+       vec4 albedo = vec4(0.7, 0.675, 1.0, texture(tex, texCoord).a);
+    #else
+        vec4 albedo = textureGrad(tex, texCoord, deltaUv1, deltaUv2) * vertColor;
+        if (albedo.a < alphaTestRef) discard;
+    #endif
 
 	#ifdef WHITE_WORLD
 		albedo.rgb = vec3(1.0);
