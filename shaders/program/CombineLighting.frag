@@ -330,7 +330,7 @@ void main() {
 		#ifdef SSILVB_ENABLED
 			#ifdef SVGF_ENABLED
 				vec3 radiance = UpscaleDiffuseIndirect(screenCoord, worldNormal, viewPos.z);
-                radiance *= rcp(1.0 - radiance.x); // Inverse tonemapping
+                radiance *= rcp(1.000001 - radiance.x); // Inverse tonemapping
 			#else
 				vec3 radiance = texelFetch(colortex3, texelPos >> 1, 0).rgb;
 			#endif
