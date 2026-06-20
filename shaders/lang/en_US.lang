@@ -458,10 +458,15 @@ option.MOD_BLOCK_SUPPORT=Mod Block Support
 option.PHYSICS_OCEAN_SUPPORT=Physics Ocean Support
 option.FORCE_DISABLE_SUBGROUP_OPS=§4Force Disable Subgroup Ops
 
+# Debug
 option.WHITE_WORLD=White World
-option.DEBUG_BLOOM_TILES=DEBUG_BLOOM_TILES
-option.DEBUG_CLOUD_SHADOWS=DEBUG_CLOUD_SHADOWS
-option.DEBUG_CLOUD_MAP=DEBUG_CLOUD_MAP
-option.DEBUG_NORMALS=DEBUG_NORMALS
-option.DEBUG_RESHADING=DEBUG_RESHADING
-option.DEBUG_SKY_MAP=DEBUG_SKY_MAP
+option.DEBUG_NORMALS=Debug Normals
+option.DEBUG_ATMOSPHERE_LUTS=Debug Atmosphere LUTs
+option.DEBUG_SKY_MAP=Debug Sky Map
+option.DEBUG_BLOOM_TILES=Debug Bloom Tiles
+option.DEBUG_CLOUD_MAP=Debug Cloud Map
+option.DEBUG_CLOUD_NOISE=Debug Cloud Noise
+option.DEBUG_CLOUD_SHADOWS=Debug Cloud Shadows
+option.DEBUG_VOXELIZATION=Debug Voxelization
+option.DEBUG_RADIANCE_CACHE=Debug Radiance Cache
+option.DEBUG_TONE_MAPPING_PLOT=Debug Tone Mapping Plot
