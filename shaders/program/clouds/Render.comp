@@ -17,9 +17,7 @@
 
 layout(local_size_x = 16, local_size_y = 16) in;
 
-#if SR_ENABLE
-	const vec2 workGroupsRender = vec2(SR_RENDER_SCALE_FACTOR, SR_RENDER_SCALE_FACTOR);
-#elif !defined CLOUD_TAAU_ENABLED
+#ifndef CLOUD_TAAU_ENABLED
 	const vec2 workGroupsRender = vec2(1.0, 1.0);
 #elif CLOUD_TAAU_SCALE == 2
 	const vec2 workGroupsRender = vec2(0.5, 0.5);
@@ -70,30 +68,24 @@ bool SkyCheck4x4(vec2 coord) {
 	return any(equal(LL & LR & UL & UR, uvec4(0u)));
 }
 
-// Work in SR input size when SR is enabled; otherwise work in cloud TAAU source size.
 //======// Main //================================================================================//
 void main() {
 	uvec2 localPos = RemapThread16x16(gl_LocalInvocationIndex);
 	ivec2 texelPos = ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy);
 
-	vec2 coord = texelToUv(texelPos);
+	vec2 coord = texelToUvScaled(texelPos);
 
-	#if SR_ENABLE
-		vec2 renderCoord = coord * rcp(SR_RENDER_SCALE_FACTOR) + taaJitter * 0.5;
-	#elif defined CLOUD_TAAU_ENABLED
-		vec2 renderCoord = (coord + taaJitter * 0.5) * CLOUD_TAAU_SCALE;
-	#else
-		#define renderCoord coord
+	#ifdef CLOUD_TAAU_ENABLED
+		coord *= CLOUD_TAAU_SCALE;
 	#endif
 
 	// x: sunlight, y: skylight, z: depth, w: transmittance
 	vec4 cloudOut = vec4(0.0, 0.0, 0.0, 1.0);
 
-	// SkyCheck4x4() must be work in scaled space,but cloud rendering must be work in origin space
-	if (SkyCheck4x4(renderCoord)) {
+	if (SkyCheck4x4(scaleScreenUv(coord))) {
 		vec2 noise = SampleStbnVec2(texelPos, frameCounter + 11);
 
-		vec3 viewDir  = ScreenToViewDirRaw(renderCoord);
+		vec3 viewDir  = ScreenToViewDirRaw(coord);
 		vec3 worldDir = mat3(gbufferModelViewInverse) * viewDir;
 
 		cloudOut = RenderClouds(worldDir, noise);

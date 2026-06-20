@@ -82,16 +82,15 @@ void main() {
 	cloudOut = vec4(0.0, 0.0, 1e6, 1.0);
 	frameOut = 0u;
 
-	#if SR_ENABLE
-		vec2 screenCoord = gl_FragCoord.xy * scaledTexelSize;
-		vec2 currCoord = screenCoord - taaJitter * 0.5;
-	#else
-		vec2 screenCoord = gl_FragCoord.xy * originTexelSize;
-		vec2 currCoord = screenCoord - taaJitter * (0.5 * float(CLOUD_TAAU_SCALE));
-	#endif
+    vec2 screenCoord = gl_FragCoord.xy * scaledTexelSize;
+    vec2 currCoord = screenCoord - taaJitter * (0.5
+    #ifdef CLOUD_TAAU_ENABLED
+     * float(CLOUD_TAAU_SCALE)
+    #endif
+    );
 
 	// Fetch closest cloud depth
-	float cloudDepth = minOf(textureGather(cloudOriginTex, currCoord, 2));
+	float cloudDepth = minOf(textureGather(cloudOriginTex, scaleScreenUv(currCoord), 2));
 
 	// Skip ground
 	if (cloudDepth < EPS) return;
@@ -111,13 +110,12 @@ void main() {
 
 	if (disocclusion) {
 		// Return smoothed origin
-		cloudOut = textureBicubic(cloudOriginTex, currCoord);
+		cloudOut = textureBicubic(cloudOriginTex, scaleScreenUv(currCoord));
 	} else {
-		#if SR_ENABLE
-			ivec2 currTexel = uvToTexelScaled(currCoord);
-		#else
-			ivec2 currTexel = uvToTexel(currCoord) / CLOUD_TAAU_SCALE;
-		#endif
+		ivec2 currTexel = uvToTexelScaled(currCoord);
+        #ifdef CLOUD_TAAU_ENABLED
+            currTexel /= CLOUD_TAAU_SCALE;
+        #endif
 		vec4 currData = texelFetch(cloudOriginTex, currTexel, 0);
 
 		vec4 prevData = max0(textureCatmullRom(cloudReconstructTex, prevCoord));

@@ -28,7 +28,7 @@ vec4 CalculateSpecularReflections(Material material, vec3 worldNormal, vec3 scre
 	if (ScreenSpaceRaytrace(viewPos, mat3(gbufferModelView) * lightDir, dither, stepCount, screenPos)) {
 		float edgeFade = screenPos.x * screenPos.y * oms(screenPos.x) * oms(screenPos.y);
 		edgeFade *= 1e2 + cube(saturate(1.0 - gbufferModelViewInverse[2].y)) * 1e3;
-		reflection.rgb += (texture(colortex4, screenPos.xy).rgb - reflection.rgb) * saturate(edgeFade);
+		reflection.rgb += (texture(colortex4, scaleScreenUv(screenPos.xy)).rgb - reflection.rgb) * saturate(edgeFade);
 
 		ivec2 texel = uvToTexelScaled(screenPos.xy);
 		vec3 reflectViewPos = ScreenToViewPos(vec3(screenPos.xy, loadDepth0(texel)));

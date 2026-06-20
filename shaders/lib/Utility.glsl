@@ -20,6 +20,8 @@
 
 #if SR_INSTALLED && SR_ENABLE
     #undef TAA_ENABLED
+    #undef CLOUD_TAAU_ENABLED
+    #undef CAS_ENABLED
 #endif
 
 #if defined(TAA_ENABLED) || (SR_ALGO_SUPPORTS_JITTER && SR_SHOULD_APPLY_JITTER)

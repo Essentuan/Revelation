@@ -40,13 +40,7 @@
 
 //======// Output //==============================================================================//
 
-#if SR_ENABLE
-// Screen resolution
-/* RENDERTARGETS: 10 */
-#else
-// Render resolution
 /* RENDERTARGETS: 0 */
-#endif
 out vec3 color; // Tonemapped output
 
 //======// Uniform //=============================================================================//
@@ -67,7 +61,7 @@ void CombineBloomAndFog(inout vec3 scene, vec2 screenCoord, float exposure) {
 	float bloomIntensity = BLOOM_INTENSITY * 0.1;
 
 	#ifdef BLOOMY_FOG
-		float fogMask = texture(colortex0, screenCoord + taaJitter * 0.5).w;
+		float fogMask = texture(colortex0, scaleScreenUv(screenCoord)).w;
 		bloomIntensity = max(bloomIntensity, fogMask * BLOOMY_FOG_INTENSITY);
 	#endif
 
@@ -83,7 +77,7 @@ void CombineBloomAndFog(inout vec3 scene, vec2 screenCoord, float exposure) {
 	#endif
 
 	if (rainStrength > 1e-2) {
-		float rainAlpha = texture(colortex6, screenCoord).a;
+		float rainAlpha = texture(colortex6, scaleScreenUv(screenCoord)).a;
 		rainAlpha = oms(rainAlpha) * RAIN_VISIBILITY;
 		scene = scene * oms(rainAlpha) + bloomData * rainAlpha * 1.25;
 	}
@@ -163,30 +157,23 @@ vec3 Lottes(vec3 x) {
 void main() {
     // When super resolution is enabled, texelPos will be at the original resolution
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
-    #if SR_ENABLE
-        vec2 screenCoord = texelToUv(texelPos);
-    #else
-        vec2 screenCoord = texelToUvScaled(texelPos);
-    #endif
+    vec2 screenCoord = texelToUv(texelPos);
 
 	#if EXPOSURE_MODE == MANUAL
 		float exposure = exp2(-MANUAL_EV);
 	#else
 		float exposure = exposure.value;
 	#endif
-    #if SR_ENABLE
-        color = texelFetch(colortex10, texelPos, 0).rgb;
+    #ifdef MOTION_BLUR
+        color = texelFetch(colortex0, texelPos, 0).rgb;
+    #elif RENDER_SCALE_1000X == 1000
+        color = texelFetch(colortex1, texelPos, 0).rgb;
     #else
-	    #ifdef MOTION_BLUR
-	    	color = texelFetch(colortex0, texelPos, 0).rgb;
-	    #else
-	    	color = texelFetch(colortex1, texelPos, 0).rgb;
-	    #endif
+        color = texelFetch(colortex3, texelPos, 0).rgb;
     #endif
 
 	// Bloom and fog
 	#ifdef BLOOM
-        // When super resolution is enabled, bloom will be upscaled to the original resolution
 		CombineBloomAndFog(color, screenCoord, exposure);
 	#endif
 

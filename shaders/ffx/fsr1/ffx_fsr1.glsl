@@ -1,11 +1,11 @@
 vec4 FsrEasuRF(vec2 p) {
-    return vec4(textureGather(FSR1_EASU_IN, p, 0));
+    return textureGather(FSR1_EASU_IN, p, 0);
 }
 vec4 FsrEasuGF(vec2 p) {
-    return vec4(textureGather(FSR1_EASU_IN, p, 1));
+    return textureGather(FSR1_EASU_IN, p, 1);
 }
 vec4 FsrEasuBF(vec2 p) {
-    return vec4(textureGather(FSR1_EASU_IN, p, 2));
+    return textureGather(FSR1_EASU_IN, p, 2);
 }
 
 bool fsr1InBounds(uvec2 p, uvec2 sizeXY) {

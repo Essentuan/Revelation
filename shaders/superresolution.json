@@ -3,8 +3,7 @@
     "profiles": {
         "*": {
             "jitter": {
-                "enabled": true,
-                "source": "mod"
+                "enabled": true
             },
             "upscale": {
                 "enabled": true,
@@ -14,7 +13,7 @@
                 "motion_jittered": false,
                 "trigger": {
                     "type": "BEFORE",
-                    "pass": "composite31"
+                    "pass": "composite8"
                 },
                 "inputs": {
                     "color": {
@@ -36,7 +35,7 @@
                 "outputs": {
                     "upscaled_color": {
                         "enabled": true,
-                        "target": ["colortex10"],
+                        "target": ["autotex1"],
                         "region": [0, 0, -2, -2]
                     }
                 }

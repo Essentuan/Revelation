@@ -52,7 +52,7 @@ void TemporalFilter(ivec2 texelPos, vec3 screenPos, vec3 worldNormal) {
 	#endif
 	vec2 prevCoord = prevNDCPos.xy * 0.5 + 0.5;
 
-	vec2 currCoord = texelToUvScaled(texelPos);
+	vec2 currCoord = texelToUv(texelPos);
 	encodedNormalDepth = vec3(OctEncodeSnorm(worldNormal), viewPos.z);
 
 	if (saturate(prevCoord) == prevCoord && !historyReset) {

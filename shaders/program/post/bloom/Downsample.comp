@@ -43,7 +43,11 @@ writeonly uniform image2D colorimg4;
 //======// Function //============================================================================//
 
 #if DOWNSAMPLE_LEVEL == 0
-	#define bloomTileTex colortex1
+    #if RENDER_SCALE_1000X == 1000
+	    #define bloomTileTex colortex1
+    #else
+	    #define bloomTileTex colortex3
+    #endif
 #else
 	#define bloomTileTex colortex4
 #endif
@@ -138,5 +142,5 @@ void main() {
 
 	vec2 dstTexel = vec2(gl_GlobalInvocationID.xy + DOWNSAMPLE_LEVEL * 8);
 	dstTexel += bloomTileOffset[DOWNSAMPLE_LEVEL] * originViewSize + 0.5;
-	imageStore(colorimg4, scaleTexelPos(ivec2(dstTexel)), vec4(bloomTile, 1.0));
+	imageStore(colorimg4, ivec2(dstTexel), vec4(bloomTile, 1.0));
 }

@@ -113,13 +113,7 @@ void main() {
 
 		// Clouds
 		#ifdef CLOUDS
-			#ifdef CLOUD_TAAU_ENABLED
-				vec4 cloudData = texture(cloudReconstructTex, screenCoord);
-			#else
-				// Dither offset
-				screenCoord += scaledTexelSize * (dither - 0.5);
-				vec4 cloudData = textureBicubic(cloudOriginTex, screenCoord);
-			#endif
+			vec4 cloudData = texture(cloudReconstructTex, screenCoord);
 
 			CompositeClouds(sceneOut, cloudData, worldDir);
 			transmittance *= cloudData.w;

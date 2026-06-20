@@ -16,7 +16,7 @@
 //======// Input //===============================================================================//
 
 layout(local_size_x = 16, local_size_y = 16) in;
-const vec2 workGroupsRender = vec2(RENDER_SCALE, RENDER_SCALE);
+const vec2 workGroupsRender = vec2(1.0, 1.0);
 
 //======// Uniform //=============================================================================//
 
@@ -28,32 +28,38 @@ restrict writeonly uniform image2D colorimg0; // Motion blur output
 
 #include "/lib/universal/Random.glsl"
 
+#if RENDER_SCALE_1000X == 1000
+    #define loadBuffer colortex1
+#else
+    #define loadBuffer colortex3
+#endif
+
 vec3 MotionBlur(ivec2 texelPos) {
-	vec2 motionVector = texelFetch(colortex8, texelPos, 0).xy;
+	vec2 motionVector = texelFetch(colortex8, scaleTexelPos(texelPos), 0).xy;
 	float motionNorm = inversesqrt(sdot(motionVector));
 
-	if (motionNorm > 1e6) return texelFetch(colortex1, texelPos, 0).rgb;
+	if (motionNorm > 1e6) return texelFetch(loadBuffer, texelPos, 0).rgb;
 	motionVector *= saturate(motionNorm);
 
 	const float strength = MOTION_BLUR_STRENGTH / float(MOTION_BLUR_SAMPLES) * 0.01;
-	motionVector *= strength / max(frameTime, 1e-3) * scaledViewSize;
+	motionVector *= strength / max(frameTime, 1e-3) * originViewSize;
 
 	float dither = BlueNoise(texelPos, frameCounter);
 
 	vec2 sampleCoord = vec2(texelPos) + 0.5 + motionVector * dither;
-	sampleCoord -= motionVector * MOTION_BLUR_SAMPLES * 0.5;
+	sampleCoord -= motionVector * float(MOTION_BLUR_SAMPLES) * 0.5;
 
 	vec3 sum = vec3(0.0);
 	float sumWeight = 0.0;
 
 	for (uint i = 0u; i < MOTION_BLUR_SAMPLES; ++i, sampleCoord += motionVector) {
-		if (clamp(sampleCoord, vec2(0.0), scaledViewSize - 1.0) == sampleCoord) {
-			sum += texelFetch(colortex1, ivec2(sampleCoord), 0).rgb;
+		if (clamp(sampleCoord, vec2(0.0), originViewSize - 1.0) == sampleCoord) {
+			sum += texelFetch(loadBuffer, ivec2(sampleCoord), 0).rgb;
 			++sumWeight;
 		}
 	}
 
-	if (sumWeight < EPS) return texelFetch(colortex1, texelPos, 0).rgb;
+	if (sumWeight < EPS) return texelFetch(loadBuffer, texelPos, 0).rgb;
 
 	return sum * rcp(sumWeight);
 }

@@ -27,10 +27,6 @@ layout(location = 1) out vec3 clearOut;
 layout(location = 2) out vec2 motionVectorOut;
 #endif
 
-//======// Input //===============================================================================//
-
-// flat in float exposure;
-
 //======// Uniform //=============================================================================//
 
 #include "/lib/universal/Uniform.glsl"
@@ -91,9 +87,9 @@ vec4 TemporalReprojection(vec2 screenCoord, vec2 motionVector) {
 	if (saturate(prevCoord) != prevCoord) return vec4(YCoCgToRGB(currData), 1.0);
 
 	#ifdef TAA_SHARPEN
-		vec4 temporalData = textureCatmullRomFastAntiRing(colortex1, prevCoord);
+		vec4 temporalData = textureCatmullRomFastAntiRing(colortex1, scaleScreenUv(prevCoord));
 	#else
-		vec4 temporalData = texture(colortex1, prevCoord);
+		vec4 temporalData = texture(colortex1, scaleScreenUv(prevCoord));
 	#endif
 
 	vec3 prevData = RGBToYCoCg(temporalData.rgb);
