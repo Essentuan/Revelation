@@ -40,15 +40,15 @@ out vec3 finalOut;
 // https://gpuopen.com/wp-content/uploads/2019/07/FidelityFX-CAS.pptx
 // https://github.com/GPUOpen-Effects/FidelityFX-CAS
 
-vec3 FFXCasFilter(in ivec2 texel, in float sharpness) {
+vec3 FFXCasFilter(in ivec2 texelPos, in float sharpness) {
     #ifdef HDR_ENABLED
-        #define CasLoad(offset) reinhard(texelFetchOffset(colortex0, texel, 0, offset).rgb)
+        #define CasLoad(offset) reinhard(texelFetchOffset(colortex0, texelPos, 0, offset).rgb)
     #else
-        #define CasLoad(offset) texelFetchOffset(colortex0, texel, 0, offset).rgb
+        #define CasLoad(offset) texelFetchOffset(colortex0, texelPos, 0, offset).rgb
     #endif
 
 	#ifndef CAS_ENABLED
-		return CasLoad(ivec2(0, 0));
+		return texelFetch(colortex0, texelPos, 0).rgb;
 	#endif
 
 	// a b c
