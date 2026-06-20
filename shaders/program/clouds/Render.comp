@@ -73,10 +73,10 @@ void main() {
 	uvec2 localPos = RemapThread16x16(gl_LocalInvocationIndex);
 	ivec2 texelPos = ivec2(localPos + gl_WorkGroupID.xy * gl_WorkGroupSize.xy);
 
-	vec2 coord = texelToUvScaled(texelPos);
+	vec2 coord = (vec2(texelPos) + cloud.upscaleJitter) * scaledTexelSize;
 
 	#ifdef CLOUD_TAAU_ENABLED
-		coord *= CLOUD_TAAU_SCALE;
+		coord *= float(CLOUD_TAAU_SCALE);
 	#endif
 
 	// x: sunlight, y: skylight, z: depth, w: transmittance

@@ -34,6 +34,8 @@ const ivec3 workGroups = ivec3(1, 1, 1);
 #include "/lib/atmosphere/Common.glsl"
 #include "/lib/atmosphere/clouds/Common.glsl"
 
+#include "/lib/universal/Random.glsl"
+
 //======// Main //================================================================================//
 void main() {
 	// Compute illuminance
@@ -47,9 +49,13 @@ void main() {
 	global.worldTimeDiff = worldTime - global.lastWorldTime;
     global.lastWorldTime = worldTime;
 
-	#ifdef CLOUD_SHADOWS
-		mat4 projMat = BuildOrthoMat(CLOUD_SHADOW_DISTANCE * 32.0, CLOUD_SHADOW_DISTANCE * 32.0, 0.0, cumulusTopRadius);
-		cloud.shadowViewProj = projMat * shadowModelView;
-		cloud.shadowViewProjInv = inverse(cloud.shadowViewProj);
-	#endif
+    #ifdef CLOUDS
+        #ifdef CLOUD_SHADOWS
+            mat4 projMat = BuildOrthoMat(CLOUD_SHADOW_DISTANCE * 32.0, CLOUD_SHADOW_DISTANCE * 32.0, 0.0, cumulusTopRadius);
+            cloud.shadowViewProj = projMat * shadowModelView;
+            cloud.shadowViewProjInv = inverse(cloud.shadowViewProj);
+        #endif
+
+        cloud.upscaleJitter = Halton23(frameCounter + 211);
+    #endif
 }
