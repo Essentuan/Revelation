@@ -88,7 +88,10 @@ void main() {
 	vec2 prevCoord = ReprojectScreenPos(screenPos).xy;
 
 	if (saturate(prevCoord) == prevCoord && !historyReset) {
-		uvec3 reprojectedData = texelFetch(colortex11, uvToTexelScaled(prevCoord) >> 1, 0).xyz;
+        float rand = InterleavedGradientNoise(gl_FragCoord.xy, frameCounter);
+        ivec2 sampleTexel = StochasticBilinear(prevCoord * scaledViewSize, rand);
+
+		uvec3 reprojectedData = texelFetch(colortex11, sampleTexel >> 1, 0).xyz;
 		mat2x3 reprojectedFog = UnpackFogData(reprojectedData.xy);
 
 		float blendWeight = 0.9;
