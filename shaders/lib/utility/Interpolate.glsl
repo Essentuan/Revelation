@@ -304,3 +304,21 @@ vec4 textureTiling(sampler2D tex, vec2 coord) {
 
 	return sample0 + sample1 + sample2 + sample3;
 }
+
+ivec2 StochasticBilinear(vec2 coord, float rand) {
+    vec2 px = coord - 0.5;
+    vec2 f = fract(px);
+
+    vec4 w = bilinear(f);
+
+    ivec2 offset = ivec2(1, 1);
+    if (rand < w.x) {
+        offset = ivec2(0, 0);
+    } else if (rand < w.x + w.y) {
+        offset = ivec2(1, 0);
+    } else if (rand < w.x + w.y + w.z) {
+        offset = ivec2(0, 1);
+    }
+
+    return ivec2(px - f) + offset;
+}

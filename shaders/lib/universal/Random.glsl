@@ -200,6 +200,24 @@ vec2 TentFilter(vec2 x) {
 	return vec2(TentFilter(x.x), TentFilter(x.y));
 }
 
+// https://graphics-programming.org/blog/ordered-dithering-is-useful-and-good
+float dither256x256(uvec2 fragCoord) {
+    uint x = fragCoord.x ^ fragCoord.y;
+    uint y = fragCoord.y;
+    uint z = x << 16 | y;
+    z |= z << 12;
+    z &= 0xF0F0F0F0u;
+    z |= z >> 6;
+    z &= 0x33333333u;
+    z |= z << 3;
+    z &= 0xaaaaaaaau;
+    z  = z >> 9 | z << 6;
+    z &= 0x7fffffu;
+    return uintBitsToFloat(
+        floatBitsToUint(1.0) | z
+    ) - 1.0;
+}
+
 //================================================================================================//
 
 /***************************************************************************
