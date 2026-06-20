@@ -326,9 +326,6 @@ void main() {
 			}
 		#endif
 
-		// Lightning
-		diffuseRadiance += LightningContribution(worldPos, worldNormal);
-
 		// Indirect diffuse lighting
 		#ifdef SSILVB_ENABLED
 			#ifdef SVGF_ENABLED

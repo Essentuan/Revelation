@@ -205,17 +205,6 @@ vec3 LightningContribution(vec3 pos) {
 	return vec3(0.32, 0.3, 1.0) * 5e5 / (1.0 + distSq);
 }
 
-vec3 LightningContribution(vec3 pos, vec3 normal) {
-	if (lightningBoltPosition.w < 0.5) return vec3(0.0);
-
-	vec3 vector = lightningBoltPosition.xyz - pos;
-	float distSq = sdot(vector);
-	vec3 lightDir = vector * inversesqrt(distSq);
-
-	float diffuse = saturate(dot(normal, lightDir)) * 0.75 + 0.25;
-	return vec3(0.32, 0.3, 1.0) * 5e3 / (1.0 + distSq) * diffuse;
-}
-
 //================================================================================================//
 
 vec2 UnitToSubUv(vec2 uv, vec2 res) {
