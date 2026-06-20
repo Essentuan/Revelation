@@ -57,7 +57,7 @@ uniform sampler2D cloudOriginTex;
 		vec3 sum = vec3(0.0);
 		float sumWeight = 0.0;
 
-		ivec2 texelEnd = ivec2(scaledHalfViewEnd) - 1;
+		ivec2 texelEnd = ivec2(scaledHalfViewSize) - 2;
 		coord = coord * scaledViewSize * 0.5 - 0.5;
 
 		ivec2 floorTexel = ivec2(floor(coord));

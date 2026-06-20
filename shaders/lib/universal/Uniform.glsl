@@ -147,8 +147,6 @@ uniform vec2 scaledViewSize;
 uniform vec2 scaledTexelSize;
 uniform vec2 originHalfViewSize;
 uniform vec2 scaledHalfViewSize;
-uniform vec2 originHalfViewEnd;
-uniform vec2 scaledHalfViewEnd;
 uniform vec2 renderScale;
 
 uniform vec2 taaJitter;
