@@ -202,7 +202,7 @@ vec3 LightningContribution(vec3 pos) {
 	if (lightningBoltPosition.w < 0.5) return vec3(0.0);
 
 	float distSq = sdot(lightningBoltPosition.xyz - pos);
-	return vec3(0.32, 0.3, 1.0) * 5e5 / (1.0 + distSq);
+	return vec3(0.32, 0.3, 1.0) * 5e4 / (1.0 + distSq);
 }
 
 //================================================================================================//
