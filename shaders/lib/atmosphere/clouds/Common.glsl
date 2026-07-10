@@ -113,13 +113,14 @@ const float cloudHighThickness      = CLOUD_HIGH_THICKNESS;
 const float cloudMidRadius          = planetRadius + CLOUD_MID_ALTITUDE;
 const float cloudHighRadius         = planetRadius + CLOUD_HIGH_ALTITUDE;
 
-const float cumulusAlbedo 		    = 0.97;
-const float stratusAlbedo 		    = 0.91;
-const float cirrusAlbedo 		    = 0.87;
+// visible-ish physical starting points, m^-1
+const float cumulusExtinction       = 0.06;
+const float stratusExtinction       = 0.04;
+const float cirrusExtinction        = 0.02;
 
-const float cumulusExtinction 		= 0.05;
-const float stratusExtinction 		= 0.03;
-const float cirrusExtinction 		= 0.01;
+const float cumulusAlbedo           = 0.999;
+const float stratusAlbedo           = 0.995;
+const float cirrusAlbedo            = 0.98;
 
 const float cumulusScattering 		= cumulusExtinction * cumulusAlbedo;
 const float stratusScattering 		= stratusExtinction * stratusAlbedo;
