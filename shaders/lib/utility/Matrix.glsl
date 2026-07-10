@@ -18,10 +18,19 @@ mat4 BuildOrthoMat(float width, float height, float near, float far) {
 	float rd = rcp(near - far);
 
 	return mat4(
-		-2.0 * rw, 0.0, 0.0, 0.0,
-		0.0, -2.0 * rh, 0.0, 0.0,
+		2.0 * rw, 0.0, 0.0, 0.0,
+		0.0, 2.0 * rh, 0.0, 0.0,
 		0.0, 0.0, 2.0 * rd, 0.0,
 		0.0, 0.0, (near + far) * rd, 1.0
+	);
+}
+
+mat4 BuildInvOrthoMat(float width, float height, float near, float far) {
+	return mat4(
+		0.5 * width, 0.0, 0.0, 0.0,
+		0.0, 0.5 * height, 0.0, 0.0,
+		0.0, 0.0, -0.5 * (far - near), 0.0,
+		0.0, 0.0, -0.5 * (far + near), 1.0
 	);
 }
 
