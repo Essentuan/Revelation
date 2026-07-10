@@ -61,40 +61,33 @@ float CloudMultiScatteringApproxOz(float opticalDepth, float phase) {
 	float scatteringFalloff = cloudMsFalloffA;
 	float extinctionFalloff = cloudMsFalloffB;
 
-	float single = exp2(-rLOG2 * opticalDepth) * phase;
-	float multiple = 0.0;
+	float scattering = exp2(-rLOG2 * opticalDepth) * phase;
 
 	for (uint ms = 1u; ms < cloudMsCount; ++ms) {
 		phase = mix(uniformPhase, phase, cloudMsFalloffC);
 
 		float transmittance = exp2(-rLOG2 * extinctionFalloff * opticalDepth);
-		multiple += transmittance * phase * scatteringFalloff;
+		scattering += transmittance * phase * scatteringFalloff;
 
 		scatteringFalloff *= scatteringFalloff;
 		extinctionFalloff *= extinctionFalloff;
 	}
 
-	return single + multiple;
+	return scattering;
 }
 
-vec2 CloudMultiScatteringApproxHaringPro(float opticalDepth, float phase, float extinction, float albedo) {
+vec2 CloudMultiScatteringApproxHaringPro(float opticalDepth, float phase, float coarseExtinction, float albedo) {
 	// https://zhuanlan.zhihu.com/p/457997155
-	float fms = albedo * oms(approxExp(-12.0 * extinction));
+	float fms = albedo * oms(approxExp(-192.0 * coarseExtinction));
     float msBase = fms / (1.0 - fms);
 
-    float scatteringSun = approxExp(-opticalDepth) * phase;
+    float scatteringSun = exp(-opticalDepth) * phase;
     scatteringSun += approxExp(-0.3 * opticalDepth) * mix(phase, uniformPhase, fms) * msBase;
 
-    float skyTransmittance = rcp(sqr(1.0 + 8.0 * extinction));
-    float scatteringSky = skyTransmittance * (1.0 + msBase);
+    float skyTransmittance = approxExp(-128.0 * coarseExtinction);
+    float scatteringSky = skyTransmittance * (2.0 + msBase);
 
 	return vec2(scatteringSun, scatteringSky);
-}
-
-//================================================================================================//
-
-vec3 RenderCloudMid(vec2 rayPos, vec3 rayDir, float noise, float phase) {
-	return vec3(0.0, 0.0, 1.0);
 }
 
 //================================================================================================//
@@ -107,7 +100,7 @@ vec3 RenderCloudHigh(vec2 rayPos, vec3 lightDir, float noise, float phase) {
 
 		float opticalDepthSun = 0.0; {
 			const float rSteps = 1.0 / float(CLOUD_HIGH_SUNLIGHT_SAMPLES);
-			const float rayLength = cloudHighThickness * 0.5;
+			const float rayLength = cloudHighThickness * 0.75;
 			const float stepLength = rayLength * rSteps * rSteps;
 
 			vec2 rayStep = lightDir.xz * stepLength;
@@ -125,8 +118,8 @@ vec3 RenderCloudHigh(vec2 rayPos, vec3 lightDir, float noise, float phase) {
 		}
 
 		// Approximate multi-scattering
-		float coarseDensity = approxSqrt(density);
-		vec2 scattering = CloudMultiScatteringApproxHaringPro(opticalDepthSun, phase, coarseDensity, cirrusAlbedo);
+		float coarseExtinction = fma(density, 0.6, 0.4) * cirrusExtinction;
+		vec2 scattering = CloudMultiScatteringApproxHaringPro(opticalDepthSun, phase, coarseExtinction, cirrusAlbedo);
 
 		scattering *= oms(transmittance) * cirrusAlbedo;
 		return vec3(scattering, transmittance);
@@ -159,6 +152,9 @@ vec4 RenderClouds(vec3 rayDir, vec2 noise) {
 
 	float LdotV = dot(lightDir, rayDir);
 
+	float r = atmosphereViewHeight; // length(atmosphereViewPos)
+	float mu = rayDir.y; // dot(atmosphereViewPos, rayDir) / r
+
 	// Compute phase function
 	#if 0
 		float phase = TripleLobePhase(LdotV, cloudForwardG, cloudBackwardG, cloudLobeMixer, cloudSilverG, cloudSilverI);
@@ -168,9 +164,6 @@ vec4 RenderClouds(vec3 rayDir, vec2 noise) {
 		float phase = NumericalMieFit(LdotV);
 	#endif
 	// float phases[cloudMsCount] = SetupParticipatingMediaPhases(phase, cloudMsFalloffC);
-
-	float r = atmosphereViewHeight; // length(atmosphereViewPos)
-	float mu = rayDir.y; // dot(atmosphereViewPos, rayDir) / r
 
 	bool planetIntersection = RayIntersectPlanetGround(r, mu);
 
@@ -216,11 +209,11 @@ vec4 RenderClouds(vec3 rayDir, vec2 noise) {
 						float opticalDepthSun = CloudVolumeOpticalDepth(rayPos, lightDir, noise.y, CLOUD_LOW_SUNLIGHT_SAMPLES);
 
 						// Approximate multi-scattering
-						float coarseDensity = dimensionalProfile * approxSqrt(stepDensity);
-						vec2 scattering = CloudMultiScatteringApproxHaringPro(opticalDepthSun, phase, coarseDensity, cumulusAlbedo);
+						float coarseExtinction = dimensionalProfile * approxSqrt(stepDensity) * cumulusExtinction;
+						vec2 scattering = CloudMultiScatteringApproxHaringPro(opticalDepthSun, phase, coarseExtinction, cumulusAlbedo);
 
 						// Estimate the light optical depth of the ground from the cloud volume
-						float scatteringGround = oms(coarseDensity) * 0.5 * uniformPhase;
+						float scatteringGround = oms(dimensionalProfile) * 0.5 * uniformPhase;
 						scattering += scatteringGround * lightDir.y;
 
 						float stepOpticalDepth = stepDensity * stepSize;
@@ -263,7 +256,7 @@ vec4 RenderClouds(vec3 rayDir, vec2 noise) {
 			float rayLength = r > cloudMidRadius ? intersection.x : intersection.y;
 			vec3 rayPos = rayDir * rayLength + atmosphereViewPos;
 
-			vec3 cloudTemp = RenderCloudMid(rayPos.xz, lightDir, noise.y, phase);
+			vec3 cloudTemp;
 
 			// Update integral data
 			if (lessThanFLT1(cloudTemp.z)) {
@@ -318,7 +311,7 @@ void CompositeClouds(inout vec3 skyRadiance, vec4 cloudData, vec3 rayDir) {
 
 		// Lerp bottom and top sky illuminance based on normalized height
 		float heightFraction = saturate((length(cloudPos) - cumulusBottomRadius) * rcp(cumulusThickness));
-        vec3 skyBottomIlluminance = max0(ReconstructSH3(global.skySH, vec3(0.0, 1.0, 0.0)));
+        vec3 skyBottomIlluminance = ConvolvedReconstructSH3(global.skySH, vec3(0.0, -1.0, 0.0));
 		vec3 skyIlluminance = mix(skyBottomIlluminance, global.skyUpIlluminance, heightFraction);
 
 		vec3 scattering = cloudData.x * directIlluminance;
