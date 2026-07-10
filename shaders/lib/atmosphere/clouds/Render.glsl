@@ -106,7 +106,7 @@ vec2 CloudMultiScatteringApproxHaringPro(float opticalDepth, float phase, float 
 
 //================================================================================================//
 
-vec3 RenderCloudHigh(vec3 rayPos, vec3 lightDir, float noise, float phase) {
+vec3 RenderCloudHigh(vec3 rayPos, vec3 lightDir, float noise, float LdotV) {
 	float density = CloudHighDensity(rayPos.xz);
 	if (density > EPS) {
 		float opticalDepth = density * cloudLayer2.thickness/*  / abs(rayDir.y) */;
@@ -132,6 +132,7 @@ vec3 RenderCloudHigh(vec3 rayPos, vec3 lightDir, float noise, float phase) {
         float opticalDepthSun = cloudLayer2.coeff.extinction * 2.0 * stepLength * sumDensity;
 
 		// Approximate multi-scattering
+		float phase = HenyeyGreensteinPhase(LdotV, 0.8);
 		float coarseExtinction = fma(density, 0.6, 0.4) * cloudLayer2.coeff.extinction;
 		vec2 scattering = CloudMultiScatteringApproxHaringPro(opticalDepthSun, phase, coarseExtinction, cloudLayer2.coeff.albedo);
 
@@ -159,7 +160,7 @@ vec4 RenderClouds(vec3 rayDir, vec2 noise) {
 	// Compute phase function
 	#if 0
 		float phase = TripleLobePhase(LdotV, cloudForwardG, cloudBackwardG, cloudLobeMixer, cloudSilverG, cloudSilverI);
-	#elif 0
+	#elif 1
 		float phase = HgDrainePhase(LdotV, 11.0);
 	#else
 		float phase = NumericalMieFit(LdotV);
@@ -259,7 +260,7 @@ vec4 RenderClouds(vec3 rayDir, vec2 noise) {
 			float rayLength = r > cloudLayer2.minHeight ? intersection.x : intersection.y;
 			vec3 rayPos = rayDir * rayLength + atmosphereViewPos;
 
-			vec3 cloudTemp = RenderCloudHigh(rayPos, lightDir, noise.y, phase);
+			vec3 cloudTemp = RenderCloudHigh(rayPos, lightDir, noise.y, LdotV);
 
 			// Update integral data
 			if (lessThanFLT1(cloudTemp.z)) {
