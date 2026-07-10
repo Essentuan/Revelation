@@ -92,30 +92,30 @@ vec2 CloudMultiScatteringApproxHaringPro(float opticalDepth, float phase, float 
 
 //================================================================================================//
 
-vec3 RenderCloudHigh(vec2 rayPos, vec3 lightDir, float noise, float phase) {
-	float density = CloudHighDensity(rayPos);
+vec3 RenderCloudHigh(vec3 rayPos, vec3 lightDir, float noise, float phase) {
+	float density = CloudHighDensity(rayPos.xz);
 	if (density > EPS) {
 		float opticalDepth = density * cloudHighThickness/*  / abs(rayDir.y) */;
 		float transmittance = exp2(-rLOG2 * cirrusExtinction * opticalDepth);
 
-		float opticalDepthSun = 0.0; {
-			const float rSteps = 1.0 / float(CLOUD_HIGH_SUNLIGHT_SAMPLES);
-			const float rayLength = cloudHighThickness * 0.75;
-			const float stepLength = rayLength * rSteps * rSteps;
+        // Raymarch optical depth to sun
+        const uint steps = 3;
+        const float rSteps = 1.0 / float(steps);
+        const float rayLength = cloudHighThickness * 0.5;
+        const float stepLength = rayLength * rSteps * rSteps;
 
-			vec2 rayStep = lightDir.xz * stepLength;
+        vec2 rayStep = lightDir.xz * stepLength;
 
-			float sumDensity = 0.0;
-			for (uint i = 0u; i < CLOUD_HIGH_SUNLIGHT_SAMPLES; ++i) {
-				float fi = float(i) + noise;
-				vec2 samplePos = rayPos + rayStep * sqr(fi);
+        float sumDensity = 0.0;
+        for (uint i = 0u; i < steps; ++i) {
+            float fi = float(i) + noise;
+            vec2 samplePos = rayPos.xz + rayStep * sqr(fi);
 
-				float density = CloudHighDensity(samplePos);
-				sumDensity += density * fi;
-			}
+            float density = CloudHighDensity(samplePos);
+            sumDensity += density * fi;
+        }
 
-			opticalDepthSun = cirrusExtinction * 2.0 * stepLength * sumDensity;
-		}
+        float opticalDepthSun = cirrusExtinction * 2.0 * stepLength * sumDensity;
 
 		// Approximate multi-scattering
 		float coarseExtinction = fma(density, 0.6, 0.4) * cirrusExtinction;
@@ -249,38 +249,17 @@ vec4 RenderClouds(vec3 rayDir, vec2 noise) {
 	//================================================================================================//
 
 	// Mid-level clouds
-	#ifdef CLOUD_ALTOSTRATUS
-		vec2 intersection = RaySphereIntersection(r, mu, cloudMidRadius);
-
-		if (intersection.y > 0.0 && (!planetIntersection || r > cloudMidRadius)) {
-			float rayLength = r > cloudMidRadius ? intersection.x : intersection.y;
-			vec3 rayPos = rayDir * rayLength + atmosphereViewPos;
-
-			vec3 cloudTemp;
-
-			// Update integral data
-			if (lessThanFLT1(cloudTemp.z)) {
-				// Blend layers
-				cloudData.xy = mix(cloudData.xy + cloudTemp.xy * cloudData.w, cloudData.xy * cloudTemp.z + cloudTemp.xy, step(cloudMidRadius, r));
-
-				// Update transmittance
-				cloudData.w *= cloudTemp.z;
-
-				// Update cloud depth
-				cloudData.z = min(rayLength, cloudData.z);
-			}
-		}
-	#endif
+    // TODO: Implement
 
 	// High-level clouds
-	#if defined CLOUD_CIRROCUMULUS || defined CLOUD_CIRRUS
+	#if defined CLOUD_CC || defined CLOUD_CS || defined CLOUD_CI
 		vec2 intersection = RaySphereIntersection(r, mu, cloudHighRadius);
 
 		if (intersection.y > 0.0 && (!planetIntersection || r > cloudHighRadius)) {
 			float rayLength = r > cloudHighRadius ? intersection.x : intersection.y;
 			vec3 rayPos = rayDir * rayLength + atmosphereViewPos;
 
-			vec3 cloudTemp = RenderCloudHigh(rayPos.xz, lightDir, noise.y, phase);
+			vec3 cloudTemp = RenderCloudHigh(rayPos, lightDir, noise.y, phase);
 
 			// Update integral data
 			if (lessThanFLT1(cloudTemp.z)) {
