@@ -1,10 +1,10 @@
 /*
 --------------------------------------------------------------------------------
 
-	Revelation Shaders
+    Revelation Shaders
 
-	Copyright (C) 2026 HaringPro
-	Apache License 2.0
+    Copyright (C) 2026 HaringPro
+    Apache License 2.0
 
 --------------------------------------------------------------------------------
 */
@@ -39,20 +39,24 @@ writeonly uniform image2D cloudShadowImg;
 
 //======// Main //================================================================================//
 void main() {
-	ivec2 tid = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 tid = ivec2(gl_GlobalInvocationID.xy);
 
-	// Checkerboard render cloud shadow map
-	ivec2 offset = checkerboardOffset2x2[frameCounter & 3];
-	if ((tid & 1) == offset || historyReset) {
-		float dither = BlueNoise(tid, frameCounter);
+    // Checkerboard render cloud shadow map
+    ivec2 offset = checkerboardOffset2x2[frameCounter & 3];
+    if ((tid & 1) == offset || historyReset) {
+        float dither = BlueNoise(tid, frameCounter);
 
-		vec2 uv = (vec2(tid) + dither) * rcp(textureSize(cloudShadowTex, 0));
-		vec3 rayPos = SetupCloudShadowPos(uv) + atmosphereViewPos;
+        vec2 uv = (vec2(tid) + dither) / textureSize(cloudShadowTex, 0);
+        vec3 worldPos = SetupCloudShadowPos(uv);
+        vec3 rayPos = worldPos + atmosphereViewPos;
 
         // Increase steps for lower elevation
         float steps = float(CLOUD_SHADOW_SAMPLES) * (2.0 - shadowDirWorld.y);
 
-        vec2 intersection = RaySphericalShellIntersection(rayPos, shadowDirWorld, cloudLayer0.minHeight, cloudLayer0.maxHeight);
+        // vec2 intersection = RaySphericalShellIntersection(rayPos, shadowDirWorld, cloudLayer0.minHeight, cloudLayer0.maxHeight);
+        float top = RaySphereIntersection(rayPos, shadowDirWorld, cloudLayer0.maxHeight).y;
+	    float bottom = RaySphereIntersection(rayPos, shadowDirWorld, cloudLayer0.minHeight).y;
+	    vec2 intersection = vec2(bottom, top);
         float stepLength = (intersection.y - intersection.x) * rcp(steps);
         vec3 rayStep = shadowDirWorld * stepLength;
 
@@ -78,10 +82,16 @@ void main() {
         float strength = linearstep(0.02, 0.05, shadowDirWorld.y) * sqrt(CLOUD_SHADOW_STRENGTH);
         float cloudShadow = oms(strength) + transmittance * strength;
 
-		// Accumulate
-		float weight = rcp(min(frameCounter, 32) * float(!historyReset) + 1.0);
-		cloudShadow = mix(texelFetch(cloudShadowTex, tid, 0).x, cloudShadow, weight);
+        // Reproject and accumulate
+        vec3 cloudMidPos = worldPos + shadowDirWorld * dot(intersection, vec2(0.5));
+        vec2 prevUV = WorldToCloudShadowPrevScreenPos(cloudMidPos).xy;
 
-		imageStore(cloudShadowImg, tid, vec4(cloudShadow));
-	}
+        if (saturate(prevUV) == prevUV && !historyReset) {
+            const float weight = rcp(32.0);
+            float prevValue = textureLod(cloudShadowTex, prevUV, 0.0).x;
+            cloudShadow = mix(prevValue, cloudShadow, weight);
+        }
+
+        imageStore(cloudShadowImg, tid, vec4(cloudShadow, 0.0, 0.0, 0.0));
+    }
 }

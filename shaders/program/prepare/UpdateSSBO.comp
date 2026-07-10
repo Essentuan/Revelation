@@ -51,9 +51,26 @@ void main() {
 
     #ifdef CLOUDS
         #ifdef CLOUD_SHADOWS
-            mat4 projMat = BuildOrthoMat(CLOUD_SHADOW_DISTANCE * 32.0, CLOUD_SHADOW_DISTANCE * 32.0, 0.0, cloudLayer0.maxHeight);
-            cloud.shadowViewProj = projMat * shadowModelView;
-            cloud.shadowViewProjInv = inverse(cloud.shadowViewProj);
+            const float size = CLOUD_SHADOW_DISTANCE * 32.0;
+            const float zFar = CLOUD_SHADOW_DISTANCE * 32.0;
+
+            const mat4 shadowProj = mat4(
+                2.0 / size, 0.0, 0.0, 0.0,
+                0.0, 2.0 / size, 0.0, 0.0,
+                0.0, 0.0, -2.0 / zFar, 0.0,
+                0.0, 0.0, -1.0, 1.0
+            );
+
+            const mat4 shadowProjInv = mat4(
+                0.5 * size, 0.0, 0.0, 0.0,
+                0.0, 0.5 * size, 0.0, 0.0,
+                0.0, 0.0, -0.5 * zFar, 0.0,
+                0.0, 0.0, -0.5 * zFar, 1.0
+            );
+
+            cloud.prevShadowViewProj = cloud.shadowViewProj;
+            cloud.shadowViewProj = shadowProj * shadowModelView;
+            cloud.shadowViewProjInv = shadowModelViewInverse * shadowProjInv;
         #endif
 
         cloud.upscaleJitter = Halton23(frameCounter + 211);
