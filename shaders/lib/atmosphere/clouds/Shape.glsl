@@ -39,8 +39,7 @@ float ValueErosion(float value, float oldMin) {
 
 float CloudHighDensity(vec2 rayPos) {
 	// Wind field
-	const float windAngle = radians(CLOUD_HIGH_WIND_ANGLE);
-	const vec2 windVelocity = vec2(cos(windAngle), sin(windAngle)) * CLOUD_HIGH_WIND_SPEED;
+	const vec2 windVelocity = vec2(cos(cloudLayer2.windAngle), sin(cloudLayer2.windAngle)) * cloudLayer2.windSpeed;
 	vec2 windOffset = windVelocity * worldTimeCounter;
 
 	const mat2 goldenRotate = mat2(cos(goldenAngle), -sin(goldenAngle), sin(goldenAngle), cos(goldenAngle));
@@ -126,9 +125,8 @@ float CloudHighDensity(vec2 rayPos) {
 
 float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensionalProfile, bool detail) {
 	// Wind field
-	const float windAngle = radians(CLOUD_LOW_WIND_ANGLE);
-	const vec3 windDir = vec3(cos(windAngle), 0.5, sin(windAngle));
-	const vec3 windVelocity = windDir * CLOUD_LOW_WIND_SPEED;
+	const vec3 windDir = vec3(cos(cloudLayer0.windAngle), 0.5, sin(cloudLayer0.windAngle));
+	const vec3 windVelocity = windDir * cloudLayer0.windSpeed;
 	vec3 windOffset = windVelocity * worldTimeCounter;
 
 	rayPos -= windOffset;
@@ -156,7 +154,7 @@ float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensiona
 	#endif
 	if (dimensionalProfile < 0.1) return 0.0;
 
-	vec3 noisePos = (rayPos - windDir * heightFraction * cumulusTopOffset) * rcp(2e3);
+	vec3 noisePos = (rayPos - windDir * heightFraction * cloudLayer0.thickness * 0.5) * rcp(2e3);
 	noisePos.y += dot(noisePos.xz, vec2(0.2, 0.3)); // Reduce repetition pattern
 
 	// Add curl noise
@@ -178,7 +176,7 @@ float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensiona
 
 	// See [Schneider, 2022]
 	float cloudDensity = dimensionalProfile + (baseNoise - 1.0) * 0.75;
-	if (cloudDensity < cloudEpsilon) return 0.0;
+	if (cloudDensity < cloudDensityEpsilon) return 0.0;
 
 	float heightFade = smoothstep(0.1, 0.5, heightFraction);
 

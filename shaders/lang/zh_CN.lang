@@ -134,7 +134,7 @@ suffix.CLOUD_HIGH_WIND_SPEED=m/s
 option.CLOUD_HIGH_WIND_ANGLE=风向角
 suffix.CLOUD_HIGH_WIND_ANGLE=°
 
-option.CLOUD_CUMULUS=积云
+option.CLOUD_CU=积云
 option.CLOUD_CU_COVERAGE=积云覆盖率
 option.CLOUD_CU_ALTITUDE=积云海拔
 option.CLOUD_CU_THICKNESS=积云厚度

@@ -32,9 +32,9 @@
 
 
 /* Low-level clouds */
-	#define CLOUD_CUMULUS 	                    // Enables cumulus clouds
+	#define CLOUD_CU
 
-	#ifndef CLOUD_CUMULUS
+	#ifndef CLOUD_CU
 		#undef CLOUD_SHADOWS
 	#endif
 
@@ -88,44 +88,64 @@ const float cloudMsFalloffA 	    = 0.5;
 const float cloudMsFalloffB 	    = 0.5;
 const float cloudMsFalloffC 	    = 0.5;
 
-const float cloudMapExtend 		    = 96e3; // m
-
-const float cloudForwardG 		    = 0.65;
-const float cloudBackwardG 		    = -0.3;
+const float cloudForwardG           = 0.65;
+const float cloudBackwardG          = -0.3;
 const float cloudLobeMixer          = 0.25;
 const float cloudSilverG 		    = 0.95;
 const float cloudSilverI 	        = 0.20;
 
-const float cumulusThickness 		= CLOUD_CU_THICKNESS;
-const float cumulusBottomAltitude 	= CLOUD_CU_ALTITUDE;
+const float cloudMapExtend          = 96e3; // m
 
-const float cumulusTopAltitude 		= cumulusBottomAltitude + cumulusThickness;
-const float cumulusTopOffset        = cumulusThickness * 0.25;
+const float cloudDensityEpsilon     = 0.001;
+const float cloudMinTransmittance   = 0.01;
 
-const float cumulusBottomRadius     = planetRadius + cumulusBottomAltitude;
-const float cumulusTopRadius        = planetRadius + cumulusTopAltitude;
+//================================================================================================//
 
-const float cloudMidThickness       = CLOUD_MID_THICKNESS;
-const float cloudHighThickness      = CLOUD_HIGH_THICKNESS;
+// m^-1
+struct CloudMediumCoeff {
+	float extinction;
+	float scattering;
+	float albedo;
+};
 
-const float cloudMidRadius          = planetRadius + CLOUD_MID_ALTITUDE;
-const float cloudHighRadius         = planetRadius + CLOUD_HIGH_ALTITUDE;
+struct CloudLayerParams {
+	float minHeight;
+	float maxHeight;
+	float thickness;
+	float windSpeed;
+	float windAngle;
+    CloudMediumCoeff coeff;
+};
 
-// visible-ish physical starting points, m^-1
-const float cumulusExtinction       = 0.06;
-const float stratusExtinction       = 0.04;
-const float cirrusExtinction        = 0.02;
+// Low-level clouds
+const CloudLayerParams cloudLayer0 = {
+	planetRadius + CLOUD_CU_ALTITUDE,
+	planetRadius + CLOUD_CU_ALTITUDE + CLOUD_CU_THICKNESS,
+	CLOUD_CU_THICKNESS,
+	CLOUD_LOW_WIND_SPEED,
+	radians(CLOUD_LOW_WIND_ANGLE),
+    CloudMediumCoeff(0.06, 0.06 * 0.999, 0.999)
+};
 
-const float cumulusAlbedo           = 0.999;
-const float stratusAlbedo           = 0.995;
-const float cirrusAlbedo            = 0.98;
+// Mid-level clouds
+const CloudLayerParams cloudLayer1 = {
+	planetRadius + CLOUD_MID_ALTITUDE,
+	planetRadius + CLOUD_MID_ALTITUDE + CLOUD_MID_THICKNESS,
+	CLOUD_MID_THICKNESS,
+	CLOUD_MID_WIND_SPEED,
+	radians(CLOUD_MID_WIND_ANGLE),
+    CloudMediumCoeff(0.04, 0.04 * 0.995, 0.995)
+};
 
-const float cumulusScattering 		= cumulusExtinction * cumulusAlbedo;
-const float stratusScattering 		= stratusExtinction * stratusAlbedo;
-const float cirrusScattering 		= cirrusExtinction * cirrusAlbedo;
-
-const float cloudEpsilon            = 0.001;
-const float cloudMinTransmittance   = 0.02;
+// High-level clouds
+const CloudLayerParams cloudLayer2 = {
+	planetRadius + CLOUD_HIGH_ALTITUDE,
+	planetRadius + CLOUD_HIGH_ALTITUDE + CLOUD_HIGH_THICKNESS,
+	CLOUD_HIGH_THICKNESS,
+	CLOUD_HIGH_WIND_SPEED,
+	radians(CLOUD_HIGH_WIND_ANGLE),
+    CloudMediumCoeff(0.02, 0.02 * 0.98, 0.98)
+};
 
 //================================================================================================//
 

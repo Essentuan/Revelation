@@ -130,7 +130,7 @@ suffix.CLOUD_HIGH_WIND_SPEED=m/s
 option.CLOUD_HIGH_WIND_ANGLE=Wind Angle
 suffix.CLOUD_HIGH_WIND_ANGLE=°
 
-option.CLOUD_CUMULUS=Cumulus
+option.CLOUD_CU=Cumulus
 option.CLOUD_CU_COVERAGE=Cumulus Coverage
 option.CLOUD_CU_ALTITUDE=Cumulus Altitude
 option.CLOUD_CU_THICKNESS=Cumulus Thickness
