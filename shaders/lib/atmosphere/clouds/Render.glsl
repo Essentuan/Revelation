@@ -305,7 +305,7 @@ CloudRenderResult RenderClouds(vec3 rayDir, vec2 noise, vec3 skyRadiance) {
 		vec3 skyIlluminance = mix(skyBottomIlluminance, global.skyUpIlluminance, heightFraction);
 
 		result.scatteredLight = scatteringBase.x * directIlluminance;
-		result.scatteredLight += scatteringBase.y * rPI * skyIlluminance;
+		result.scatteredLight += scatteringBase.y * rPI * max0(skyIlluminance);
 
 		result.scatteredLight += LightningContribution(cloudPos - atmosphereViewPos) * sqr(scatteringBase.y);
 
