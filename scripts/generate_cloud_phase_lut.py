@@ -15,9 +15,7 @@ OPAC reference: https://cds-espri.ipsl.upmc.fr/etherTypo/?id=989&L=0
 from __future__ import annotations
 
 import argparse
-import bisect
 import csv
-import heapq
 import math
 import struct
 from dataclasses import dataclass
@@ -28,8 +26,10 @@ from typing import Sequence
 LUT_WIDTH = 512
 LUT_HEIGHT = 3
 PHASE_FLOOR = 2.0**-24
-MAPPING_GRID_SIZE = 65537
-MAPPING_NODE_COUNT = LUT_WIDTH
+VALIDATION_SAMPLE_COUNT = 65537
+# Fitted across all cloud types and channels to concentrate samples near both endpoints.
+PHASE_ENDPOINT_DENSITY = 1.98
+PHASE_FORWARD_BIAS = 0.84
 
 CIRRUS_ROUGHNESS_DEGREES = 1.5
 CIRRUS_ICE_FEATURE_WEIGHT = 0.9
@@ -84,30 +84,35 @@ class CloudSource:
 
 
 @dataclass(frozen=True)
-class PhaseMapping:
-    normalized_angles: tuple[float, ...]
-    texture_coordinates: tuple[float, ...]
-    reference_error: float
+class PhaseParameterization:
+    endpoint_density: float = PHASE_ENDPOINT_DENSITY
+    forward_bias: float = PHASE_FORWARD_BIAS
 
     def coordinate(self, normalized_angle: float) -> float:
-        return self._interpolate(
-            self.normalized_angles,
-            self.texture_coordinates,
-            min(max(normalized_angle, 0.0), 1.0),
+        angle = min(max(normalized_angle, 0.0), 1.0)
+        centered = 2.0 * angle - 1.0
+        symmetric = 0.5 + 0.5 * centered / (
+            self.endpoint_density
+            + (1.0 - self.endpoint_density) * abs(centered)
+        )
+        return symmetric / (
+            self.forward_bias + (1.0 - self.forward_bias) * symmetric
         )
 
     def angle(self, texture_coordinate: float) -> float:
-        return self._interpolate(
-            self.texture_coordinates,
-            self.normalized_angles,
-            min(max(texture_coordinate, 0.0), 1.0),
+        coordinate = min(max(texture_coordinate, 0.0), 1.0)
+        symmetric = (
+            self.forward_bias
+            * coordinate
+            / (1.0 - (1.0 - self.forward_bias) * coordinate)
         )
-
-    @staticmethod
-    def _interpolate(xs: Sequence[float], ys: Sequence[float], x: float) -> float:
-        index = min(max(bisect.bisect_right(xs, x) - 1, 0), len(xs) - 2)
-        fraction = (x - xs[index]) / (xs[index + 1] - xs[index])
-        return ys[index] + (ys[index + 1] - ys[index]) * fraction
+        centered = 2.0 * symmetric - 1.0
+        magnitude = (
+            self.endpoint_density
+            * abs(centered)
+            / (1.0 + (self.endpoint_density - 1.0) * abs(centered))
+        )
+        return 0.5 + math.copysign(0.5 * magnitude, centered)
 
 
 CLOUD_SOURCES = (
@@ -433,95 +438,6 @@ def build_typical_cirrus_curves(
     return output[0], output[1], output[2]
 
 
-def build_phase_mapping(phase_sets: Sequence[Sequence[Pchip]]) -> PhaseMapping:
-    # Greedily split the interval with the largest log-domain interpolation
-    # error across every cloud type, RGB channel, and Rec.2020 luminance.
-    normalized_angles = [i / (MAPPING_GRID_SIZE - 1) for i in range(MAPPING_GRID_SIZE)]
-    log2e = 1.0 / math.log(2.0)
-    reference_curves: list[list[float]] = []
-
-    for curves in phase_sets:
-        rgb_logs = [
-            [curve(math.pi * angle) * log2e for angle in normalized_angles]
-            for curve in curves
-        ]
-        reference_curves.extend(rgb_logs)
-        reference_curves.append(
-            [
-                math.log2(
-                    phase_luma(tuple(2.0 ** rgb_logs[channel][i] for channel in range(3)))
-                )
-                for i in range(MAPPING_GRID_SIZE)
-            ]
-        )
-
-    def interval_error(start: int, end: int) -> tuple[float, int]:
-        if end - start <= 1:
-            return 0.0, start
-        max_error = 0.0
-        split = (start + end) // 2
-        inverse_span = 1.0 / (end - start)
-        for sample in range(start + 1, end):
-            fraction = (sample - start) * inverse_span
-            for curve in reference_curves:
-                interpolated = curve[start] + (curve[end] - curve[start]) * fraction
-                error = abs(interpolated - curve[sample])
-                if error > max_error:
-                    max_error = error
-                    split = sample
-        return max_error, split
-
-    error, split = interval_error(0, MAPPING_GRID_SIZE - 1)
-    intervals = [(-error, 0, MAPPING_GRID_SIZE - 1, split)]
-    node_indices = {0, MAPPING_GRID_SIZE - 1}
-
-    for _ in range(MAPPING_NODE_COUNT - 2):
-        _, start, end, split = heapq.heappop(intervals)
-        node_indices.add(split)
-        for child_start, child_end in ((start, split), (split, end)):
-            if child_end - child_start <= 1:
-                continue
-            error, child_split = interval_error(child_start, child_end)
-            heapq.heappush(
-                intervals,
-                (-error, child_start, child_end, child_split),
-            )
-
-    sorted_indices = sorted(node_indices)
-    angles = tuple(normalized_angles[index] for index in sorted_indices)
-    coordinates = tuple(i / (MAPPING_NODE_COUNT - 1) for i in range(MAPPING_NODE_COUNT))
-    return PhaseMapping(angles, coordinates, -intervals[0][0])
-
-
-def _glsl_float(value: float) -> str:
-    result = f"{value:.10g}"
-    if "." not in result and "e" not in result:
-        result += ".0"
-    return result
-
-
-def write_mapping_glsl(path: Path, mapping: PhaseMapping) -> None:
-    search_steps = math.ceil(math.log2(len(mapping.normalized_angles)))
-    lines = [
-        "#if !defined INCLUDE_CLOUDS_PHASE_LUT_MAPPING",
-        "#define INCLUDE_CLOUDS_PHASE_LUT_MAPPING",
-        "",
-        f"const int cloudPhaseWarpKnotCount = {len(mapping.normalized_angles)};",
-        f"const uint cloudPhaseWarpSearchSteps = {search_steps}u;",
-        "const vec2 cloudPhaseWarpKnots[cloudPhaseWarpKnotCount] = vec2[](",
-    ]
-    for index, (angle, coordinate) in enumerate(
-        zip(mapping.normalized_angles, mapping.texture_coordinates)
-    ):
-        suffix = "," if index + 1 < len(mapping.normalized_angles) else ""
-        lines.append(
-            f"\tvec2({_glsl_float(angle)}, {_glsl_float(coordinate)}){suffix}"
-        )
-    lines.extend((");", "", "#endif", ""))
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(lines), encoding="ascii", newline="\n")
-
-
 def phase_rgb(curves: Sequence[Pchip], theta: float) -> tuple[float, float, float]:
     return tuple(math.exp(curve(theta)) for curve in curves)
 
@@ -548,7 +464,7 @@ def phase_luma_asymmetry(curves: Sequence[Pchip], knots: Sequence[float]) -> flo
 def write_lut(
     path: Path,
     phase_sets: Sequence[Sequence[Pchip]],
-    mapping: PhaseMapping,
+    parameterization: PhaseParameterization,
     texture_format: str,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -557,7 +473,7 @@ def write_lut(
         for curves in phase_sets:
             for pixel in range(LUT_WIDTH):
                 u = pixel / (LUT_WIDTH - 1)
-                theta = math.pi * mapping.angle(u)
+                theta = math.pi * parameterization.angle(u)
                 rgb = phase_rgb(curves, theta)
                 encoded = (
                     tuple(math.log2(max(value, PHASE_FLOOR)) for value in rgb)
@@ -570,7 +486,7 @@ def write_lut(
 def validate_lut(
     path: Path,
     phase_sets: Sequence[Sequence[Pchip]],
-    mapping: PhaseMapping,
+    parameterization: PhaseParameterization,
     texture_format: str,
 ) -> None:
     channel_count = 3 if texture_format == "rgb" else 1
@@ -588,12 +504,12 @@ def validate_lut(
 
     for row, curves in enumerate(phase_sets):
         reconstructed_integrals = [0.0] * channel_count
-        sample_count = MAPPING_GRID_SIZE
+        sample_count = VALIDATION_SAMPLE_COUNT
         step = math.pi / (sample_count - 1)
         previous_sample: tuple[float, ...] | None = None
         for sample in range(sample_count):
             theta = sample * step
-            u = mapping.coordinate(theta / math.pi)
+            u = parameterization.coordinate(theta / math.pi)
             x = u * (LUT_WIDTH - 1)
             x0 = min(int(x), LUT_WIDTH - 1)
             x1 = min(x0 + 1, LUT_WIDTH - 1)
@@ -666,17 +582,6 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=repo_root / "shaders" / "texture" / "cloud" / "CloudPhaseLut.bin",
     )
-    parser.add_argument(
-        "--mapping-output",
-        type=Path,
-        default=repo_root
-        / "shaders"
-        / "lib"
-        / "atmosphere"
-        / "clouds"
-        / "PhaseLutMapping.glsl",
-        help="Generated GLSL include containing the adaptive angle mapping",
-    )
     return parser.parse_args()
 
 
@@ -722,13 +627,12 @@ def main() -> None:
         maxima = tuple(max(math.exp(curve(angle)) for angle in angles) for curve in curves)
         print(f"{source.name}: peak Rec.2020 phase = {maxima}")
 
-    mapping = build_phase_mapping(phase_sets)
-    write_mapping_glsl(args.mapping_output, mapping)
-    write_lut(args.output, phase_sets, mapping, args.texture_format)
-    validate_lut(args.output, phase_sets, mapping, args.texture_format)
+    parameterization = PhaseParameterization()
+    write_lut(args.output, phase_sets, parameterization, args.texture_format)
+    validate_lut(args.output, phase_sets, parameterization, args.texture_format)
     print(
-        f"mapping: {len(mapping.normalized_angles)} knots, "
-        f"reference max error {mapping.reference_error:.6f} stops"
+        f"parameterization: endpoint density {parameterization.endpoint_density:.3f}, "
+        f"forward bias {parameterization.forward_bias:.3f}"
     )
     shader_mode = 1 if args.texture_format == "rgb" else 0
     print(f"shader setting: CLOUD_PHASE_LUT_COLORED {shader_mode}")

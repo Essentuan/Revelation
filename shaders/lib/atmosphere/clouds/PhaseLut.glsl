@@ -7,29 +7,15 @@
 
 const ivec2 cloudPhaseLutRes = ivec2(512, 3);
 
-#include "/lib/atmosphere/clouds/PhaseLutMapping.glsl"
-
-float CloudPhaseLutSearch(float cosTheta) {
-	float t = acos(satSnorm(cosTheta)) * rPI;
-	int lower = 0;
-	int upper = cloudPhaseWarpKnotCount - 1;
-
-    // Binary search for the knot that is just greater than t.
-	for (uint i = 0u; i < cloudPhaseWarpSearchSteps; ++i) {
-		int middle = (lower + upper + 1) >> 1;
-		if (cloudPhaseWarpKnots[middle].x <= t) lower = middle;
-		else upper = middle - 1;
-	}
-
-	lower = min(lower, cloudPhaseWarpKnotCount - 2);
-	vec2 knot0 = cloudPhaseWarpKnots[lower];
-	vec2 knot1 = cloudPhaseWarpKnots[lower + 1];
-	return remap(knot0.x, knot1.x, knot0.y, knot1.y, t);
-}
+const float cloudPhaseEndpointDensity = 1.98;
+const float cloudPhaseForwardBias = 0.84;
 
 vec2 CloudPhaseLutUv(float cosTheta, int cloudType) {
-	int row = clamp(cloudType, CLOUD_PHASE_CU, CLOUD_PHASE_CI);
-	vec2 uv = vec2(CloudPhaseLutSearch(cosTheta), float(row));
+	float angle = acos(satSnorm(cosTheta)) * rPI;
+	float centered = fma(angle, 2.0, -1.0);
+	float symmetric = fma(centered / mix(cloudPhaseEndpointDensity, 1.0, abs(centered)), 0.5, 0.5);
+	float u = symmetric / mix(cloudPhaseForwardBias, 1.0, symmetric);
+	vec2 uv = vec2(u, float(clamp(cloudType, CLOUD_PHASE_CU, CLOUD_PHASE_CI)));
 	return UnitToSubUv(uv, vec2(cloudPhaseLutRes));
 }
 
