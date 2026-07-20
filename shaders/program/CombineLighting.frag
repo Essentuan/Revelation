@@ -304,15 +304,6 @@ void main() {
 			}
 		#endif
 
-		// Emissive
-		#if EMISSIVE_MODE > 0 && defined MC_SPECULAR_MAP
-			diffuseRadiance += material.emissive;
-		#endif
-		#if EMISSIVE_MODE < 2
-			// Hard-coded emissive
-			diffuseRadiance += HardCodeEmissive(materialID, albedo, worldPos) * EMISSIVE_BRIGHTNESS;
-		#endif
-
 		// Handheld light
 		#ifdef HANDHELD_LIGHTING
 			if (heldBlockLightValue + heldBlockLightValue2 > EPS) {
@@ -350,6 +341,15 @@ void main() {
 			specularRadiance += loadSceneMain(texelPos) * specular;
 		}
 
-		sceneOut = diffuseRadiance + specularRadiance;
+		// Emissive
+		#if EMISSIVE_MODE > 0 && defined MC_SPECULAR_MAP
+			sceneOut = material.emissive * albedo;
+		#endif
+		#if EMISSIVE_MODE < 2
+			// Hard-coded emissive
+			sceneOut += HardCodeEmissive(materialID, albedo, worldPos) * EMISSIVE_BRIGHTNESS * albedo;
+		#endif
+
+		sceneOut += diffuseRadiance + specularRadiance;
 	}
 }
