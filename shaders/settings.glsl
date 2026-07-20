@@ -32,6 +32,7 @@ const float realShadowMapRes = float(shadowMapResolution) * MC_SHADOW_QUALITY;
 /* Clouds */
 	#define CLOUDS
 	#define CLOUD_SHADOWS
+	#define CLOUD_PHASE_LUT_COLORED 0 // [0 1] 0: R16F luminance, 1: RGB16F color
 
 	#ifndef CLOUDS
 		#undef CLOUD_SHADOWS

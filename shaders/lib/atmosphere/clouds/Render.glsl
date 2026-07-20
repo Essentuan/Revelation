@@ -26,6 +26,7 @@
 */
 
 #include "/lib/atmosphere/clouds/Shape.glsl"
+#include "/lib/atmosphere/clouds/PhaseLut.glsl"
 
 //================================================================================================//
 
@@ -134,7 +135,7 @@ vec3 RenderCloudHigh(vec3 rayPos, vec3 lightDir, float noise, float LdotV) {
         float opticalDepthSun = cloudLayer2.coeff.extinction * 2.0 * stepLength * sumDensity;
 
 		// Approximate multi-scattering
-		float phase = HenyeyGreensteinPhase(LdotV, 0.8);
+		float phase = SampleCloudPhaseLutScalar(LdotV, CLOUD_PHASE_CI);
 		float coarseExtinction = fma(density, 0.8, 0.4) * cloudLayer2.coeff.extinction;
 		vec2 scattering = CloudMultiScatteringApproxHaringPro(opticalDepthSun, phase, coarseExtinction, lightDir);
 
@@ -162,13 +163,7 @@ CloudRenderResult RenderClouds(vec3 rayDir, vec2 noise, vec3 skyRadiance) {
 	float mu = rayDir.y; // dot(atmosphereViewPos, rayDir) / r
 
 	// Compute phase function
-	#if 0
-		float phase = TripleLobePhase(LdotV, cloudForwardG, cloudBackwardG, cloudLobeMixer, cloudSilverG, cloudSilverI);
-	#elif 1
-		float phase = HgDrainePhase(LdotV, 11.0);
-	#else
-		float phase = NumericalMieFit(LdotV);
-	#endif
+	float phase = SampleCloudPhaseLutScalar(LdotV, CLOUD_PHASE_CU);
 
 	bool planetIntersection = RayIntersectPlanetGround(r, mu);
 
