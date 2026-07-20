@@ -150,14 +150,14 @@ float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensiona
 	// heightFraction = ValueErosion(heightFraction, oms(cloudMap.y) * 0.3);
 	float gradient = GetVerticalProfile(heightFraction, type);
 
-	#if 0
-	dimensionalProfile = (gradient * coverage);
+	#if 1
+	dimensionalProfile = gradient * coverage;
 	#else
 	dimensionalProfile = saturate(gradient + coverage - 1.0);
 	#endif
-	if (dimensionalProfile < 0.1) return 0.0;
+	if (dimensionalProfile < 0.05) return 0.0;
 
-	vec3 noisePos = (rayPos - windDir * heightFraction * cloudLayer0.thickness * 0.5) * rcp(2e3);
+	vec3 noisePos = (rayPos - windDir * heightFraction * cloudLayer0.thickness * 0.25) * rcp(2e3);
 	noisePos.y += dot(noisePos.xz, vec2(0.2, 0.3)); // Reduce repetition pattern
 
 	// Add curl noise
@@ -178,7 +178,7 @@ float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensiona
 	#endif
 
 	// See [Schneider, 2022]
-	float cloudDensity = dimensionalProfile + (baseNoise - 1.0) * 0.75;
+	float cloudDensity = dimensionalProfile + (baseNoise - 1.0) * 0.65;
 	if (cloudDensity < cloudDensityEpsilon) return 0.0;
 
 	float heightFade = smoothstep(0.1, 0.5, heightFraction);
