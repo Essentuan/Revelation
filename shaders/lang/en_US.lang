@@ -328,7 +328,7 @@ option.ROUGH_REFLECTIONS_THRESHOLD=Rough Reflections Threshold
 option.REFLECTION_FILTER=Reflection Filter
 
 option.RAYTRACED_REFRACTION=Raytraced Refraction
-option.REFRACTION_STRENGTH=Refraction Strength
+option.REFRACTION_SAMPLES=Refraction Samples
 
 # Transparent
 option.WATER_PARALLAX=Water Parallax

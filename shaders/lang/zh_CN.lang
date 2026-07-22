@@ -332,7 +332,7 @@ option.ROUGH_REFLECTIONS_THRESHOLD=粗糙反射阈值
 option.REFLECTION_FILTER=反射过滤
 
 option.RAYTRACED_REFRACTION=光线追踪折射
-option.REFRACTION_STRENGTH=折射强度
+option.REFRACTION_SAMPLES=折射采样数
 
 # Transparent
 option.WATER_PARALLAX=水体视差
