@@ -127,6 +127,9 @@ vec3 DofGatherDisk(
 	float coveringOpacity = 0.0;
 	vec2 direction = initialDir;
 	float aperturePhase = initialPhase;
+	#ifdef DOF_APERTURE_VIGNETTING
+		vec3 vignettingData = DofApertureVignettingPrepare(parameters.centerUv);
+	#endif
 
 	for (uint pairIndex = 0u; pairIndex < uint(DOF_GATHER_SAMPLES >> 1); ++pairIndex) {
 		uint firstIndex = pairIndex << 1u;
@@ -138,6 +141,10 @@ vec3 DofGatherDisk(
 		vec2 secondOffset = DofApertureOffset(
 			-direction, aperturePhase + 0.5, secondRadius * gatherRadius
 		);
+		#ifdef DOF_APERTURE_VIGNETTING
+			DofApertureVignettingApply(firstOffset, gatherRadius, vignettingData);
+			DofApertureVignettingApply(secondOffset, gatherRadius, vignettingData);
+		#endif
 		DofGatherSample firstSample = DofBuildGatherSample(
 			parameters, firstOffset, firstRadius * gatherRadiusFraction,
 			centerCoc, centerCocRadius, coveringCoc

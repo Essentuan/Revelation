@@ -267,6 +267,7 @@ const float realShadowMapRes = float(shadowMapResolution) * MC_SHADOW_QUALITY;
 	// #define DEPTH_OF_FIELD
     #ifdef DEPTH_OF_FIELD
     #endif
+	// #define DOF_APERTURE_VIGNETTING
 	#define CAMERA_FOCUS_MODE 0 // [0 1]
 	#define DOF_FOCAL_LENGTH 50.0 // [18.0 24.0 35.0 50.0 75.0 100.0]
 	#define DOF_F_STOP 2.0 // [1.0 1.4 2.0 2.8 4.0 5.6 8.0 11.0 16.0]
@@ -275,7 +276,7 @@ const float realShadowMapRes = float(shadowMapResolution) * MC_SHADOW_QUALITY;
 	#define DOF_COC_SPREAD_SAMPLES 10 // [4 6 8 10 12 14 16 18 20 24 32]
 	#define DOF_MAX_BLUR_RADIUS 12.0 // [4.0 6.0 8.0 10.0 12.0 16.0 20.0 24.0 32.0]
 	#define DOF_FOCUS_HALFLIFE 0.05 // [0.04 0.05 0.075 0.1 0.15 0.2 0.25 0.3 0.4 0.5 0.75 1.0]
-	#define DOF_MANUAL_FOCUS_DISTANCE 10.0 // [1.0 2.0 3.0 4.0 5.0 6.0 8.0 10.0 12.0 16.0 24.0 32.0 48.0 64.0 96.0 128.0 192.0 256.0 512.0]
+	#define DOF_MANUAL_FOCUS_DISTANCE 10.0 // [1.0 2.0 3.0 4.0 5.0 6.0 8.0 10.0 12.0 16.0 20.0 24.0 32.0 48.0 64.0 96.0 128.0 192.0 256.0 512.0]
 	#define DOF_FOCUS_IGNORE_HAND
 
 /* TAA */

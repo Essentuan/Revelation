@@ -368,6 +368,7 @@ option.DOF_F_STOP=F-Stop
 option.DOF_APERTURE_SHAPE=Aperture Shape
 value.DOF_APERTURE_SHAPE.0=Circular
 value.DOF_APERTURE_SHAPE.1=Hexagonal
+option.DOF_APERTURE_VIGNETTING=Aperture Vignetting
 option.DOF_GATHER_SAMPLES=Gather Sample Count
 option.DOF_COC_SPREAD_SAMPLES=CoC Search Sample Count
 option.DOF_MAX_BLUR_RADIUS=Maximum Blur Radius

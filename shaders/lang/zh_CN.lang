@@ -372,6 +372,7 @@ option.DOF_F_STOP=光圈值
 option.DOF_APERTURE_SHAPE=光圈形状
 value.DOF_APERTURE_SHAPE.0=圆形
 value.DOF_APERTURE_SHAPE.1=六边形
+option.DOF_APERTURE_VIGNETTING=口径蚀
 option.DOF_GATHER_SAMPLES=聚集采样数
 option.DOF_COC_SPREAD_SAMPLES=弥散圆搜索采样数
 option.DOF_MAX_BLUR_RADIUS=最大模糊半径

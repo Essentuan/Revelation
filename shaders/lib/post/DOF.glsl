@@ -43,6 +43,23 @@ vec2 DofApertureOffset(vec2 direction, float aperturePhase, float radius) {
 	#endif
 }
 
+#ifdef DOF_APERTURE_VIGNETTING
+	vec3 DofApertureVignettingPrepare(vec2 centerUv) {
+		vec2 centerPos = centerUv - 0.5;
+		float centerRadiusSq = sdot(centerPos);
+		float centerRadiusInv = inversesqrt(maxEps(centerRadiusSq));
+		float compression = centerRadiusSq * centerRadiusInv;
+        compression *= 4.0 * gbufferProjectionInverse[1].y;
+		return vec3(centerPos * centerRadiusInv, compression);
+	}
+
+	void DofApertureVignettingApply(inout vec2 sampleOffset, float kernelRadius, vec3 vignettingData) {
+		float radialOffset = dot(sampleOffset, vignettingData.xy);
+		float radialWarp = (radialOffset + kernelRadius) * vignettingData.z;
+		sampleOffset -= vignettingData.xy * radialWarp;
+	}
+#endif
+
 float DofApertureCoverage(float cocRadius, float sampleDistance, float maxBlurRadius) {
 	return saturate((cocRadius - sampleDistance) * maxBlurRadius + 0.5);
 }

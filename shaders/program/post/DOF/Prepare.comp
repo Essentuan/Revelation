@@ -83,6 +83,9 @@ vec3 DofPropagateCoC(ivec2 texelPos, float centerDepth, float focusDepth, float 
 	float jitterAngle = TAU * kernelNoise.x;
 	vec2 direction = vec2(cos(jitterAngle), sin(jitterAngle));
 	float aperturePhase = kernelNoise.x;
+	#ifdef DOF_APERTURE_VIGNETTING
+		vec3 vignettingData = DofApertureVignettingPrepare(centerUv);
+	#endif
 
 	for (uint i = 0u; i < uint(DOF_COC_SPREAD_SAMPLES); ++i) {
 		float pairSide = float(i & 1u);
@@ -90,6 +93,9 @@ vec3 DofPropagateCoC(ivec2 texelPos, float centerDepth, float focusDepth, float 
 		vec2 sampleDirection = direction * (1.0 - 2.0 * pairSide);
 		float samplePhase = aperturePhase + 0.5 * pairSide;
 		vec2 sampleOffset = DofApertureOffset(sampleDirection, samplePhase, sampleRadius * maxBlurRadius);
+		#ifdef DOF_APERTURE_VIGNETTING
+			DofApertureVignettingApply(sampleOffset, maxBlurRadius, vignettingData);
+		#endif
 		vec2 sampleUv = DofMirrorUv(centerUv + sampleOffset * originTexelSize, uvMirrorEnd);
 		float sampleDepth = DofLoadViewDepthUv(sampleUv);
 		float sampleCocRadius = abs(DofCoCRadius(sampleDepth, focusDepth, cocScale, maxBlurRadius)) * inverseMaxBlurRadius;
