@@ -64,9 +64,9 @@ float DofApertureCoverage(float cocRadius, float sampleDistance, float maxBlurRa
 	return saturate((cocRadius - sampleDistance) * maxBlurRadius + 0.5);
 }
 
-vec2 DofMirrorUv(vec2 uv, vec2 uvMirrorEnd) {
+vec2 DofMirrorUv(vec2 uv) {
 	uv = max(uv, -uv);
-	uv = min(uv, uvMirrorEnd - uv);
+	uv = min(uv, 2.0 - uv);
 	return saturate(uv);
 }
 

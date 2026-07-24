@@ -55,7 +55,7 @@ float DofLoadViewDepth(ivec2 texelPos) {
 }
 
 float DofLoadViewDepthUv(vec2 uv) {
-	ivec2 texelPos = uvToTexel(uv);
+	ivec2 texelPos = uvToTexelScaled(uv);
 	return DofLoadViewDepth(texelPos);
 }
 
@@ -76,8 +76,7 @@ vec3 DofPropagateCoC(ivec2 texelPos, float centerDepth, float focusDepth, float 
 	float centerCocRadius = abs(centerCoc) * inverseMaxBlurRadius;
 	float gatherRadiusFraction = centerCocRadius;
 
-	vec2 centerUv = (vec2(texelPos) + 0.5) * originTexelSize;
-	vec2 uvMirrorEnd = 2.0 * renderScale;
+	vec2 centerUv = texelToUvScaled(texelPos);
 	vec2 kernelNoise = SampleStbnVec2(texelPos, frameCounter + 5);
 	float radialPhase = kernelNoise.y * inverseSampleCount;
 	float jitterAngle = TAU * kernelNoise.x;
@@ -96,7 +95,7 @@ vec3 DofPropagateCoC(ivec2 texelPos, float centerDepth, float focusDepth, float 
 		#ifdef DOF_APERTURE_VIGNETTING
 			DofApertureVignettingApply(sampleOffset, maxBlurRadius, vignettingData);
 		#endif
-		vec2 sampleUv = DofMirrorUv(centerUv + sampleOffset * originTexelSize, uvMirrorEnd);
+		vec2 sampleUv = DofMirrorUv(centerUv + sampleOffset * scaledTexelSize);
 		float sampleDepth = DofLoadViewDepthUv(sampleUv);
 		float sampleCocRadius = abs(DofCoCRadius(sampleDepth, focusDepth, cocScale, maxBlurRadius)) * inverseMaxBlurRadius;
 		float sampleCoverage = DofApertureCoverage(sampleCocRadius, sampleRadius, maxBlurRadius);
@@ -126,8 +125,8 @@ void main() {
 	vec4 sceneData = texelFetch(colortex0, texelPos, 0);
 	float viewDepth = DofLoadViewDepth(texelPos);
 	float focusDepth = DofPrepareFocusDepth();
-	float maxBlurRadius = maxEps(DOF_MAX_BLUR_RADIUS * renderScale.x);
-	vec3 cocData = DofPropagateCoC(texelPos, viewDepth, focusDepth, maxBlurRadius);
+
+	vec3 cocData = DofPropagateCoC(texelPos, viewDepth, focusDepth, DOF_MAX_BLUR_RADIUS);
 	imageStore(colorimg3, texelPos, vec4(sceneData.rgb, cocData.x));
 	imageStore(colorimg15, texelPos, vec4(cocData.yz, 0.0, 0.0));
 }

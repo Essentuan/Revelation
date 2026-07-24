@@ -41,12 +41,6 @@ layout(rgba16f) restrict uniform image2D colorimg15;
 #include "/lib/universal/Transform.glsl"
 #include "/lib/post/DOF.glsl"
 
-struct DofGatherParameters {
-	vec2 centerUv;
-	vec2 uvMirrorEnd;
-	float maxBlurRadius;
-};
-
 struct DofGatherSample {
 	vec3 color;
 	float centerCoverage;
@@ -55,33 +49,33 @@ struct DofGatherSample {
 	float colorWeight;
 };
 
-vec4 DofLoadPoint(DofGatherParameters parameters, vec2 sampleOffset) {
-	vec2 sampleUv = parameters.centerUv + sampleOffset * originTexelSize;
-	sampleUv = DofMirrorUv(sampleUv, parameters.uvMirrorEnd);
-	vec4 pointData = textureLod(colortex3, sampleUv, 0.0);
+vec4 DofLoadPoint(vec2 centerUv, vec2 sampleOffset) {
+	vec2 sampleUv = centerUv + sampleOffset * scaledTexelSize;
+	sampleUv = DofMirrorUv(sampleUv);
+	vec4 pointData = textureLod(colortex3, scaleScreenUv(sampleUv), 0.0);
 	return pointData;
 }
 
 DofGatherSample DofBuildGatherSample(
-	DofGatherParameters parameters,
+	vec2 centerUv,
 	vec2 sampleOffset,
 	float sampleDistance,
 	float centerCoc,
 	float centerCocRadius,
 	float coveringCoc
 ) {
-	vec4 sampleData = DofLoadPoint(parameters, sampleOffset);
-	float sampleCocRadius = abs(sampleData.a) / parameters.maxBlurRadius;
+	vec4 sampleData = DofLoadPoint(centerUv, sampleOffset);
+	float sampleCocRadius = abs(sampleData.a) * rcp(DOF_MAX_BLUR_RADIUS);
 	float coveringBias = float(coveringCoc < 0.0);
 	float coveringMembership = saturate(coveringCoc - sampleData.a + coveringBias);
 	float coveringCoverage = DofApertureCoverage(
-		sampleCocRadius, sampleDistance, parameters.maxBlurRadius
+		sampleCocRadius, sampleDistance, DOF_MAX_BLUR_RADIUS
 	) * coveringMembership;
 
 	DofGatherSample gatherSample;
 	gatherSample.color = sampleData.rgb;
 	gatherSample.centerCoverage = DofApertureCoverage(
-		centerCocRadius, sampleDistance, parameters.maxBlurRadius
+		centerCocRadius, sampleDistance, DOF_MAX_BLUR_RADIUS
 	) * saturate(sampleData.a - centerCoc + 1.0) * (1.0 - coveringMembership);
 	gatherSample.coveringCoverage = coveringCoverage;
 	gatherSample.coveringOpacity = coveringCoverage;
@@ -105,7 +99,7 @@ void DofAccumulateGatherSample(
 }
 
 vec3 DofGatherDisk(
-	DofGatherParameters parameters,
+	vec2 centerUv,
 	vec4 centerData,
 	vec2 initialDir,
 	float initialPhase,
@@ -117,7 +111,7 @@ vec3 DofGatherDisk(
 	const float inverseSampleCount = rcp(float(DOF_GATHER_SAMPLES));
 	radialPhase *= inverseSampleCount;
 
-	float inverseMaxBlurRadius = rcp(parameters.maxBlurRadius);
+	float inverseMaxBlurRadius = rcp(DOF_MAX_BLUR_RADIUS);
 	float gatherRadiusFraction = gatherRadius * inverseMaxBlurRadius;
 	float centerCocRadius = abs(centerCoc) * inverseMaxBlurRadius;
 	vec3 centerLayerColor = centerData.rgb * EPS;
@@ -128,7 +122,7 @@ vec3 DofGatherDisk(
 	vec2 direction = initialDir;
 	float aperturePhase = initialPhase;
 	#ifdef DOF_APERTURE_VIGNETTING
-		vec3 vignettingData = DofApertureVignettingPrepare(parameters.centerUv);
+		vec3 vignettingData = DofApertureVignettingPrepare(centerUv);
 	#endif
 
 	for (uint pairIndex = 0u; pairIndex < uint(DOF_GATHER_SAMPLES >> 1); ++pairIndex) {
@@ -146,11 +140,11 @@ vec3 DofGatherDisk(
 			DofApertureVignettingApply(secondOffset, gatherRadius, vignettingData);
 		#endif
 		DofGatherSample firstSample = DofBuildGatherSample(
-			parameters, firstOffset, firstRadius * gatherRadiusFraction,
+			centerUv, firstOffset, firstRadius * gatherRadiusFraction,
 			centerCoc, centerCocRadius, coveringCoc
 		);
 		DofGatherSample secondSample = DofBuildGatherSample(
-			parameters, secondOffset, secondRadius * gatherRadiusFraction,
+			centerUv, secondOffset, secondRadius * gatherRadiusFraction,
 			centerCoc, centerCocRadius, coveringCoc
 		);
 
@@ -176,10 +170,7 @@ vec4 DofFilter(ivec2 texelPos) {
 	vec4 centerData = texelFetch(colortex3, texelPos, 0);
 	float fogMask = texelFetch(colortex0, texelPos, 0).a;
 
-	DofGatherParameters parameters;
-	parameters.centerUv = texelToUv(texelPos);
-	parameters.uvMirrorEnd = 2.0 * renderScale;
-	parameters.maxBlurRadius = maxEps(DOF_MAX_BLUR_RADIUS * renderScale.x);
+	vec2 centerUv = texelToUvScaled(texelPos);
 
 	float centerCoc = centerData.a;
 	vec2 kernelNoise = SampleStbnVec2(texelPos, frameCounter + 6);
@@ -189,7 +180,7 @@ vec4 DofFilter(ivec2 texelPos) {
 	vec4 gatherData = imageLoad(colorimg15, texelPos);
 	float gatherRadius = maxEps(gatherData.y);
 	vec3 filteredColor = DofGatherDisk(
-		parameters, centerData, initialDir, kernelNoise.x, kernelNoise.y,
+		centerUv, centerData, initialDir, kernelNoise.x, kernelNoise.y,
 		centerCoc, gatherData.x, gatherRadius
 	);
 	return vec4(filteredColor, fogMask);
