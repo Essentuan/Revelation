@@ -39,8 +39,7 @@ void main() {
 	vec2 previousCoord = ReprojectScreenPos(vec3(texelToUvScaled(texelPos), depth)).xy;
 
 	if (depth > 0.56) {
-        previousCoord = scaleScreenUv(saturate(previousCoord));
-		vec3 reprojectedHistory = texture(colortex1, previousCoord).rgb;
+		vec3 reprojectedHistory = texture(colortex1, saturate(previousCoord)).rgb;
 		imageStore(colorimg4, texelPos, vec4(reprojectedHistory, 1.0));
 	}
 }
