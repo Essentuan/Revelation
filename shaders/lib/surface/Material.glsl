@@ -91,7 +91,21 @@ Material GetMaterialData(vec4 specTex, vec3 albedo) {
 
     material.reflectance = GetMaterialF0(material.metallic, albedo);
 
-	material.specularMask = material.roughness < 0.5 || material.metallic > EPS;
+	material.specularMask = material.roughness < 0.4 || material.metallic > EPS;
+	material.mirrorMask = material.roughness < ROUGH_REFLECTIONS_THRESHOLD;
+
+	return material;
+}
+
+Material GetMaterialData(vec2 specTex, vec3 albedo) {
+	Material material;
+
+	material.roughness = sqr(1.0 - specTex.r);
+	material.metallic = specTex.g;
+
+    material.reflectance = GetMaterialF0(material.metallic, albedo);
+
+	material.specularMask = material.roughness < 0.4 || material.metallic > EPS;
 	material.mirrorMask = material.roughness < ROUGH_REFLECTIONS_THRESHOLD;
 
 	return material;
@@ -103,7 +117,7 @@ Material GetMaterialData(vec2 specTex) {
 	material.roughness = sqr(1.0 - specTex.r);
 	material.metallic = specTex.g;
 
-	material.specularMask = material.roughness < 0.5 || material.metallic > EPS;
+	material.specularMask = material.roughness < 0.4 || material.metallic > EPS;
 	material.mirrorMask = material.roughness < ROUGH_REFLECTIONS_THRESHOLD;
 
 	return material;
