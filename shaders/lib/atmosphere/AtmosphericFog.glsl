@@ -14,12 +14,12 @@ vec2 CalculateFogDensity(vec3 rayPos, float uniformFog) {
 	rayPos += cameraPosition;
 
 	// float rayLength = length(rayPos + vec3(0.0, planetRadius, 0.0));
-	vec2 density = exp2(abs(rayPos.y - VF_HEIGHT) * falloffScale);
+	vec2 density = saturate(exp2(abs(rayPos.y - VF_HEIGHT) * falloffScale));
 
 #if VF_NOISE_QUALITY == LOW
 	rayPos.xz -= vec2(1.0, 0.75) * worldTimeCounter;
 
-	float noise = texture(noisetex, rayPos.xz * 0.002).z;
+	float noise = texture(noisetex, rayPos.xz * 0.001).z;
 #elif VF_NOISE_QUALITY == MEDIUM
 	vec3 windOffset = vec3(0.07, 0.04, 0.05) * worldTimeCounter;
 
@@ -30,8 +30,8 @@ vec2 CalculateFogDensity(vec3 rayPos, float uniformFog) {
 	noise -= Pseudo3DNoise(rayPos * 4.0 - windOffset);
 #endif
 
-	density.y *= sqr(noise) * (2.0 + biomeSandstorm * 8.0 + biomeSnowstorm * 4.0);
-	density += uniformFog * linearstep(cloudLayer0.maxHeight, cloudLayer0.minHeight, rayPos.y + planetRadius);
+	density.y *= sqr(noise) * (0.5 + biomeSandstorm * 2.0 + biomeSnowstorm);
+	density += uniformFog * linearstep(512.0, 384.0, rayPos.y + planetRadius);
 
 	return density;
 }
@@ -42,31 +42,26 @@ vec2 CalculateFogDensity(vec3 rayPos, float uniformFog) {
 	#undef VF_CLOUD_SHADOWS
 #endif
 
-mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, uint steps) {
-	float rayLength = sdot(endPos - startPos);
+mat2x3 RaymarchAtmosphericFog(vec3 rayStart, vec3 rayEnd, float dither, uint steps) {
+	float rayLength = sdot(rayEnd - rayStart);
 	float norm = inversesqrt(rayLength);
 	rayLength *= norm;
 
-	vec3 rayDir = (endPos - startPos) * norm;
-
-	// Adaptive step count
-	steps = min(steps, uint(float(steps) * 0.4 + rayLength * rcp(16.0)));
-	float rSteps = rcp(float(steps));
+	vec3 rayDir = (rayEnd - rayStart) * norm;
 
 	float maxDist = lodRenderDist;
 	rayLength = min(rayLength, maxDist);
 
-	// Squared step distribution
-	float stepLength = rayLength * rSteps * rSteps;
-	vec3 rayStep = rayDir * stepLength;
+    float stepCount = float(steps);
+    float stepInverse = 1.0 / stepCount;
 
-	vec3 shadowStart = projMAD(shadowProjection, transMAD(shadowModelView, startPos));
-	vec3 shadowStep = mat3(shadowModelView) * rayStep * diagonal3(shadowProjection);
+	vec3 shadowStart = projMAD(shadowProjection, transMAD(shadowModelView, rayStart));
+	vec3 shadowDir = mat3(shadowModelView) * rayDir * diagonal3(shadowProjection);
 
 	float LdotV = dot(shadowDirWorld, rayDir);
-	vec2 phase = AtmospherePhase(LdotV);
+	vec2 phase = vec2(AirPhase(LdotV), HgDrainePhase(LdotV, 16.0));
 
-	float mieDensityMult = VF_MIE_DENSITY * 5e2 * (1.0 + wetness * VF_MIE_DENSITY_RAIN_MULT);
+	float mieDensityMult = VF_MIE_DENSITY * 3e3 * (1.0 + wetness * VF_MIE_DENSITY_RAIN_MULT);
 
 	#ifdef VF_TIME_FADE
 		mieDensityMult *= max(wetness, sqr(1.0 - timeNoon) - timeSunset * 0.25);
@@ -91,17 +86,24 @@ mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, uint ste
 		fogMieScattering
 	);
 
-	float uniformFog = (8.0 + wetness * VF_MIE_DENSITY_RAIN_MULT * 8.0) / maxDist;
+	float uniformFog = (2.0 + wetness * VF_MIE_DENSITY_RAIN_MULT * 2.0) / maxDist;
 
 	vec3 scatteringSun = vec3(0.0);
 	vec3 scatteringSky = vec3(0.0);
 	vec3 transmittance = vec3(1.0);
 
-	for (uint i = 0u; i < steps; ++i) {
-		// Squared step distribution
-		float fi = float(i) + dither;
-		vec3 rayPos = startPos + rayStep * sqr(fi);
-		vec3 shadowPos = shadowStart + shadowStep * sqr(fi);
+    for (float i = 0.0; i < stepCount; ++i) {
+        vec2 t01 = vec2(i, i + 1.0) * stepInverse;
+
+        // Square distribution
+        t01 *= t01;
+        t01 *= rayLength;
+
+        float t = mix(t01.x, t01.y, dither);
+        float dt = t01.y - t01.x;
+
+		vec3 rayPos = rayStart + rayDir * t;
+		vec3 shadowPos = shadowStart + shadowDir * t;
 
 		vec2 stepDensity = CalculateFogDensity(rayPos, uniformFog);
 
@@ -146,17 +148,17 @@ mat2x3 RaymarchAtmosphericFog(vec3 startPos, vec3 endPos, float dither, uint ste
 
 		float stepSize = 4.0;
 		vec3 lightPos = rayPos;
-		for (uint i = 0u; i < 3u; ++i) {
+		for (uint j = 0u; j < 3u; ++j) {
 			stepSize *= 1.5;
 			lightPos += shadowDirWorld * stepSize;
 
 			vec2 density = CalculateFogDensity(lightPos, uniformFog);
 			opticalDepthSun += density * stepSize;
 		}
-        vec3 transmittanceToSun = exp(-fogExtinctionCoeff * opticalDepthSun) * sampleShadow;
+        vec3 transmittanceToSun = exp2(-rLOG2 * fogExtinctionCoeff * opticalDepthSun) * sampleShadow;
 
 		vec3 stepExtinction = fogExtinctionCoeff * stepDensity;
-		vec3 stepTransmittance = exp2(-rLOG2 * 2.0 * fi * stepLength * stepExtinction);
+		vec3 stepTransmittance = exp2(-rLOG2 * dt * stepExtinction);
 
 		vec3 stepIntegral = transmittance * oms(stepTransmittance) / maxEps(stepExtinction);
 
