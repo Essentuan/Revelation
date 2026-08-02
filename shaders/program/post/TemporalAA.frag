@@ -54,7 +54,7 @@ vec3 CrossClosestFragment(ivec2 texelPos, float depth) {
 	closest = closest.z > d3 ? vec3(vec2(t3), d3) : closest;
 	closest = closest.z > d4 ? vec3(vec2(t4), d4) : closest;
 
-	closest.xy *= scaledTexelSize;
+	closest.xy *= originTexelSize;
 	return closest;
 }
 
@@ -143,9 +143,9 @@ vec4 TemporalReprojection(vec2 screenCoord, vec2 motionVector) {
 void main() {
 	clearOut = vec3(0.0); // Clear the output buffer for bloom tiles
 
-	ivec2 screenTexel = ivec2(gl_FragCoord.xy);
+	ivec2 texelPos = ivec2(gl_FragCoord.xy);
 
-	float depth = loadDepth0(screenTexel);
+	float depth = loadDepth0(texelPos);
 	vec2 screenCoord = gl_FragCoord.xy * originTexelSize;
 
 	#if RENDER_MODE == 1
@@ -153,15 +153,15 @@ void main() {
 		#if defined LOD_MOD
 			// Voxy LoD often does not write vanilla depth (depth ~= 1.0 but non-sky material).
 			// Detect it and use DH/VOXY reprojection path instead of fully disabling temporal effects.
-			uint materialID = loadMaterialPack(screenTexel).y;
+			uint materialID = loadMaterialPack(texelPos).y;
 			if (depth > 1.0 - EPS && materialID != 0u) {
-				float lodDepth = loadDepth0Lod(screenTexel);
+				float lodDepth = loadDepth0Lod(texelPos);
 				motionVector = ReprojectScreenPosLod(vec3(screenCoord, lodDepth)).xy - screenCoord;
 			} else
 		#endif
 		{
 		#ifdef TAA_CLOSEST_FRAGMENT
-			vec3 closestFragment = CrossClosestFragment(screenTexel, depth);
+			vec3 closestFragment = CrossClosestFragment(texelPos, depth);
 			motionVector = ReprojectScreenPos(closestFragment).xy - closestFragment.xy;
 		#else
 			motionVector = ReprojectScreenPos(vec3(screenCoord, depth)).xy - screenCoord;
@@ -176,7 +176,7 @@ void main() {
 		#ifdef TAA_ENABLED
 			temporalOut = TemporalReprojection(screenCoord, motionVector);
 		#else
-			temporalOut = vec4(loadInput(screenTexel), 1.0);
+			temporalOut = vec4(loadInput(texelPos), 1.0);
 		#endif
 	#else
 		ivec2 srcTexel = uvToTexel(screenCoord + taaJitter * 0.5);
