@@ -103,8 +103,12 @@ void main() {
         }
     #endif
 
-    vec2 deltaUv1 = dFdx(texCoord) * 0.5;
-    vec2 deltaUv2 = dFdy(texCoord) * 0.5;
+    vec2 deltaUv1 = dFdx(texCoord);
+    vec2 deltaUv2 = dFdy(texCoord);
+    #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
+        deltaUv1 *= renderScale.x;
+        deltaUv2 *= renderScale.y;
+    #endif
 
 	float dither = BlueNoise(ivec2(gl_FragCoord.xy), frameCounter);
 

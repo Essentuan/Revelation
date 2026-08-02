@@ -36,6 +36,7 @@ uniform vec4 entityColor;
 uniform float alphaTestRef;
 
 uniform vec2 scaledViewSize;
+uniform vec2 renderScale;
 
 //======// Input //===============================================================================//
 
@@ -61,6 +62,10 @@ void main() {
 
     vec2 deltaUv1 = dFdx(texCoord);
     vec2 deltaUv2 = dFdy(texCoord);
+    #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
+        deltaUv1 *= renderScale.x;
+        deltaUv2 *= renderScale.y;
+    #endif
 
 	#if GBUFFERS_LIGHTNING
        vec4 albedo = vec4(0.7, 0.675, 1.0, texture(tex, texCoord).a);

@@ -96,7 +96,6 @@ void main() {
 
 	// Construct TBN matrix
 	#ifdef MC_NORMAL_MAP
-
         vec3 tangentPerp = deltaPos2 * deltaUv1.x - deltaPos1 * deltaUv2.x;
         vec3 tangent = normalize(cross(tangentPerp, geoNormal));
 
@@ -106,9 +105,10 @@ void main() {
 		mat3 tbnMatrix = mat3(tangent, bitangent, geoNormal);
 	#endif
 
-    // Increase detail reserve
-    deltaUv1 *= 0.5;
-    deltaUv2 *= 0.5;
+    #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
+        deltaUv1 *= renderScale.x;
+        deltaUv2 *= renderScale.y;
+    #endif
 
 	vec4 albedo = textureGrad(tex, texCoord, deltaUv1, deltaUv2) * vertColor;
 

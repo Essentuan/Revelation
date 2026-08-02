@@ -86,6 +86,11 @@ void main() {
 
     mat3 tbnMatrix = mat3(tangent, bitangent, geoNormal);
 
+    #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
+        deltaUv1 *= renderScale.x;
+        deltaUv2 *= renderScale.y;
+    #endif
+
 	if (materialID == 3u) { // water
 		ivec2 texelPos = ivec2(gl_FragCoord.xy);
 		vec3 worldDir = normalize(worldPos - gbufferModelViewInverse[3].xyz);
