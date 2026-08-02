@@ -35,8 +35,6 @@
     #define RENDER_SCALE_HALF SR_RENDER_SCALE_FACTOR_HALF
 #endif
 
-#define ApplyFog(scene, fog) ((scene) * fog[1] + fog[0])
-
 #include "/lib/utility/Compat.glsl"
 #include "/lib/utility/Math.glsl"
 #include "/lib/utility/Matrix.glsl"

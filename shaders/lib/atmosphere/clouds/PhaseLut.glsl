@@ -19,7 +19,7 @@ vec2 CloudPhaseLutUv(float cosTheta, int cloudType) {
 	return UnitToSubUv(uv, vec2(cloudPhaseLutRes));
 }
 
-#if CLOUD_PHASE_LUT_COLORED == 1
+#if CLOUD_PHASE_LUT_COLORED
 
 // The RGB LUT stores log2 of the normalized linear Rec.2020 phase function.
 vec3 SampleCloudPhaseLut(float cosTheta, int cloudType) {
