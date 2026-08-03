@@ -23,7 +23,7 @@ vec3 HardCodeEmissive(uint materialID, vec3 albedo, vec3 worldPos) {
 			return vec3(albedoLuminance);
 		// Torch like
 		case 21u:
-			return vec3(1.0, 0.7, 0.3) * 4.0 * step(min(0.6, albedo.b * 5.0), albedo.r);
+			return vec3(8.0 * albedoLuminance * step(min(0.6, albedo.b * 5.0), albedo.r));
 		// Fire
 		case 7u: case 22u:
 			return vec3(1.0, 0.7, 0.3) * 4.0;
