@@ -54,7 +54,11 @@ vec3 CrossClosestFragment(ivec2 texelPos, float depth) {
 	closest = closest.z > d3 ? vec3(vec2(t3), d3) : closest;
 	closest = closest.z > d4 ? vec3(vec2(t4), d4) : closest;
 
-	closest.xy *= originTexelSize;
+	#if SR_ENABLE
+		closest.xy *= scaledTexelSize;
+	#else
+		closest.xy *= originTexelSize;
+	#endif
 	return closest;
 }
 
@@ -146,7 +150,11 @@ void main() {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
 
 	float depth = loadDepth0(texelPos);
-	vec2 screenCoord = gl_FragCoord.xy * originTexelSize;
+	#if SR_ENABLE
+		vec2 screenCoord = gl_FragCoord.xy * scaledTexelSize;
+	#else
+		vec2 screenCoord = gl_FragCoord.xy * originTexelSize;
+	#endif
 
 	#if RENDER_MODE == 1
 		vec2 motionVector;
@@ -169,7 +177,6 @@ void main() {
 		}
 
 		#if defined(MOTION_BLUR) || SR_ENABLE
-			// motionVectorOut = depth < 0.56 ? motionVector * 0.25 : motionVector;
             motionVectorOut = motionVector;
 		#endif
 
