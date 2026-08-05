@@ -49,7 +49,7 @@ float CloudHighDensity(vec2 rayPos) {
 
     // Sample cloud coverage
     // R: Ci, G: Cs, B: Cc, A: shared
-	vec4 cloudMap = texture(cloudMapHi, rayPos * rcp(384e3));
+	vec4 cloudMap = texture(cloudMapHi, rayPos * rcp(500e3));
 
     float sharedCoverage = cloudMap.w;
     if (sharedCoverage < cloudDensityEpsilon) return 0.0;
@@ -57,19 +57,19 @@ float CloudHighDensity(vec2 rayPos) {
 	float activeCoverage = 0.0;
 
 	#ifdef CLOUD_CI
-		float cirrusCoverage = CLOUD_CI_COVERAGE - 0.5 + cloudMap.x;
+		float cirrusCoverage = CLOUD_CI_COVERAGE - 0.55 + cloudMap.x;
 		cirrusCoverage = sqr(linearstep(0.35, 1.0, cirrusCoverage));
 		activeCoverage = cirrusCoverage;
 	#endif
 
 	#ifdef CLOUD_CS
-		float cirrostratusCoverage = CLOUD_CS_COVERAGE - 0.5 + cloudMap.y;
+		float cirrostratusCoverage = CLOUD_CS_COVERAGE - 0.55 + cloudMap.y;
 		cirrostratusCoverage = sqr(linearstep(0.5, 1.0, cirrostratusCoverage));
 		activeCoverage += cirrostratusCoverage;
 	#endif
 
 	#ifdef CLOUD_CC
-		float cirrocumulusCoverage = CLOUD_CC_COVERAGE - 0.5 + cloudMap.z;
+		float cirrocumulusCoverage = CLOUD_CC_COVERAGE - 0.55 + cloudMap.z;
 		cirrocumulusCoverage = smoothstep(0.45, 1.0, cirrocumulusCoverage);
 		activeCoverage += cirrocumulusCoverage;
 	#endif
