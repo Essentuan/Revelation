@@ -111,20 +111,9 @@ float CloudHighDensity(vec2 rayPos) {
 
 //================================================================================================//
 
-#if 0
-	float GetVerticalProfile(float heightFraction, float cloudType) {
-		return texture(verticalLut, vec2(cloudType, heightFraction)).x;
-	}
-#else
-	float GetVerticalProfile(float h, float t) {
-		float stratus = saturate(h * 16.0) * linearstep(0.2, 0.1, h);
-		float stratocumulus = saturate(h * 6.0) * linearstep(0.6, 0.2, h);
-		float cumulus = saturate(h * 8.0) * linearstep(1.0, 0.6, h);
-
-		float gradient = mix(stratus, stratocumulus, smoothstep(0.0, 0.5, t));
-		return mix(gradient, cumulus, smoothstep(0.5, 1.0, t));
-	}
-#endif
+float GetVerticalProfile(float heightFraction, float cloudType) {
+    return texture(verticalLut, vec2(cloudType, heightFraction)).x;
+}
 
 float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensionalProfile, bool detail) {
 	dimensionalProfile = 0.0;
@@ -138,73 +127,50 @@ float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensiona
 	rayPos.xz += cameraPosition.xz;
 
 	// Sample cloud map
-	vec2 cloudMap = texture(cloudMapLo, (rayPos.xz * rcp(64e3))).xy;
+	vec2 cloudMap = texture(cloudMapLo, rayPos.xz * rcp(64e3)).xy;
 
 	// Coveage profile
-	vec2 stepEdge = mix(vec2(0.5, 1.0) - CLOUD_CU_COVERAGE * 0.4, vec2(0.1, 0.4), sqr(wetness));
+	vec2 stepEdge = mix(vec2(0.6, 1.0) - CLOUD_CU_COVERAGE * 0.4, vec2(0.1, 0.4), sqr(wetness));
 	float coverage = linearstep(stepEdge.x, stepEdge.y, cloudMap.x);
 	if (coverage < 0.1) return 0.0;
 
 	float localCoverage = texture(noisetex, rayPos.xz * rcp(512e3) + 0.75).z;
 	coverage *= linearstep(stepEdge.x, stepEdge.y * 0.8, localCoverage);
 
-	// Vertical profile
-	float type = cloudMap.y * approxSqrt(coverage);
-	// heightFraction = ValueErosion(heightFraction, oms(cloudMap.y) * 0.3);
-	float gradient = GetVerticalProfile(heightFraction, type);
+    // Press heightFraction via raw coverage(cloudMap.x)
+    // coverage = 1.0 -> original
+    // coverage = 0.0 -> fully pressed
+    heightFraction = saturate(heightFraction / fma(cloudMap.x, 0.9, 0.1));
 
-	#if 1
+	// Vertical profile
+	float gradient = GetVerticalProfile(heightFraction, cloudMap.y);
+
 	dimensionalProfile = gradient * coverage;
-	#else
-	dimensionalProfile = saturate(gradient + coverage - 1.0);
-	#endif
 	if (dimensionalProfile < 0.05) return 0.0;
 
-	vec3 noisePos = (rayPos - windDir * heightFraction * cloudLayer0.thickness * 0.25) * rcp(2e3);
+	vec3 noisePos = rayPos - windDir * heightFraction * cloudLayer0.thickness * 0.3;
 	noisePos.y += dot(noisePos.xz, vec2(0.2, 0.3)); // Reduce repetition pattern
+    noisePos *= rcp(2e3);
 
 	// Add curl noise
 	#if !defined PASS_SKY_MAP
 	if (detail) {
-		vec3 curlNoise = texture(curlNoise3D, noisePos * vec3(2.0, 3.0, 2.0)).xyz;
-		noisePos += curlNoise * gradient * oms(coverage) * 0.4;
+		vec3 curlNoise = texture(curlNoise3D, noisePos * 2.0).xyz;
+		noisePos += curlNoise * gradient * oms(coverage) * 0.3;
 	}
 	#endif
 
-	#if 0
-	vec2 billowyNoise = texture(baseNoiseTex, fract(noisePos)).xy;
-
-	// Blend between HF and LF according to dimensionalProfile
-	float baseNoise = mix(billowyNoise.x, billowyNoise.y, approxSqrt(dimensionalProfile));
-	#else
 	float baseNoise = texture(baseNoiseTex, noisePos).x;
-	#endif
 
-	// See [Schneider, 2022]
-	float cloudDensity = dimensionalProfile + (baseNoise - 1.0) * 0.65;
+	// Noise erosion
+    float erosion = oms(baseNoise * gradient) * 0.6;
+	float cloudDensity = dimensionalProfile - erosion;
 	if (cloudDensity < cloudDensityEpsilon) return 0.0;
 
 	float heightFade = smoothstep(0.1, 0.5, heightFraction);
 
-	// Detail erosion
-	// float detailNoise = 0.1;
-
-	// #if !defined PASS_SKY_MAP
-	// if (detail) {
-	// 	noisePos -= baseNoise * 0.1 * windDir + windOffset * 1e-4;
-
-	// 	detailNoise = texture(detailNoiseTex, noisePos * 8.0).x;
-
-	// 	// Transition from wispy shapes to billowy shapes over height
-	// 	detailNoise = sqr(mix(detailNoise, 0.75 - detailNoise * 0.5, heightFade)) * 0.4;
-	// }
-	// #endif
-
-	// cloudDensity = ValueErosion(cloudDensity, detailNoise);
-	// cloudDensity = saturate(cloudDensity - detailNoise * oms(cloudDensity));
-
 	// Density profile
-	cloudDensity *= mix(1.0, inversesqrt(cloudDensity), heightFraction);
+	cloudDensity *= mix(1.0, inversesqrt(cloudDensity), dimensionalProfile);
 	return cloudDensity * mix(CLOUD_CU_DENSITY_B, CLOUD_CU_DENSITY_T, heightFade);
 }
 
