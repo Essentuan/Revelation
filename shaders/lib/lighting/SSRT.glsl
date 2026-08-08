@@ -39,12 +39,6 @@ bool ScreenSpaceRaytrace(vec3 viewOrigin, vec3 viewDir, float dither, uint steps
 		hitPos = rayOrigin + rayStep * t;
 
 		if (saturate(hitPos.xy) != hitPos.xy) break;
-		if (hitPos.z >= screenDepthSky) {
-		#ifdef SSRT_SKY_TRACING
-			hit = true;
-		#endif
-			break;
-		}
 
 		ivec2 sampleTexel = uvToTexelScaled(hitPos.xy);
 		float sampleDepth = loadDepth2(sampleTexel);
@@ -53,8 +47,13 @@ bool ScreenSpaceRaytrace(vec3 viewOrigin, vec3 viewDir, float dither, uint steps
 		#endif
 
 		float depthDiff = sampleDepth - hitPos.z;
-		if (abs(depthDiff + compareTolerance) < compareTolerance) {
-			hit = true;
+        hit = abs(depthDiff + compareTolerance) < compareTolerance;
+        #ifdef SSRT_SKY_TRACING
+		    hit = hit || all(greaterThanEqual(vec2(sampleDepth, hitPos.z), vec2(screenDepthSky)));
+        #endif
+
+		if (hit) {
+			hitPos.z = sampleDepth;
 			break;
 		}
 
