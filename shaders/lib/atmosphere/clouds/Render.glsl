@@ -188,7 +188,7 @@ CloudRenderResult RenderClouds(vec3 rayDir, vec2 noise, vec3 skyRadiance) {
                     saturate(tMax * rcp(maxRaymarchingDist))
                 ));
                 float invStepCount = rcp(stepCount);
-				float stepScale = tMax * sqr(invStepCount);
+				float stepLength = tMax * invStepCount;
 
 				vec3 startPos = atmosphereViewPos + rayDir * intersection.x;
 
@@ -200,12 +200,13 @@ CloudRenderResult RenderClouds(vec3 rayDir, vec2 noise, vec3 skyRadiance) {
                     bool fineSampling = true;
                     uint emptySampleCount = 0u;
                     const uint emptySampleLimit = 4u;
+                    const float maxCoarseSpan = cloudLayer0.thickness * 0.125;
+                    bool allowCoarseStride = stepLength <= maxCoarseSpan;
 				#endif
 
 				// Raymarch through the cloud volume
 				for (int i = 0; i < int(stepCount); ++i) {
-					float fi = float(i);
-					float t = fma(noise.x, fma(fi, 2.0, 1.0), sqr(fi)) * stepScale;
+					float t = (float(i) + noise.x) * stepLength;
 
 					vec3 rayPos = startPos + rayDir * t;
 
@@ -223,7 +224,7 @@ CloudRenderResult RenderClouds(vec3 rayDir, vec2 noise, vec3 skyRadiance) {
 							cloudDensityModeCoarse
 						);
 						if (dimensionalProfile < cloudProfileEpsilon) {
-							i++;
+							if (allowCoarseStride) i++;
 							continue;
 						}
 
@@ -256,7 +257,6 @@ CloudRenderResult RenderClouds(vec3 rayDir, vec2 noise, vec3 skyRadiance) {
 
 					// Skip if no density
 					if (stepDensity >= cloudDensityEpsilon) {
-						float dt = fma(fi, 2.0, 1.0) * stepScale;
 						float sigmaT = stepDensity * cloudLayer0.coeff.extinction;
 
 						// Compute the optical depth of sunlight through clouds
@@ -271,7 +271,7 @@ CloudRenderResult RenderClouds(vec3 rayDir, vec2 noise, vec3 skyRadiance) {
 						float scatteringGround = oms(sqr(dimensionalProfile)) * oms(heightFraction) * lightDir.y;
 						scattering += scatteringGround * uniformPhase;
 
-						float stepTransmittance = exp2(-rLOG2 * sigmaT * dt);
+						float stepTransmittance = exp2(-rLOG2 * sigmaT * stepLength);
 
 						// Energy-conserving analytical integration from [Hillaire, 2016]
 						float stepIntegral = transmittance * oms(stepTransmittance);
