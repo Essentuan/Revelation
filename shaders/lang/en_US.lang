@@ -104,6 +104,7 @@ option.CLOUD_TAAU_ANTIFLICKER=Anti-flicker
 
 option.CLOUD_LOW_SAMPLES_MIN=Min Main Samples
 option.CLOUD_LOW_SAMPLES_MAX=Max Main Samples
+option.CLOUD_EMPTY_SPACE_SKIP=Empty-space Skipping
 option.CLOUD_LOW_SUNLIGHT_SAMPLES=Sunlight Samples
 option.CLOUD_LOW_WIND_SPEED=Wind Speed
 suffix.CLOUD_LOW_WIND_SPEED=m/s

@@ -115,7 +115,13 @@ float GetVerticalProfile(float heightFraction, float cloudType) {
     return texture(verticalLut, vec2(cloudType, heightFraction)).x;
 }
 
-float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensionalProfile, bool detail) {
+const float cloudProfileEpsilon = 0.05;
+
+const uint cloudDensityModeCoarse = 0u;
+const uint cloudDensityModeBase = 1u;
+const uint cloudDensityModeDetail = 2u;
+
+float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensionalProfile, uint sampleMode) {
 	dimensionalProfile = 0.0;
 
 	// Wind field
@@ -129,7 +135,7 @@ float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensiona
 	// Sample cloud map
 	vec2 cloudMap = texture(cloudMapLo, rayPos.xz * rcp(64e3)).xy;
 
-	// Coveage profile
+	// Coverage profile
 	vec2 stepEdge = mix(vec2(0.6, 1.0) - CLOUD_CU_COVERAGE * 0.4, vec2(0.1, 0.4), sqr(wetness));
 	float coverage = linearstep(stepEdge.x, stepEdge.y, cloudMap.x);
 	if (coverage < 0.1) return 0.0;
@@ -137,16 +143,17 @@ float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensiona
 	float localCoverage = texture(noisetex, rayPos.xz * rcp(512e3) + 0.75).z;
 	coverage *= linearstep(stepEdge.x, stepEdge.y * 0.8, localCoverage);
 
-    // Press heightFraction via raw coverage(cloudMap.x)
-    // coverage = 1.0 -> original
-    // coverage = 0.0 -> fully pressed
-    heightFraction = saturate(heightFraction / fma(cloudMap.x, 0.9, 0.1));
+	// Press heightFraction via raw coverage(cloudMap.x)
+	heightFraction = saturate(heightFraction / fma(cloudMap.x, 0.9, 0.1));
 
 	// Vertical profile
 	float gradient = GetVerticalProfile(heightFraction, cloudMap.y);
-
 	dimensionalProfile = gradient * coverage;
-	if (dimensionalProfile < 0.05) return 0.0;
+	if (dimensionalProfile < cloudProfileEpsilon) return 0.0;
+
+	#ifdef CLOUD_EMPTY_SPACE_SKIP
+	if (sampleMode == cloudDensityModeCoarse) return dimensionalProfile;
+	#endif
 
 	vec3 noisePos = rayPos - windDir * heightFraction * cloudLayer0.thickness * 0.3;
 	noisePos.y += dot(noisePos.xz, vec2(0.2, 0.3)); // Reduce repetition pattern
@@ -154,7 +161,7 @@ float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensiona
 
 	// Add curl noise
 	#if !defined PASS_SKY_MAP
-	if (detail) {
+	if (sampleMode == cloudDensityModeDetail) {
 		vec3 curlNoise = texture(curlNoise3D, noisePos * 2.0).xyz;
 		noisePos += curlNoise * gradient * oms(coverage) * 0.3;
 	}

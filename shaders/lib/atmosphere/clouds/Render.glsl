@@ -44,8 +44,9 @@ float[cloudMsCount] SetupParticipatingMediaPhases(float primaryPhase, float fall
 	return phases;
 }
 
-float CloudVolumeOpticalDepth(vec3 rayPos, vec3 rayDir, float noise, uint steps) {
-	float rSteps = 1.0 / float(steps);
+float CloudVolumeOpticalDepth(vec3 rayPos, vec3 rayDir, float noise) {
+	const uint steps = uint(CLOUD_LOW_SUNLIGHT_SAMPLES);
+	const float rSteps = 1.0 / float(steps);
 	float rayLength = cloudLayer0.thickness * (1.75 - rayDir.y);
 
 	float stepLength = rayLength * rSteps * rSteps;
@@ -64,7 +65,8 @@ float CloudVolumeOpticalDepth(vec3 rayPos, vec3 rayDir, float noise, uint steps)
 		// if (abs(heightFraction - 0.5) > 0.5) break; // Skip if outside the clouds
 
 		float temp;
-		float density = CloudVolumeDensity(samplePos, heightFraction, temp, i < 3u);
+		uint sampleMode = i < 3u ? cloudDensityModeDetail : cloudDensityModeBase;
+		float density = CloudVolumeDensity(samplePos, heightFraction, temp, sampleMode);
 		sumDensity += density * (fi + 0.5);
 	}
 
@@ -180,10 +182,13 @@ CloudRenderResult RenderClouds(vec3 rayDir, vec2 noise, vec3 skyRadiance) {
 				float tMax = clamp(intersection.y - intersection.x, 0.0, maxRaymarchingDist);
 
                 // Variable step count based on raymarching distance
-                float stepCount = mix(CLOUD_LOW_SAMPLES_MIN, CLOUD_LOW_SAMPLES_MAX, saturate(tMax * rcp(maxRaymarchingDist)));
-                float stepCountFloor = floor(stepCount);
-                float tMaxFloor = tMax * stepCountFloor / stepCount;
-                stepCountFloor = 1.0 / stepCountFloor;
+                float stepCount = floor(mix(
+                    CLOUD_LOW_SAMPLES_MIN,
+                    CLOUD_LOW_SAMPLES_MAX,
+                    saturate(tMax * rcp(maxRaymarchingDist))
+                ));
+                float invStepCount = rcp(stepCount);
+				float stepScale = tMax * sqr(invStepCount);
 
 				vec3 startPos = atmosphereViewPos + rayDir * intersection.x;
 
@@ -191,17 +196,16 @@ CloudRenderResult RenderClouds(vec3 rayDir, vec2 noise, vec3 skyRadiance) {
 
 				vec2 stepScattering = vec2(0.0);
 				float transmittance = 1.0;
+				#ifdef CLOUD_EMPTY_SPACE_SKIP
+                    bool fineSampling = true;
+                    uint emptySampleCount = 0u;
+                    const uint emptySampleLimit = 4u;
+				#endif
 
 				// Raymarch through the cloud volume
-				for (float i = 0.0; i < stepCount; ++i) {
-                    vec2 t01 = vec2(i, i + 1.0) * stepCountFloor;
-
-                    // Square distribution
-                    t01 *= t01;
-                    t01 *= tMaxFloor;
-
-                    float t = mix(t01.x, t01.y, noise.x);
-                    float dt = t01.y - t01.x;
+				for (int i = 0; i < int(stepCount); ++i) {
+					float fi = float(i);
+					float t = fma(noise.x, fma(fi, 2.0, 1.0), sqr(fi)) * stepScale;
 
 					vec3 rayPos = startPos + rayDir * t;
 
@@ -209,16 +213,54 @@ CloudRenderResult RenderClouds(vec3 rayDir, vec2 noise, vec3 skyRadiance) {
 					float heightFraction = length(rayPos) * rcp(cloudLayer0.thickness) - cloudLayer0.minHeight / cloudLayer0.thickness;
 					// if (abs(heightFraction - 0.5) > 0.5) break; // Skip if outside the clouds
 
+					#ifdef CLOUD_EMPTY_SPACE_SKIP
+					if (!fineSampling) {
+						float dimensionalProfile;
+						CloudVolumeDensity(
+							rayPos,
+							heightFraction,
+							dimensionalProfile,
+							cloudDensityModeCoarse
+						);
+						if (dimensionalProfile < cloudProfileEpsilon) {
+							i++;
+							continue;
+						}
+
+						fineSampling = true;
+						emptySampleCount = 0u;
+						i = max(i - 2, -1);
+						continue;
+					}
+					#endif
+
 					// Compute sample cloud density
 					float dimensionalProfile;
-					float stepDensity = CloudVolumeDensity(rayPos, heightFraction, dimensionalProfile, true);
+					float stepDensity = CloudVolumeDensity(
+						rayPos,
+						heightFraction,
+						dimensionalProfile,
+						cloudDensityModeDetail
+					);
+
+					#ifdef CLOUD_EMPTY_SPACE_SKIP
+					if (stepDensity < cloudDensityEpsilon) {
+						if (++emptySampleCount >= emptySampleLimit) {
+							fineSampling = false;
+							emptySampleCount = 0u;
+						}
+						continue;
+					}
+					emptySampleCount = 0u;
+					#endif
 
 					// Skip if no density
-					if (stepDensity > cloudDensityEpsilon) {
+					if (stepDensity >= cloudDensityEpsilon) {
+						float dt = fma(fi, 2.0, 1.0) * stepScale;
 						float sigmaT = stepDensity * cloudLayer0.coeff.extinction;
 
 						// Compute the optical depth of sunlight through clouds
-						float opticalDepthSun = CloudVolumeOpticalDepth(rayPos, lightDir, noise.y, CLOUD_LOW_SUNLIGHT_SAMPLES);
+						float opticalDepthSun = CloudVolumeOpticalDepth(rayPos, lightDir, noise.y);
 
 						// Approximate multi-scattering
                         float msVolume = linearstep(0.4, 1.0, dimensionalProfile);

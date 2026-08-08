@@ -73,7 +73,7 @@ void main() {
             // if (abs(heightFraction - 0.5) > 0.5) break; // Skip if outside the clouds
 
             float temp;
-            extinction += CloudVolumeDensity(rayPos, heightFraction, temp, false) * stepLength;
+            extinction += CloudVolumeDensity(rayPos, heightFraction, temp, cloudDensityModeBase) * stepLength;
         }
 
         float transmittance = exp2(-rLOG2 * cloudLayer0.coeff.extinction * extinction);
