@@ -36,32 +36,45 @@ const ivec3 workGroups = ivec3(1, 1, 1);
 //======// Shared Memory //=======================================================================//
 
 shared uint sharedPrefix[HISTOGRAM_BIN_COUNT];
-#ifdef SUBGROUP_OPS
-	#if defined MC_GL_VENDOR_NVIDIA
-		shared uint sharedBinIndex[gl_NumSubgroups];
-	#else
-		shared uint sharedBinIndex[16];
-	#endif
-#else
-	shared uint sharedBinIndex[HISTOGRAM_BIN_COUNT];
-#endif
+shared uint sharedBinIndex[HISTOGRAM_BIN_COUNT];
 
 //======// Function //============================================================================//
 
-const float autoEvRange = AUTO_EV_MAX - AUTO_EV_MIN;
-const float autoEvRangeInv = 1.0 / autoEvRange;
+const float autoEvMin = min(AUTO_EV_MIN, AUTO_EV_MAX);
+const float autoEvMax = max(AUTO_EV_MIN, AUTO_EV_MAX);
+const float autoEvRange = max(autoEvMax - autoEvMin, EPS);
 
-void ParallelSum(uint index) {
+void ParallelSum(uint index, uint value) {
 	#ifdef SUBGROUP_OPS
-		uint sum = subgroupAdd(sharedBinIndex[index]);
-
-		SCALARIZED_LOAD(sharedBinIndex[gl_SubgroupID], sum);
+		uint sum = subgroupAdd(value);
+		if (gl_SubgroupInvocationID == 0u) {
+			sharedBinIndex[gl_SubgroupID] = sum;
+		}
 		barrier();
 
-		if (index < gl_NumSubgroups) {
-			sharedBinIndex[0] = subgroupAdd(sharedBinIndex[index]);
+		if (gl_NumSubgroups <= gl_SubgroupSize) {
+			if (gl_SubgroupID == 0u) {
+				uint partialSum = index < gl_NumSubgroups ? sharedBinIndex[index] : 0u;
+				partialSum = subgroupAdd(partialSum);
+				if (gl_SubgroupInvocationID == 0u) {
+					sharedBinIndex[0] = partialSum;
+				}
+			}
+			barrier();
+		} else {
+			uint activeCount = gl_NumSubgroups;
+			while (activeCount > 1u) {
+				uint nextCount = (activeCount + 1u) >> 1u;
+				if (index < nextCount && index + nextCount < activeCount) {
+					sharedBinIndex[index] += sharedBinIndex[index + nextCount];
+				}
+				barrier();
+				activeCount = nextCount;
+			}
 		}
 	#else
+		sharedBinIndex[index] = value;
+		barrier();
 		for (uint stride = HISTOGRAM_BIN_COUNT >> 1u; stride > 0u; stride >>= 1u) {
 			if (index < stride) {
 				sharedBinIndex[index] += sharedBinIndex[index + stride];
@@ -71,31 +84,61 @@ void ParallelSum(uint index) {
 	#endif
 }
 
-void ParallelPrefixSum(uint index) {
+uvec2 ParallelPrefixSum(uint index, uint histogramValue) {
 	#ifdef SUBGROUP_OPS
-		uint prefix = subgroupInclusiveAdd(exposure.histogram[index]);
-		if (gl_SubgroupInvocationID == gl_SubgroupSize - 1u) {
-			sharedPrefix[gl_SubgroupID] = prefix;
+		uint prefix = subgroupInclusiveAdd(histogramValue);
+		uint subgroupSum = subgroupAdd(histogramValue);
+		if (gl_SubgroupInvocationID == 0u) {
+			sharedPrefix[gl_SubgroupID] = subgroupSum;
 		}
 		barrier();
 
-		if (gl_SubgroupID == 0u) {
-			sharedPrefix[index] = subgroupInclusiveAdd(sharedPrefix[index]);
-		}
-		barrier();
-
-		prefix += gl_SubgroupID > 0u ? sharedPrefix[gl_SubgroupID - 1u] : 0u;
-		sharedPrefix[index] = prefix;
-		barrier();
-	#else
-		sharedPrefix[index] = exposure.histogram[index];
-		for (uint stride = 1u; stride < HISTOGRAM_BIN_COUNT; stride <<= 1u) {
-			uint dstIndex = index + stride;
-			if (dstIndex < HISTOGRAM_BIN_COUNT) {
-				sharedPrefix[dstIndex] += sharedPrefix[index];
+		if (gl_NumSubgroups <= gl_SubgroupSize) {
+			if (gl_SubgroupID == 0u) {
+				uint subgroupPrefix = index < gl_NumSubgroups ? sharedPrefix[index] : 0u;
+				subgroupPrefix = subgroupInclusiveAdd(subgroupPrefix);
+				if (index < gl_NumSubgroups) {
+					sharedPrefix[index] = subgroupPrefix;
+				}
 			}
 			barrier();
+		} else {
+			if (index >= gl_NumSubgroups) {
+				sharedPrefix[index] = 0u;
+			}
+			barrier();
+
+			for (uint stride = 1u; stride < gl_NumSubgroups; stride <<= 1u) {
+				uint subgroupPrefix = sharedPrefix[index];
+				if (index < gl_NumSubgroups && index >= stride) {
+					subgroupPrefix += sharedPrefix[index - stride];
+				}
+				barrier();
+				if (index < gl_NumSubgroups) {
+					sharedPrefix[index] = subgroupPrefix;
+				}
+				barrier();
+			}
 		}
+
+		uint sampleCount = sharedPrefix[gl_NumSubgroups - 1u];
+		prefix += gl_SubgroupID > 0u ? sharedPrefix[gl_SubgroupID - 1u] : 0u;
+		return uvec2(prefix, sampleCount);
+	#else
+		sharedPrefix[index] = histogramValue;
+		barrier();
+
+		for (uint stride = 1u; stride < HISTOGRAM_BIN_COUNT; stride <<= 1u) {
+			uint prefix = sharedPrefix[index];
+			if (index >= stride) {
+				prefix += sharedPrefix[index - stride];
+			}
+			barrier();
+			sharedPrefix[index] = prefix;
+			barrier();
+		}
+
+		return uvec2(sharedPrefix[index], sharedPrefix[HISTOGRAM_BIN_COUNT - 1u]);
 	#endif
 }
 
@@ -104,37 +147,35 @@ void main() {
 	uint index = gl_LocalInvocationIndex;
 
 	// Get cumulative histogram
-	ParallelPrefixSum(index);
+	uint histogramValue = exposure.histogram[index];
+	uvec2 prefixData = ParallelPrefixSum(index, histogramValue);
+	uint prefix = prefixData.x;
+	uint sampleCount = prefixData.y;
 
-	float sumBin = float(sharedPrefix[HISTOGRAM_BIN_COUNT - 1u]);
-	uint lowerBound = uint(round(HISTOGRAM_LOWER_BOUND * sumBin));
-	uint upperBound = uint(round(HISTOGRAM_UPPER_BOUND * sumBin));
+	const float lowerFraction = min(HISTOGRAM_LOWER_BOUND, HISTOGRAM_UPPER_BOUND);
+	const float upperFraction = max(HISTOGRAM_LOWER_BOUND, HISTOGRAM_UPPER_BOUND);
 
-	sharedPrefix[index] = clamp(sharedPrefix[index], lowerBound, upperBound);
-	barrier();
+	uint lowerBound = uint(round(lowerFraction * float(sampleCount)));
+	uint upperBound = uint(round(upperFraction * float(sampleCount)));
 
 	// Get weighted bin index
-	sharedPrefix[index] -= index > 0u ? sharedPrefix[index - 1u] : 0u;
-	sharedBinIndex[index] = sharedPrefix[index] * index;
-
-	ParallelSum(index);
+	uint previousPrefix = prefix - histogramValue;
+	uint binCount = clamp(prefix, lowerBound, upperBound);
+	binCount -= clamp(previousPrefix, lowerBound, upperBound);
+	ParallelSum(index, binCount * index);
 
 	// Compute exposure value in thread 0
 	if (index == 0u) {
-		float avgLuminance = float(sharedBinIndex[0]) / float(upperBound - lowerBound);
-		avgLuminance = avgLuminance * (autoEvRange / float(HISTOGRAM_BIN_COUNT - 1u)) + AUTO_EV_MIN;
-
-		// Exposure compensation curve
-		// #define log10(x) (log2(x) * rcp(log2(10.0)))
-		// float keyValue = 1.03 - 2.0 / (log10(avgLuminance + 1.0) + 2.0);
-		// keyValue = mix(keyValue, 0.5, nightVision);
-		float exposureCurve = mix(0.65, 1.0, nightVision);
-
-		float targetExposure = exp2(AUTO_EV_BIAS - exposureCurve * avgLuminance) * 0.18;
 		float prevExposure = exposure.value;
 
-		float exposureRate = targetExposure > prevExposure ? EXPOSURE_SPEED_DOWN : EXPOSURE_SPEED_UP;
-		exposure.value = mix(targetExposure, prevExposure, exp2(-exposureRate * frameTime));
+        float avgLuminance = float(sharedBinIndex[0]) / float(upperBound - lowerBound);
+        avgLuminance = avgLuminance * (autoEvRange / float(HISTOGRAM_BIN_COUNT - 1u));
+        avgLuminance += autoEvMin;
+
+        float exposureCurve = mix(0.65, 1.0, nightVision);
+        float targetExposure = exp2(AUTO_EV_BIAS - exposureCurve * avgLuminance) * 0.18;
+        float exposureRate = targetExposure > prevExposure ? EXPOSURE_SPEED_DOWN : EXPOSURE_SPEED_UP;
+        exposure.value = mix(targetExposure, prevExposure, exp2(-exposureRate * frameTime));
 	}
 
 	// Clear histogram bin
