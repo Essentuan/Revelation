@@ -131,7 +131,7 @@ float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensiona
 	vec2 cloudMap = texture(cloudMapLo, rayPos.xz * rcp(64e3)).xy;
 
 	// Coverage profile
-	vec2 stepEdge = mix(vec2(0.6, 1.0) - CLOUD_CU_COVERAGE * 0.4, vec2(0.1, 0.4), sqr(wetness));
+	vec2 stepEdge = mix(vec2(0.7, 1.0) - CLOUD_CU_COVERAGE * 0.5, vec2(0.1, 0.4), sqr(wetness));
 	float coverage = linearstep(stepEdge.x, stepEdge.y, cloudMap.x);
 	if (coverage < 0.1) return 0.0;
 
@@ -139,7 +139,7 @@ float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensiona
 	coverage *= linearstep(stepEdge.x, stepEdge.y * 0.8, localCoverage);
 
 	// Press heightFraction via raw coverage(cloudMap.x)
-	heightFraction = saturate(heightFraction / fma(cloudMap.x, 0.9, 0.1));
+	heightFraction = saturate(heightFraction / cloudMap.x);
 
 	// Vertical profile
 	float gradient = GetVerticalProfile(heightFraction, cloudMap.y);
@@ -165,7 +165,7 @@ float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensiona
 	float baseNoise = texture(baseNoiseTex, noisePos).x;
 
 	// Noise erosion
-    float erosion = oms(baseNoise * gradient) * 0.65;
+    float erosion = oms(baseNoise * gradient) * 0.75;
 	float cloudDensity = dimensionalProfile - erosion;
 	if (cloudDensity < cloudDensityEpsilon) return 0.0;
 
