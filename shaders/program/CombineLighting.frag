@@ -17,6 +17,10 @@
 
 #include "/lib/Utility.glsl"
 
+#ifdef COLORED_HANDHELD_LIGHTING
+    const bool colortex10MipmapEnabled = true;
+#endif
+
 //======// Output //==============================================================================//
 
 /* RENDERTARGETS: 0 */
@@ -149,7 +153,8 @@ void main() {
 		#endif
 
 		// Hand-depth correction
-		if (screenPos.z < 0.56) {
+        bool handMask = screenPos.z < 0.56;
+		if (handMask) {
 			screenPos.z = screenPos.z * rcp(MC_HAND_DEPTH) + (0.5 - 0.5 / MC_HAND_DEPTH);
 		}
 
@@ -309,9 +314,18 @@ void main() {
 			if (heldBlockLightValue + heldBlockLightValue2 > EPS) {
 				float NdotL = saturate(dot(worldNormal, -worldDir));
 				float attenuation = rcp(1.0 + viewDist * viewDist) * NdotL;
-				float irradiance = max(heldBlockLightValue, heldBlockLightValue2) * HELD_LIGHT_BRIGHTNESS;
+				float intensity = max(heldBlockLightValue, heldBlockLightValue2);
+                intensity *= HELD_LIGHT_BRIGHTNESS;
 
-				diffuseRadiance += irradiance * attenuation * blocklightColor;
+                #ifdef COLORED_HANDHELD_LIGHTING
+                    // Mip-based colored lighting
+                    vec4 heldLightData = textureLod(colortex10, vec2(0.5, 0.25), 64.0);
+                    vec3 heldLightColor = heldLightData.rgb * rcp(heldLightData.a + EPS);
+                #else
+                    #define heldLightColor blocklightColor
+                #endif
+				diffuseRadiance += intensity * attenuation * heldLightColor;
+                diffuseRadiance += intensity * 4.0 * float(handMask) * luminance(albedo);
 			}
 		#endif
 

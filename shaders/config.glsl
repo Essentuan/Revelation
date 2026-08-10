@@ -20,7 +20,7 @@
 	const int 	colortex7Format 			= RGBA16UI;
 	const int 	colortex8Format 			= RGBA16_SNORM;
 	const int 	colortex9Format 			= RGBA16F;
-	// const int 	colortex10Format 			= ;
+	const int 	colortex10Format 			= RGBA16;
 	const int 	colortex11Format 			= RGB32UI;
 	const int 	colortex12Format 			= RG16;
 	const int 	colortex13Format 			= R8I;
@@ -78,7 +78,7 @@
 	|	colortex7	|   rgba16ui        |	Full res  	|	Material data
 	|	colortex8	|   rgba16_snorm    |	Full res  	|	Normal data -> Motion vector
 	|	colortex9	|   rgba16f     	|	Full res	|	Cloud history
-	|	colortex10	|                   |				|	Unused
+	|	colortex10	|   rgba16          |	Full res	|	Handheld albedo
 	|	colortex11	|   rgb32ui         |	Half res  	|	Volumetric fog, linear depth
 	|	colortex12	|   rg16          	|	Full res	|	Parallax offset -> Water data
 	|	colortex13	|   r8i	        	|	Full res  	|	Cloud frame index
