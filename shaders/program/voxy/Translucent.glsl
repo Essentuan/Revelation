@@ -4,9 +4,10 @@
 #include "/lib/Utility.glsl"
 #include "/lib/water/WaterWave.glsl"
 
-layout(location = 0) out uvec4 materialOut;
-layout(location = 1) out vec4 normalOut;
-layout(location = 2) out vec4 waterOut;
+layout(location = 0) out vec4 albedoOut;
+layout(location = 1) out uvec2 materialOut;
+layout(location = 2) out vec4 normalOut;
+layout(location = 3) out vec4 waterOut;
 
 vec3 VoxyFaceNormal(uint face) {
 	return vec3(
@@ -49,7 +50,6 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 
 	materialOut.x = Pack2x8U(lightmap);
 	materialOut.y = materialId;
-	materialOut.zw = uvec2(0u);
 
 	normalOut.xy = normalOut.zw = encodedNormal;
 
@@ -82,7 +82,6 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 
 		waterOut = vec4(waterDepth * rcp255, Pack2x8(encodedWaterNormal), 0.0, 1.0);
 	} else {
-		materialOut.z = Pack2x8U(baseColor.xy);
-		materialOut.w = Pack2x8U(baseColor.zw);
+		albedoOut = baseColor;
 	}
 }
