@@ -430,9 +430,6 @@ option.PURKINJE_SHIFT=浦肯野效应
 option.PURKINJE_SHIFT.comment=模拟人眼在低光照下视锥细胞→视杆细胞切换的色觉偏移：暗处颜色向蓝绿偏移（视杆细胞敏感色），红色减弱。光照越暗效果越强。
 option.PURKINJE_SHIFT_STRENGTH=浦肯野效应强度
 option.PURKINJE_SHIFT_NOISE=浦肯野效应噪声
-option.PURKINJE_SHIFT_R=浦肯野效应-§4红
-option.PURKINJE_SHIFT_G=浦肯野效应-§2绿
-option.PURKINJE_SHIFT_B=浦肯野效应-§1蓝
 
 option.VIGNETTE_ENABLED=暗角
 option.VIGNETTE_STRENGTH=暗角强度

@@ -29,10 +29,7 @@
 
 #define PURKINJE_SHIFT
 // #define PURKINJE_SHIFT_NOISE
-#define PURKINJE_SHIFT_STRENGTH 0.2 // [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
-#define PURKINJE_SHIFT_R 0.56 // [0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
-#define PURKINJE_SHIFT_G 0.78 // [0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
-#define PURKINJE_SHIFT_B 1.0  // [0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
+#define PURKINJE_SHIFT_STRENGTH 0.5 // [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 
 // #define VIGNETTE_ENABLED
 #define VIGNETTE_STRENGTH 1.0 // [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.5 3.0 3.5 4.0 5.0]
@@ -83,22 +80,35 @@ void CombineBloomAndFog(inout vec3 scene, vec2 screenCoord, float exposure) {
 	}
 }
 
-// See section 3.4 of http://www.diva-portal.org/smash/get/diva2:24136/FULLTEXT01.pdf
-vec3 ScotopicVision(vec3 color, float exposure) {
-	const vec3 rodResponse = vec3(0.05, 0.55, 0.60);
-	const vec3 tint = vec3(PURKINJE_SHIFT_R, PURKINJE_SHIFT_G, PURKINJE_SHIFT_B);
-
-	vec3 xyz = color * sRGB_2_XYZ;
-	vec3 scotopic = xyz * max0(1.33 * (1.0 + (xyz.y + xyz.z) / xyz.x) - 1.68);
-
-	float rodLuminance = dot(scotopic * XYZ_2_sRGB, rodResponse);
-	float mesopicFactor = saturate(log2(1.0 + exposure) / (2.0 + 4.0 * rodLuminance));
-
-	#ifdef PURKINJE_SHIFT_NOISE
-		rodLuminance *= 0.5 + SampleStbnVec1(ivec2(gl_GlobalInvocationID.xy), frameCounter);
+float MesopicAdaptation(float exposure) {
+	#if EXPOSURE_MODE == MANUAL
+		float adaptedLogLuminance = log2(0.18 / exposure);
+	#else
+		float exposureEv = log2(maxEps(exposure) * rcp(0.18));
+		float exposureCurve = mix(0.65, 1.0, nightVision);
+		float adaptedLogLuminance = (AUTO_EV_BIAS - exposureEv) / exposureCurve;
 	#endif
 
-	return mix(color, rodLuminance * tint, PURKINJE_SHIFT_STRENGTH * mesopicFactor);
+	return 1.0 - smoothstep(-5.0, 1.0, adaptedLogLuminance);
+}
+
+vec3 ScotopicVision(vec3 color, float mesopicFactor) {
+	const vec3 photopicResponse = vec3(0.2627002, 0.6779981, 0.0593017);
+	// Normalized from Ys = -0.702 X + 1.039 Y + 0.433 Z.
+	const vec3 scotopicResponse = vec3(-0.2065580, 0.7293298, 0.4772282);
+
+	float photopicLuminance = max0(dot(color, photopicResponse));
+	float scotopicLuminance = max0(dot(color, scotopicResponse));
+
+	#ifdef PURKINJE_SHIFT_NOISE
+		scotopicLuminance *= 0.5 + SampleStbnVec1(ivec2(gl_FragCoord.xy), frameCounter);
+	#endif
+
+	float localFactor = rcp(1.0 + 2.0 * photopicLuminance);
+	float rodWeight = saturate(PURKINJE_SHIFT_STRENGTH * mesopicFactor * localFactor);
+
+	float rodLuminance = min(scotopicLuminance, 2.0 * photopicLuminance);
+	return mix(color, vec3(rodLuminance), rodWeight);
 }
 
 vec3 None(vec3 x) {
@@ -166,6 +176,7 @@ void main() {
 	#else
 		float exposure = exposure.value;
 	#endif
+
     #ifdef MOTION_BLUR
         color = texelFetch(colortex0, texelPos, 0).rgb;
     #else
@@ -204,7 +215,8 @@ void main() {
 
 	// Purkinje shift
 	#ifdef PURKINJE_SHIFT
-		color = ScotopicVision(color, exposure);
+		float mesopicFactor = MesopicAdaptation(exposure);
+		color = ScotopicVision(color, mesopicFactor);
 	#endif
 
 	// Vignetting

@@ -426,9 +426,6 @@ option.PURKINJE_SHIFT=Purkinje Shift
 option.PURKINJE_SHIFT.comment=Simulates the human eye's photopic-to-scotopic vision transition in low light: colors shift toward blue-green (rod cell sensitivity), reds fade, and blues/greens become more visible. Stronger in darker scenes.
 option.PURKINJE_SHIFT_STRENGTH=Purkinje Shift Strength
 option.PURKINJE_SHIFT_NOISE=Purkinje Shift Noise
-option.PURKINJE_SHIFT_R=Purkinje Color §4Red
-option.PURKINJE_SHIFT_G=Purkinje Color §2Green
-option.PURKINJE_SHIFT_B=Purkinje Color §1Blue
 
 option.VIGNETTE_ENABLED=Vignette
 option.VIGNETTE_STRENGTH=Vignette Strength
