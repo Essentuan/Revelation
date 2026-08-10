@@ -28,6 +28,8 @@ uniform sampler2D shadowtex0;
 uniform sampler2D shadowcolor0;
 uniform sampler2D shadowcolor1;
 
+#include "Caustic.glsl"
+
 float BlockerSearch(vec3 shadowScreenPos, float dither, float searchScale) {
 	float blockerDepth = 0.0;
 
@@ -45,32 +47,6 @@ float BlockerSearch(vec3 shadowScreenPos, float dither, float searchScale) {
 	return blockerDepth * shadowProjectionInverse[2].z;
 }
 
-vec3 CalculateWaterCaustics(vec3 worldPos, float waterDepth, float dither) {
-    float waterDepthModified = approxSqrt(clamp(waterDepth, 2.0, 64.0));
-
-	vec3 flatRefractDir = refract(vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), 1.0 / WATER_IOR);
-	vec3 surfacePos = worldPos + flatRefractDir * abs(waterDepthModified / flatRefractDir.y);
-
-	float radius = 0.1 * waterDepthModified;
-	float distThresholdInv = -3.0 / radius;
-
-	float caustics = 0.0;
-	for (uint i = 0u; i < 16u; ++i) {
-		vec3 samplePos = worldPos;
-		samplePos.xz += sampleVogelDisk(i, 16, dither) * radius;
-
-		vec2 sampleCoord = WorldToShadowScreenSpace(samplePos).xy;
-		vec3 waveNormal = OctDecodeUnorm(texelFetch(shadowcolor1, ivec2(sampleCoord * realShadowMapRes), 0).xy);
-
-		vec3 refractDir = refract(vec3(0.0, -1.0, 0.0), waveNormal, 1.0 / WATER_IOR);
-		vec3 refractedPos = samplePos + refractDir * abs(waterDepthModified / refractDir.y);
-
-		caustics += saturate(fma(distance(surfacePos, refractedPos), distThresholdInv, 1.0));
-	}
-
-	return sqr(caustics) * saturate(exp2(-rLOG2 * waterExtinction * waterDepth));
-}
-
 vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, float blockerDepth, float distortionFactor) {
 	blockerDepth *= mix(sunAngularRadius, moonAngularRadius, step(0.5, sunAngle)) * 2.0;
 
@@ -82,7 +58,7 @@ vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, f
 
 	float shadow = 0.0;
 	vec3 color = vec3(0.0);
-	vec2 waterData = vec2(0.0); // (depth, count)
+	vec4 waterData = vec4(0.0); // (depth, encoded normal, count)
 
 	for (uint i = 0u; i < PCSS_FILTER_SAMPLES; ++i) {
 		vec2 offset = sampleVogelDisk(i, PCSS_FILTER_SAMPLES, dither);
@@ -97,9 +73,9 @@ vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, f
 			float sampleDepth0 = texelFetch(shadowtex0, sampleTexel, 0).x;
 
             if (shadowScreenPos.z > sampleDepth0) {
-                float waterMask = texelFetch(shadowcolor1, sampleTexel, 0).w;
-                if (waterMask > 0.5) {
-                    waterData += vec2(sampleDepth0 - shadowScreenPos.z, 1.0);
+				vec4 waterSample = texelFetch(shadowcolor1, sampleTexel, 0);
+				if (waterSample.w > 0.5) {
+					waterData += vec4(sampleDepth0 - shadowScreenPos.z, waterSample.xy, 1.0);
                 } else {
                     color += cube(texelFetch(shadowcolor0, sampleTexel, 0).rgb);
                 }
@@ -122,12 +98,13 @@ vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, f
 	#endif
 
 	#ifdef WATER_CAUSTICS
-		if (waterData.y > EPS) {
-			waterData.x /= waterData.y;
+		if (waterData.w > 0.0) {
+			float rWaterSamples = rcp(waterData.w);
+			waterData.xyz *= rWaterSamples;
 
 			float waterDepth = waterData.x * shadowProjectionInverse[2].z * 5.0;
-			vec3 caustics = CalculateWaterCaustics(worldPos, waterDepth, dither);
-			color = mix(color, caustics, waterData.y * rSteps);
+			vec3 caustics = CalculateWaterCaustics(worldPos, waterDepth, waterData.yz);
+			color = mix(color, caustics, waterData.w * rSteps);
 		}
 	#endif
 
