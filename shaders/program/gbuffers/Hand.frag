@@ -46,6 +46,15 @@ uniform float alphaTestRef;
 
 uniform vec2 scaledViewSize;
 
+#if defined COLORED_HANDHELD_LIGHTING && GBUFFERS_HAND
+	uniform int heldBlockLightValue;
+	uniform int heldBlockLightValue2;
+
+	#define HANDHELD_ALBEDO_ACCESS coherent restrict
+	#define HANDHELD_ALBEDO_ACCUMULATE
+	#include "/lib/lighting/HandheldAlbedo.glsl"
+#endif
+
 //======// Main //================================================================================//
 void main() {
     #if (RENDER_SCALE_1000X != 1000) || SR_ENABLE
@@ -60,6 +69,13 @@ void main() {
 
 	#ifdef WHITE_WORLD
 		albedo.rgb = vec3(1.0);
+	#endif
+
+	#if defined COLORED_HANDHELD_LIGHTING && GBUFFERS_HAND
+		if (heldBlockLightValue + heldBlockLightValue2 > 0) {
+			vec3 linearAlbedo = sRGBToLinear(albedo.rgb) * sRGB_2_Rec2020;
+			AccumulateHandheldAlbedo(linearAlbedo, ivec2(gl_FragCoord.xy));
+		}
 	#endif
 
 	albedoOut = albedo;

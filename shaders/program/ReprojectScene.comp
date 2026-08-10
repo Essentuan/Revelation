@@ -23,7 +23,6 @@ const vec2 workGroupsRender = vec2(RENDER_SCALE, RENDER_SCALE);
 //======// Uniform //=============================================================================//
 
 writeonly restrict uniform image2D colorimg4;
-writeonly restrict uniform image2D colorimg10;
 
 #include "/lib/universal/Uniform.glsl"
 
@@ -43,10 +42,5 @@ void main() {
 	if (depth > 0.56) {
 		vec3 reprojectedHistory = texture(colortex1, saturate(previousCoord)).rgb;
 		imageStore(colorimg4, texelPos, vec4(reprojectedHistory, 1.0));
-    #ifdef COLORED_HANDHELD_LIGHTING
-        imageStore(colorimg10, texelPos, vec4(0.0));
-    } else {
-        imageStore(colorimg10, texelPos, vec4(FetchBaseColor(texelPos), 1.0));
-    #endif
-    }
+	}
 }

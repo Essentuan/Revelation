@@ -17,10 +17,6 @@
 
 #include "/lib/Utility.glsl"
 
-#ifdef COLORED_HANDHELD_LIGHTING
-    const bool colortex10MipmapEnabled = true;
-#endif
-
 //======// Output //==============================================================================//
 
 /* RENDERTARGETS: 0 */
@@ -33,6 +29,10 @@ out vec3 sceneOut;
 //======// SSBO //================================================================================//
 
 #include "/lib/universal/SSBO.glsl"
+
+#ifdef COLORED_HANDHELD_LIGHTING
+	#include "/lib/lighting/HandheldAlbedo.glsl"
+#endif
 
 //======// Function //============================================================================//
 
@@ -318,9 +318,8 @@ void main() {
                 intensity *= HELD_LIGHT_BRIGHTNESS;
 
                 #ifdef COLORED_HANDHELD_LIGHTING
-                    // Mip-based colored lighting
-                    vec4 heldLightData = textureLod(colortex10, vec2(0.5, 0.25), 64.0);
-                    vec3 heldLightColor = heldLightData.rgb * rcp(heldLightData.a + EPS);
+					vec4 heldLightData = handheldAlbedo.average;
+					vec3 heldLightColor = mix(blocklightColor, heldLightData.rgb, heldLightData.a);
                 #else
                     #define heldLightColor blocklightColor
                 #endif
