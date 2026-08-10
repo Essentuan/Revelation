@@ -61,7 +61,8 @@ void main() {
 
 	vec3 viewPos = ScreenToViewPosRaw(screenPos);
 	#if defined LOD_MOD
-		if (screenPos.z > 1.0 - EPS) {
+        bool lodMask = screenPos.z > 1.0 - EPS;
+		if (lodMask) {
 			screenPos.z = loadDepth0Lod(texelPos);
 			viewPos = ScreenToViewPosRawLod(screenPos);
 		}
@@ -85,7 +86,15 @@ void main() {
 	#endif
 
 	// Temporal reprojection
-	vec2 prevCoord = ReprojectScreenPos(screenPos).xy;
+	vec3 prevViewPos = worldPos + cameraMovement * step(0.56, screenPos.z);
+	prevViewPos = transMAD(gbufferPreviousModelView, prevViewPos);
+	vec3 prevNdcPos = projMAD(gbufferPreviousProjection, prevViewPos) * rcp(-prevViewPos.z);
+    #if defined LOD_MOD
+        if (lodMask) {
+            prevNdcPos = projMAD(lodPrevProjection, prevViewPos) * rcp(-prevViewPos.z);
+        }
+    #endif
+	vec2 prevCoord = prevNdcPos.xy * 0.5 + 0.5;
 
 	if (saturate(prevCoord) == prevCoord && !historyReset) {
         float rand = InterleavedGradientNoise(gl_FragCoord.xy, frameCounter);
