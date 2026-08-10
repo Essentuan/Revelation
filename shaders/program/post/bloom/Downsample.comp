@@ -43,7 +43,7 @@ writeonly uniform image2D colorimg4;
 //======// Shared Memory //=======================================================================//
 
 // 13 samples per output collapse to an 18x35 checkerboard tile.
-shared uvec2 sharedData[35][18];
+shared vec3 sharedData[35][18];
 
 //======// Function //============================================================================//
 
@@ -75,15 +75,11 @@ vec2 GetGroupSourceUv() {
 }
 
 vec3 ReadShared(ivec2 pos) {
-	uvec2 packedData = sharedData[pos.y][pos.x];
-	return vec3(unpackHalf2x16(packedData.x), uintBitsToFloat(packedData.y));
+	return sharedData[pos.y][pos.x];
 }
 
 void WriteShared(ivec2 pos, vec3 data) {
-	sharedData[pos.y][pos.x] = uvec2(
-		packHalf2x16(data.rg),
-		floatBitsToUint(data.b)
-	);
+	sharedData[pos.y][pos.x] = data;
 }
 
 void LoadSharedSample(uint index, vec2 groupSrcUv) {
