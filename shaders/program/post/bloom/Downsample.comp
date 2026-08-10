@@ -40,6 +40,11 @@ writeonly uniform image2D colorimg4;
 
 #include "/lib/universal/Uniform.glsl"
 
+//======// Shared Memory //=======================================================================//
+
+// 13 samples per output collapse to an 18x35 checkerboard tile.
+shared uvec2 sharedData[35][18];
+
 //======// Function //============================================================================//
 
 #if DOWNSAMPLE_LEVEL == 0
@@ -57,37 +62,70 @@ const vec2 bloomTileOffset[6] = vec2[6](
 	vec2(0.3150, 0.6563)
 );
 
-const ivec2 sampleOffsets[13] = ivec2[13](
-	ivec2(-2, -2),
-	ivec2( 0, -2),
-	ivec2( 2, -2),
-	ivec2(-2,  0),
-	ivec2( 0,  0),
-	ivec2( 2,  0),
-	ivec2(-2,  2),
-	ivec2( 0,  2),
-	ivec2( 2,  2),
-	ivec2(-1, -1),
-	ivec2( 1, -1),
-	ivec2(-1,  1),
-	ivec2( 1,  1)
-);
+vec2 GetGroupSourceUv() {
+	vec2 srcUv = vec2(gl_WorkGroupID.xy * 16u) * 2.0 + 1.0;
+	srcUv *= originTexelSize;
 
-vec3 CalculateBloomTile(vec2 uv) {
-	// Custom hand-crafted 36-texel downsample (13 bilinear fetches)
-	vec3 b00 = textureOffset(bloomTileTex, uv, sampleOffsets[0]).rgb;
-	vec3 b01 = textureOffset(bloomTileTex, uv, sampleOffsets[1]).rgb;
-	vec3 b02 = textureOffset(bloomTileTex, uv, sampleOffsets[2]).rgb;
-	vec3 b10 = textureOffset(bloomTileTex, uv, sampleOffsets[3]).rgb;
-	vec3 b11 = textureOffset(bloomTileTex, uv, sampleOffsets[4]).rgb;
-	vec3 b12 = textureOffset(bloomTileTex, uv, sampleOffsets[5]).rgb;
-	vec3 b20 = textureOffset(bloomTileTex, uv, sampleOffsets[6]).rgb;
-	vec3 b21 = textureOffset(bloomTileTex, uv, sampleOffsets[7]).rgb;
-	vec3 b22 = textureOffset(bloomTileTex, uv, sampleOffsets[8]).rgb;
-	vec3 c00 = textureOffset(bloomTileTex, uv, sampleOffsets[9]).rgb;
-	vec3 c01 = textureOffset(bloomTileTex, uv, sampleOffsets[10]).rgb;
-	vec3 c10 = textureOffset(bloomTileTex, uv, sampleOffsets[11]).rgb;
-	vec3 c11 = textureOffset(bloomTileTex, uv, sampleOffsets[12]).rgb;
+	#if DOWNSAMPLE_LEVEL > 0
+		const int srcIndex = DOWNSAMPLE_LEVEL - 1;
+		srcUv += float(srcIndex * 8) * originTexelSize + bloomTileOffset[srcIndex];
+	#endif
+
+	return srcUv;
+}
+
+vec3 ReadShared(ivec2 pos) {
+	uvec2 packedData = sharedData[pos.y][pos.x];
+	return vec3(unpackHalf2x16(packedData.x), uintBitsToFloat(packedData.y));
+}
+
+void WriteShared(ivec2 pos, vec3 data) {
+	sharedData[pos.y][pos.x] = uvec2(
+		packHalf2x16(data.rg),
+		floatBitsToUint(data.b)
+	);
+}
+
+void LoadSharedSample(uint index, vec2 groupSrcUv) {
+	ivec2 writePos = ivec2(index % 18u, index / 18u);
+	ivec2 sampleOffset = ivec2(
+		writePos.x * 2 + (writePos.y & 1) - 2,
+		writePos.y - 2
+	);
+	vec2 sampleUv = groupSrcUv + vec2(sampleOffset) * originTexelSize;
+	WriteShared(writePos, texture(bloomTileTex, sampleUv).rgb);
+}
+
+void LoadSharedTile() {
+	vec2 groupSrcUv = GetGroupSourceUv();
+	uint index = gl_LocalInvocationIndex;
+
+	LoadSharedSample(index, groupSrcUv);
+	LoadSharedSample(index + 256u, groupSrcUv);
+	if (index + 512u < 630u) {
+		LoadSharedSample(index + 512u, groupSrcUv);
+	}
+
+	barrier();
+}
+
+vec3 CalculateBloomTile() {
+	// Custom hand-crafted 36-texel downsample kernel
+	ivec2 centerPos = ivec2(gl_LocalInvocationID.x, gl_LocalInvocationID.y * 2u);
+
+	vec3 b00 = ReadShared(centerPos);
+	vec3 b01 = ReadShared(centerPos + ivec2(1, 0));
+	vec3 b02 = ReadShared(centerPos + ivec2(2, 0));
+	vec3 c00 = ReadShared(centerPos + ivec2(0, 1));
+	vec3 c01 = ReadShared(centerPos + ivec2(1, 1));
+	vec3 b10 = ReadShared(centerPos + ivec2(0, 2));
+	vec3 b11 = ReadShared(centerPos + ivec2(1, 2));
+	vec3 b12 = ReadShared(centerPos + ivec2(2, 2));
+	vec3 c10 = ReadShared(centerPos + ivec2(0, 3));
+	vec3 c11 = ReadShared(centerPos + ivec2(1, 3));
+	vec3 b20 = ReadShared(centerPos + ivec2(0, 4));
+	vec3 b21 = ReadShared(centerPos + ivec2(1, 4));
+	vec3 b22 = ReadShared(centerPos + ivec2(2, 4));
 
 	vec3 B00 = (b00 + b01 + b10 + b11) * 0.25;
 	vec3 B01 = (b01 + b02 + b11 + b12) * 0.25;
@@ -122,6 +160,8 @@ vec3 CalculateBloomTile(vec2 uv) {
 
 //======// Main //================================================================================//
 void main() {
+	LoadSharedTile();
+
 	vec2 srcUv = vec2(gl_GlobalInvocationID.xy) * 2.0 + 1.0;
 	srcUv *= originTexelSize;
 
@@ -129,12 +169,7 @@ void main() {
 		return;
 	}
 
-	#if DOWNSAMPLE_LEVEL > 0
-		const int srcIndex = DOWNSAMPLE_LEVEL - 1;
-		srcUv += float(srcIndex * 8) * originTexelSize + bloomTileOffset[srcIndex];
-	#endif
-
-	vec3 bloomTile = CalculateBloomTile(srcUv);
+	vec3 bloomTile = CalculateBloomTile();
 
 	vec2 dstTexel = vec2(gl_GlobalInvocationID.xy + DOWNSAMPLE_LEVEL * 8);
 	dstTexel += bloomTileOffset[DOWNSAMPLE_LEVEL] * originViewSize + 0.5;
