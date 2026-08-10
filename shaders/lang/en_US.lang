@@ -464,6 +464,10 @@ value.ACES_HDR_TARGET_GAMUT.0=Disable Gamut Compression
 value.ACES_HDR_TARGET_GAMUT.1=Rec.2020
 value.ACES_HDR_TARGET_GAMUT.2=P3-D65
 
+option.COLOR_CONTRAST=Contrast
+suffix.COLOR_CONTRAST=%
+option.COLOR_SATURATION=Saturation
+suffix.COLOR_SATURATION=%
 option.GAMMA_CORRECTION=Gamma Correction
 
 option.CAS_ENABLED=Contrast-Adaptive Sharpening

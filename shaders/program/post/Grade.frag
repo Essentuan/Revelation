@@ -35,6 +35,9 @@
 #define VIGNETTE_STRENGTH 1.0 // [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.5 3.0 3.5 4.0 5.0]
 #define VIGNETTE_ROUNDNESS 0.5 // [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.5 3.0 3.5 4.0 5.0]
 
+#define COLOR_CONTRAST 100 // [0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200]
+#define COLOR_SATURATION 100 // [0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200]
+
 //======// Output //==============================================================================//
 
 /* RENDERTARGETS: 0 */
@@ -226,19 +229,33 @@ void main() {
 		color *= exp2(-0.5 * VIGNETTE_STRENGTH * sdot(ndcCoord));
 	#endif
 
-	// Apply DRT
-	{
-		// Tone mapping
-		color = TONEMAPPING_FN(color);
-		#ifndef HDR_ENABLED
-			// Working to display space
-			color *= Rec2020_2_sRGB;
-			color = saturate(pow(color, vec3(1.0 / GAMMA_CORRECTION)));
-		#else
-			// Limited in Rec2020 non negative linear value range for CAS
-			color = max0(color);
-		#endif
-	}
+    // Tone mapping
+    color = TONEMAPPING_FN(color);
+
+    // Contrast
+    #if COLOR_CONTRAST != 100
+        const float contrast = COLOR_CONTRAST / 100.0;
+        float luminanceIn = luminance(color);
+        float luminanceOut = max0(contrast * (luminanceIn - 0.18) + 0.18);
+        color *= luminanceOut / maxEps(luminanceIn);
+    #endif
+
+    // Saturation
+    #if COLOR_SATURATION != 100
+        const float saturation = COLOR_SATURATION / 100.0;
+        color = max0(mix(vec3(luminance(color)), color, saturation));
+    #endif
+
+    #ifndef HDR_ENABLED
+        // Working to display space
+        color *= Rec2020_2_sRGB;
+
+        // Gamma correction
+        color = saturate(pow(color, vec3(1.0 / GAMMA_CORRECTION)));
+    #else
+        // Limited in Rec2020 non negative linear value range for CAS
+        color = max0(color);
+    #endif
 
 	// Debug tone mapping plot
 	#ifdef DEBUG_TONE_MAPPING_PLOT
