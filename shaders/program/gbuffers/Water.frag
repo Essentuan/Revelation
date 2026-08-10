@@ -117,14 +117,14 @@ void main() {
             worldNormal = normalize(worldNormal + vec3(rippleSlope * rainStrength, 0.0).xzy);
         }
 
-		float depth1 = loadDepth1(texelPos);
-		vec3 viewPos1 = ScreenToViewPos(vec3(gl_FragCoord.xy * scaledTexelSize, depth1));
-		vec3 worldPos1 = transMAD(gbufferModelViewInverse, viewPos1);
+		float depthBack = loadDepth1(texelPos);
+		vec3 viewPosBack = ScreenToViewPos(vec3(gl_FragCoord.xy * scaledTexelSize, depthBack));
+		vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
 
 		vec2 encodedNormal = OctEncodeSnorm(worldNormal);
 		normalOut.zw = encodedNormal;
 
-		waterOut = vec4(distance(worldPos, worldPos1) * rcp255, Pack2x8(encodedNormal), 0.0, 1.0);
+		waterOut = vec4(distance(worldPos, worldPosBack) * rcp255, Pack2x8(encodedNormal), 0.0, 1.0);
 	} else {
 		albedoOut = textureGrad(tex, texCoord, deltaUv1, deltaUv2) * vertColor;
 

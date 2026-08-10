@@ -17,10 +17,11 @@
 
 //======// Output //==============================================================================//
 
-/* RENDERTARGETS: 7,8,12 */
-layout(location = 0) out uvec4 materialOut;
-layout(location = 1) out vec4 normalOut;
-layout(location = 2) out vec4 waterOut;
+/* RENDERTARGETS: 6,7,8,12 */
+layout(location = 0) out vec4 albedoOut;
+layout(location = 1) out uvec2 materialOut;
+layout(location = 2) out vec4 normalOut;
+layout(location = 3) out vec4 waterOut;
 
 //======// Uniform //=============================================================================//
 
@@ -54,11 +55,11 @@ in vec3 worldPos;
 
 //======// Main //================================================================================//
 void main() {
-	ivec2 texel = ivec2(gl_FragCoord.xy);
+	ivec2 texelPos = ivec2(gl_FragCoord.xy);
 	float alpha = smoothstep(sqr(far - 32.0), sqr(far - 16.0), sdot(worldPos));
-	float dither = BlueNoise(texel, frameCounter);
+	float dither = BlueNoise(texelPos, frameCounter);
 
-	if (alpha < dither || lessThanFLT1(loadDepth0(texel))) {
+	if (alpha < dither || lessThanFLT1(loadDepth0(texelPos))) {
 		discard;
 		return;
 	}
@@ -86,8 +87,8 @@ void main() {
 			worldNormal = tbnMatrix * worldNormal;
 		#endif
 
-		float depthBack = loadDepth1Lod(texel);
-		vec3 viewPosBack = ScreenToViewPos(vec3(gl_FragCoord.xy * scaledTexelSize, depthBack));
+		float depthBack = loadDepth1Lod(texelPos);
+		vec3 viewPosBack = ScreenToViewPosLod(vec3(gl_FragCoord.xy * scaledTexelSize, depthBack));
 		vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
 
 		vec2 encodedNormal = OctEncodeSnorm(worldNormal);
@@ -96,9 +97,7 @@ void main() {
 		waterOut = vec4(distance(worldPos, worldPosBack) * rcp255, Pack2x8(encodedNormal), 0.0, 1.0);
 	} else {
 		normalOut.zw = normalOut.xy;
-
-		materialOut.z = Pack2x8U(vertColor.xy);
-		materialOut.w = Pack2x8U(vertColor.zw);
+        albedoOut = vertColor;
 		waterOut = vec4(0.0);
 	}
 

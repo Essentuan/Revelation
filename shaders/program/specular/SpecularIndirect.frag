@@ -61,14 +61,6 @@ void main() {
 
 		vec3 viewPos = ScreenToViewPos(screenPos);
 
-		#if defined LOD_MOD
-			bool lodMask = screenPos.z > 1.0 - EPS;
-			if (lodMask) {
-				screenPos.z = loadDepth0Lod(texelPos);
-				viewPos = ScreenToViewPosLod(screenPos);
-			}
-		#endif
-
 		vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
 		vec3 worldDir = normalize(worldPos);
 		worldPos += gbufferModelViewInverse[3].xyz;

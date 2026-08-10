@@ -134,12 +134,6 @@ void main() {
 
 	vec3 screenPos = vec3(screenCoord, depth);
 	vec3 viewPos = ScreenToViewPos(screenPos);
-	#if defined LOD_MOD
-		if (depth > 1.0 - EPS) {
-			depth = screenPos.z = loadDepth0Lod(texelPos);
-			viewPos = ScreenToViewPosLod(screenPos);
-		}
-	#endif
 
 	uvec4 materialPack = loadMaterialPack(texelPos);
 
@@ -152,6 +146,13 @@ void main() {
 	if (glassMask || waterMask) {
 		refractedTexel = uvToTexelScaled(CalculateRefractedCoord(texelPos, viewPos, screenPos, waterMask));
 	}
+
+	#if defined LOD_MOD
+		if (depth > 1.0 - EPS) {
+			depth = screenPos.z = loadDepth0Lod(texelPos);
+			viewPos = ScreenToViewPosLod(screenPos);
+		}
+	#endif
 
 	vec3 sceneColor = loadSceneMain(refractedTexel);
 

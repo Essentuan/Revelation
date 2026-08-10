@@ -164,26 +164,7 @@ uniform bool historyReset;
 
 //================================================================================================//
 
-#if defined VOXY
-	uniform sampler2D vxDepthTexOpaque;
-	uniform sampler2D vxDepthTexTrans;
-
-	uniform int vxRenderDistance;
-
-	uniform mat4 vxProj;
-	uniform mat4 vxProjInv;
-	uniform mat4 vxProjPrev;
-
-	#define lodDepthTex0 vxDepthTexTrans
-	#define lodDepthTex1 vxDepthTexOpaque
-
-	#define lodRenderDist float(vxRenderDistance * 16)
-
-	#define lodProjection vxProj
-	#define lodProjectionInv vxProjInv
-	#define lodPrevProjection vxProjPrev
-
-#elif defined DISTANT_HORIZONS
+#if defined DISTANT_HORIZONS
 
 	uniform sampler2D dhDepthTex0;
 	uniform sampler2D dhDepthTex1;
@@ -205,6 +186,26 @@ uniform bool historyReset;
 	#define lodProjection dhProjection
 	#define lodProjectionInv dhProjectionInverse
 	#define lodPrevProjection dhPreviousProjection
+
+#elif defined VOXY
+
+	uniform sampler2D vxDepthTexOpaque;
+	uniform sampler2D vxDepthTexTrans;
+
+	uniform int vxRenderDistance;
+
+	uniform mat4 vxProj;
+	uniform mat4 vxProjInv;
+	uniform mat4 vxProjPrev;
+
+	#define lodDepthTex0 vxDepthTexTrans
+	#define lodDepthTex1 vxDepthTexOpaque
+
+	#define lodRenderDist float(vxRenderDistance * 16)
+
+	#define lodProjection vxProj
+	#define lodProjectionInv vxProjInv
+	#define lodPrevProjection vxProjPrev
 
 #else // Fallback
 
