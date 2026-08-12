@@ -59,7 +59,9 @@ mat2x3 RaymarchAtmosphericFog(vec3 rayStart, vec3 rayEnd, float dither, uint ste
 	vec3 shadowDir = mat3(shadowModelView) * rayDir * diagonal3(shadowProjection);
 
 	float LdotV = dot(shadowDirWorld, rayDir);
-	vec2 phase = vec2(AirPhase(LdotV), HgDrainePhase(LdotV, 16.0));
+
+    // Do not use the HG-D phase as it amplifies flaws when visibility is missing
+	vec2 phase = vec2(AirPhase(LdotV), DualLobePhase(LdotV, 0.7, -0.3, 0.1));
 
 	float mieDensityMult = VF_MIE_DENSITY * 3e3 * (1.0 + wetness * VF_MIE_DENSITY_RAIN_MULT);
 
