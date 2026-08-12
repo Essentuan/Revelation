@@ -52,9 +52,9 @@ float EvaluateWaterMapping(
 }
 
 vec3 CalculateWaterCaustics(vec3 worldPos, float waterDepth, vec2 encodedNormal) {
-	float projectionDepth = clamp(waterDepth, 4.0, 48.0);
-	float shadowFootprint = 2.0 * abs(shadowProjectionInverse[0].x) / realShadowMapRes;
-	float footprint = max(shadowFootprint, 0.05 * approxSqrt(projectionDepth));
+	float projectionDepth = clamp(approxSqrt(waterDepth), 4.0, 32.0);
+	float shadowFootprint = 2.0 / realShadowMapRes * abs(shadowProjectionInverse[0].x);
+	float footprint = max(shadowFootprint, 0.05 * projectionDepth);
 
 	vec2 targetPos = worldPos.xz;
 	vec2 sourcePos = targetPos - WaterRefractionOffset(encodedNormal, projectionDepth);
