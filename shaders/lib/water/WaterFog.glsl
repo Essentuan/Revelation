@@ -1,7 +1,7 @@
 //================================================================================================//
 
 mat2x3 AnalyticWaterFog(float skylight, float waterDepth, float LdotV) {
-	vec3 sunTransmittance = exp2(-rLOG2 * waterExtinction * mix(4.0, 1.0, shadowDirWorld.y));
+	vec3 sunTransmittance = exp2(-rLOG2 * waterExtinction * rcp(shadowDirWorld.y + 0.05));
 
 	#if 1
 		float phase = FournierForandPhase(LdotV, 1.175, 4.065);
@@ -9,7 +9,7 @@ mat2x3 AnalyticWaterFog(float skylight, float waterDepth, float LdotV) {
 		float phase = DualLobePhase(LdotV, 0.8, -0.6, 0.1);
 	#endif
 
-	const vec3 fms = waterAlbedo * 0.8;
+	const vec3 fms = waterAlbedo * 0.9;
 	vec3 scattering = phase + uniformPhase * fms / oms(fms);
 	scattering *= oms(wetnessCustom * 0.8) * global.directIlluminance * sunTransmittance;
 	// scattering += uniformPhase * global.skyUpIlluminance;
@@ -77,8 +77,8 @@ mat2x3 AnalyticWaterFog(float skylight, float waterDepth, float LdotV) {
 			float phase = DualLobePhase(LdotV, 0.8, -0.6, 0.1);
 		#endif
 
-		const vec3 fms = waterAlbedo * 0.8;
-		vec3 scattering = phase * visibility.w + uniformPhase * fms / oms(fms);
+		const vec3 fms = waterAlbedo * 0.9;
+		vec3 scattering = phase * visibility.w + uniformPhase * fms / oms(fms) * eyeSkylightSmooth;
 		scattering *= oms(wetnessCustom * 0.8) * global.directIlluminance * visibility.xyz;
 		// scattering += uniformPhase * global.skyUpIlluminance;
 
