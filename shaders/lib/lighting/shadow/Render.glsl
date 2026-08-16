@@ -43,12 +43,12 @@ float BlockerSearch(vec3 shadowScreenPos, float dither, float searchScale) {
 		blockerDepth += saturate(shadowScreenPos.z - sampleDepth);
 	}
 
-	blockerDepth *= -5.0 / float(PCSS_SEARCH_SAMPLES);
+	blockerDepth *= -10.0 / float(PCSS_SEARCH_SAMPLES);
 	return blockerDepth * shadowProjectionInverse[2].z;
 }
 
 vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, float blockerDepth, float distortionFactor) {
-	blockerDepth *= mix(sunAngularRadius, moonAngularRadius, step(0.5, sunAngle)) * 2.0;
+	blockerDepth *= mix(sunAngularRadius, moonAngularRadius, step(0.5, sunAngle));
 
 	const float minRadius = 0.015;
 	float sharpenFactor = saturate(blockerDepth * rcp(minRadius));
@@ -58,7 +58,8 @@ vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, f
 
 	float shadow = 0.0;
 	vec3 color = vec3(0.0);
-	vec4 waterData = vec4(0.0); // (depth, encoded normal, count)
+	vec4 waterData = vec4(0.0); // (encoded normal, count)
+	float waterDepth = 0.0;
 
 	for (uint i = 0u; i < PCSS_FILTER_SAMPLES; ++i) {
 		vec2 offset = sampleVogelDisk(i, PCSS_FILTER_SAMPLES, dither);
@@ -75,7 +76,8 @@ vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, f
             if (shadowScreenPos.z > sampleDepth0) {
 				vec4 waterSample = texelFetch(shadowcolor1, sampleTexel, 0);
 				if (waterSample.w > 0.5) {
-					waterData += vec4(sampleDepth0 - shadowScreenPos.z, waterSample.xy, 1.0);
+					waterData += vec4(waterSample.xyz, 1.0);
+					waterDepth += sampleDepth0 - shadowScreenPos.z;
                 } else {
                     color += cube(texelFetch(shadowcolor0, sampleTexel, 0).rgb);
                 }
@@ -102,8 +104,8 @@ vec3 PercentageCloserFilter(vec3 shadowScreenPos, vec3 worldPos, float dither, f
 			float rWaterSamples = rcp(waterData.w);
 			waterData.xyz *= rWaterSamples;
 
-			float waterDepth = waterData.x * shadowProjectionInverse[2].z * 5.0;
-			vec3 caustics = CalculateWaterCaustics(worldPos, waterDepth, waterData.yz);
+			waterDepth *= rWaterSamples * shadowProjectionInverse[2].z * 10.0;
+			vec3 caustics = CalculateWaterCaustics(worldPos, waterDepth, waterData.xyz);
 			color = mix(color, caustics, waterData.w * rSteps);
 		}
 	#endif

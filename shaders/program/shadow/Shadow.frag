@@ -43,8 +43,7 @@ uniform sampler2D tex;
 void main() {
 	if (isWater == 1u) {
 		vec3 waveNormal = CalculateWaterNormal(vectorData.xz);
-		shadowcolor1Out.xy = OctEncodeUnorm(waveNormal.xzy);
-		shadowcolor1Out.w = 1.0;
+		shadowcolor1Out = vec4(waveNormal.xzy * 0.5 + 0.5, 1.0);
 	} else {
 		vec4 albedo = texture(tex, texCoord);
 		if (albedo.a < max(0.01, alphaTestRef)) discard;

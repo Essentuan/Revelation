@@ -1,6 +1,6 @@
 
-vec2 WaterRefractionOffset(vec2 encodedNormal, float waterDepth) {
-	vec3 waveNormal = OctDecodeUnorm(encodedNormal);
+vec2 WaterRefractionOffset(vec3 encodedNormal, float waterDepth) {
+	vec3 waveNormal = normalize(encodedNormal * 2.0 - 1.0);
 	vec3 refractDir = refract(vec3(0.0, -1.0, 0.0), waveNormal, 1.0 / WATER_IOR);
 
 	return refractDir.xz * (waterDepth / maxEps(abs(refractDir.y)));
@@ -23,10 +23,10 @@ float EvaluateWaterMapping(
 	vec4 sample10 = texelFetch(shadowcolor1, texel00 + ivec2(1, 0), 0);
 	vec4 sample01 = texelFetch(shadowcolor1, texel00 + ivec2(0, 1), 0);
 	vec4 sample11 = texelFetch(shadowcolor1, texel00 + ivec2(1, 1), 0);
-	vec2 offset00 = WaterRefractionOffset(sample00.xy, projectionDepth);
-	vec2 offset10 = WaterRefractionOffset(sample10.xy, projectionDepth);
-	vec2 offset01 = WaterRefractionOffset(sample01.xy, projectionDepth);
-	vec2 offset11 = WaterRefractionOffset(sample11.xy, projectionDepth);
+	vec2 offset00 = WaterRefractionOffset(sample00.xyz, projectionDepth);
+	vec2 offset10 = WaterRefractionOffset(sample10.xyz, projectionDepth);
+	vec2 offset01 = WaterRefractionOffset(sample01.xyz, projectionDepth);
+	vec2 offset11 = WaterRefractionOffset(sample11.xyz, projectionDepth);
 
 	vec2 offset0 = mix(offset00, offset10, texelFract.x);
 	vec2 offset1 = mix(offset01, offset11, texelFract.x);
@@ -51,8 +51,8 @@ float EvaluateWaterMapping(
 	return min(min(sample00.w, sample10.w), min(sample01.w, sample11.w));
 }
 
-vec3 CalculateWaterCaustics(vec3 worldPos, float waterDepth, vec2 encodedNormal) {
-	float projectionDepth = clamp(approxSqrt(waterDepth), 4.0, 32.0);
+vec3 CalculateWaterCaustics(vec3 worldPos, float waterDepth, vec3 encodedNormal) {
+	float projectionDepth = clamp(approxSqrt(waterDepth), 2.0, 16.0);
 	float shadowFootprint = 2.0 / realShadowMapRes * abs(shadowProjectionInverse[0].x);
 	float footprint = max(shadowFootprint, 0.05 * projectionDepth);
 

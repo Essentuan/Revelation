@@ -25,7 +25,7 @@ mat2x3 AnalyticWaterFog(float skylight, float waterDepth, float LdotV) {
 #if defined PASS_VOLUMETRIC_FOG
 	#include "/lib/water/WaterWave.glsl"
 	vec3 CalculateWaterCaustics(ivec2 shadowTexel, float waterDepth) {
-		vec3 waveNormal = OctDecodeUnorm(texelFetch(shadowcolor1, shadowTexel, 0).xy);
+		vec3 waveNormal = normalize(texelFetch(shadowcolor1, shadowTexel, 0).xyz * 2.0 - 1.0);
 		vec3 refractDir = refract(vec3(0.0, -1.0, 0.0), waveNormal, 1.0 / WATER_IOR);
 
 		vec3 projectOffset = refractDir * abs(1.0 / refractDir.y);
@@ -62,7 +62,7 @@ mat2x3 AnalyticWaterFog(float skylight, float waterDepth, float LdotV) {
 			float waterMask = texelFetch(shadowcolor1, shadowTexel, 0).w;
 			if (waterMask > EPS) {
 			    float sampleDepth0 = texelFetch(shadowtex0, shadowTexel, 0).x;
-				float waterDepth = (sampleDepth0 - shadowScreenPos.z) * shadowProjectionInverse[2].z * 5.0;
+				float waterDepth = (sampleDepth0 - shadowScreenPos.z) * shadowProjectionInverse[2].z * 10.0;
 				absorption = CalculateWaterCaustics(shadowTexel, waterDepth);
 			}
 
