@@ -48,11 +48,12 @@ layout(location = 0) out vec4 sceneOut;
 #include "/lib/lighting/BRDF.glsl"
 #include "/lib/lighting/SSRT.glsl"
 
-vec2 CalculateRefractedCoord(ivec2 texelPos, vec3 viewPos, vec3 screenPos, bool waterMask) {
+void CalculateTranslucentRefraction(inout vec3 sceneColor, ivec2 texelPos, vec3 viewPos, vec3 screenPos, bool waterMask) {
 	vec3 viewNormal = mat3(gbufferModelView) * FetchSurfaceNormal(texelPos);
 	vec3 viewDir = normalize(viewPos);
 
-	vec3 refractedDir = refract(viewDir, viewNormal, waterMask ? 1.0 / WATER_IOR : 1.0 / GLASS_IOR);
+    float eta = waterMask ? (isEyeInWater == 1 ? WATER_IOR : 1.0 / WATER_IOR) : 1.0 / GLASS_IOR;
+	vec3 refractedDir = refract(viewDir, viewNormal, eta);
 
 	#ifdef RAYTRACED_REFRACTION
 		float dither = BlueNoise(texelPos, frameCounter);
@@ -93,8 +94,9 @@ vec2 CalculateRefractedCoord(ivec2 texelPos, vec3 viewPos, vec3 screenPos, bool 
 	float refractedDepth = loadDepth1(uvToTexelScaled(refractedCoord));
 	refractedCoord = mix(refractedCoord, screenPos.xy, step(refractedDepth, screenPos.z));
 
-	vec2 edgeFade = smoothstep(0.8, 1.0, abs(refractedCoord * 2.0 - 1.0));
-	return mix(refractedCoord, screenPos.xy, edgeFade);
+    ivec2 refractedTexel = uvToTexelScaled(refractedCoord);
+	float confidence = smoothstep(0.8, 1.0, maxOf(abs(refractedCoord * 2.0 - 1.0)));
+    sceneColor = mix(loadSceneMain(refractedTexel), sceneColor, confidence);
 }
 
 #if defined VOLUMETRIC_FOG || defined UW_VOLUMETRIC_FOG
@@ -141,10 +143,11 @@ void main() {
 	bool glassMask = materialID == 2u;
 	bool waterMask = materialID == 3u;
 
+	vec3 sceneColor = loadSceneMain(texelPos);
+
 	// Process refraction
-	ivec2 refractedTexel = texelPos;
 	if (glassMask || waterMask) {
-		refractedTexel = uvToTexelScaled(CalculateRefractedCoord(texelPos, viewPos, screenPos, waterMask));
+        CalculateTranslucentRefraction(sceneColor, texelPos, viewPos, screenPos, waterMask);
 	}
 
 	#if defined LOD_MOD
@@ -153,8 +156,6 @@ void main() {
 			viewPos = ScreenToViewPosLod(screenPos);
 		}
 	#endif
-
-	vec3 sceneColor = loadSceneMain(refractedTexel);
 
 	float viewDist = length(viewPos);
 	vec3 worldPos = mat3(gbufferModelViewInverse) * viewPos;
