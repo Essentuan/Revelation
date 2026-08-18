@@ -1,4 +1,3 @@
-//================================================================================================//
 
 mat2x3 AnalyticWaterFog(float skylight, float waterDepth, float LdotV) {
 	vec3 sunTransmittance = exp2(-rLOG2 * waterExtinction * rcp(shadowDirWorld.y + 0.05));
@@ -23,13 +22,12 @@ mat2x3 AnalyticWaterFog(float skylight, float waterDepth, float LdotV) {
 //================================================================================================//
 
 #if defined PASS_VOLUMETRIC_FOG
-	#include "/lib/water/WaterWave.glsl"
-	vec3 CalculateWaterCaustics(ivec2 shadowTexel, float waterDepth) {
+	vec3 CalculateWaterCaustics(ivec2 shadowTexel, float waterDepth, vec3 flatProjectOffset) {
 		vec3 waveNormal = normalize(texelFetch(shadowcolor1, shadowTexel, 0).xyz * 2.0 - 1.0);
-		vec3 refractDir = refract(vec3(0.0, -1.0, 0.0), waveNormal, 1.0 / WATER_IOR);
+		vec3 refractDir = refract(-shadowDirWorld, waveNormal, 1.0 / WATER_IOR);
 
 		vec3 projectOffset = refractDir * abs(1.0 / refractDir.y);
-		return saturate(1.0 - 32.0 * distance(vec3(0.0, -1.0, 0.0), projectOffset)) * exp2(-rLOG2 * waterExtinction * waterDepth);
+		return saturate(1.0 - 32.0 * distance(flatProjectOffset, projectOffset)) * exp2(-rLOG2 * waterExtinction * waterDepth);
 	}
 
 	mat2x3 RaymarchWaterFog(vec3 worldPos, float dither) {
@@ -38,6 +36,8 @@ mat2x3 AnalyticWaterFog(float skylight, float waterDepth, float LdotV) {
 		rayLength = min(rayLength * norm, lodRenderDist);
 
 		vec3 worldDir = worldPos * norm;
+		vec3 flatRefractDir = refract(-shadowDirWorld, vec3(0.0, 1.0, 0.0), 1.0 / WATER_IOR);
+		vec3 flatProjectOffset = flatRefractDir * abs(1.0 / flatRefractDir.y);
 
 		const float rSteps = 1.0 / float(UW_VF_MAX_SAMPLES);
 
@@ -61,9 +61,9 @@ mat2x3 AnalyticWaterFog(float skylight, float waterDepth, float LdotV) {
             vec3 absorption = vec3(1.0);
 			float waterMask = texelFetch(shadowcolor1, shadowTexel, 0).w;
 			if (waterMask > EPS) {
-			    float sampleDepth0 = texelFetch(shadowtex0, shadowTexel, 0).x;
+				float sampleDepth0 = texelFetch(shadowtex0, shadowTexel, 0).x;
 				float waterDepth = (sampleDepth0 - shadowScreenPos.z) * shadowProjectionInverse[2].z * 10.0;
-				absorption = CalculateWaterCaustics(shadowTexel, waterDepth);
+				absorption = CalculateWaterCaustics(shadowTexel, waterDepth, flatProjectOffset);
 			}
 
 			visibility += vec4(absorption, sampleShadow);
