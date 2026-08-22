@@ -24,8 +24,8 @@ out uvec4 packedFogData;
 
 //======// Uniform //=============================================================================//
 
+uniform sampler2DShadow shadowtex1;
 uniform sampler2D shadowtex0;
-uniform sampler2D shadowtex1;
 uniform sampler2D shadowcolor0;
 uniform sampler2D shadowcolor1;
 

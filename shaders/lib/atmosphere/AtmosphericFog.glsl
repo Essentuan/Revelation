@@ -117,7 +117,7 @@ mat2x3 RaymarchAtmosphericFog(vec3 rayStart, vec3 rayEnd, float dither, uint ste
 			vec3 sampleShadow = vec3(1.0);
 			if (saturate(shadowScreenPos) == shadowScreenPos) {
 				ivec2 shadowTexel = ivec2(shadowScreenPos.xy * realShadowMapRes);
-				sampleShadow = step(shadowScreenPos.z, vec3(texelFetch(shadowtex1, shadowTexel, 0).x));
+				sampleShadow = vec3(texture(shadowtex1, shadowScreenPos));
 
 				float sampleDepth0 = step(shadowScreenPos.z, texelFetch(shadowtex0, shadowTexel, 0).x);
 				if (sampleShadow.x != sampleDepth0) {
@@ -128,8 +128,7 @@ mat2x3 RaymarchAtmosphericFog(vec3 rayStart, vec3 rayEnd, float dither, uint ste
 		#else
 			float sampleShadow = 1.0;
 			if (saturate(shadowScreenPos) == shadowScreenPos) {
-				ivec2 shadowTexel = ivec2(shadowScreenPos.xy * realShadowMapRes);
-				sampleShadow = step(shadowScreenPos.z, texelFetch(shadowtex1, shadowTexel, 0).x);
+				sampleShadow = texture(shadowtex1, shadowScreenPos);
 			}
 		#endif
 	#else
