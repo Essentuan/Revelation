@@ -303,3 +303,10 @@ float SpecularThroughputGGX(float NdotL, float NdotV, float roughness) {
 	float vt = sqrt((NdotV - NdotV * alpha2) * NdotV + alpha2);
 	return saturate(NdotL * (NdotV + vt) / (lt * NdotV + vt * NdotL));
 }
+
+float EvaluateSpecularProbability(vec3 reflectance, vec3 albedo, float metallic, float NdotV) {
+	vec3 fresnel = FresnelSchlick(saturate(NdotV), reflectance);
+	float specularEnergy = luminance(fresnel);
+	float diffuseEnergy = luminance(albedo * oms(metallic));
+	return saturate(specularEnergy * rcp(maxEps(specularEnergy + diffuseEnergy)));
+}
