@@ -49,6 +49,7 @@ uniform vec2 scaledViewSize;
 #if defined COLORED_HANDHELD_LIGHTING && GBUFFERS_HAND
 	uniform int heldBlockLightValue;
 	uniform int heldBlockLightValue2;
+	uniform bool isRightHanded;
 
 	#define HANDHELD_ALBEDO_ACCESS coherent restrict
 	#define HANDHELD_ALBEDO_ACCUMULATE
@@ -72,7 +73,10 @@ void main() {
 	#endif
 
 	#if defined COLORED_HANDHELD_LIGHTING && GBUFFERS_HAND
-		if (heldBlockLightValue + heldBlockLightValue2 > 0) {
+		bool handOnRight = gl_FragCoord.x >= 0.5 * scaledViewSize.x;
+		int handheldLightValue = handOnRight == isRightHanded ? heldBlockLightValue : heldBlockLightValue2;
+
+		if (handheldLightValue > 0) {
 			vec3 linearAlbedo = sRGBToLinear(albedo.rgb) * sRGB_2_Rec2020;
 			AccumulateHandheldAlbedo(linearAlbedo, ivec2(gl_FragCoord.xy));
 		}
