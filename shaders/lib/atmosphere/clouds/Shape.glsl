@@ -131,7 +131,7 @@ float CloudVolumeDensity(vec3 rayPos, float heightFraction, out float dimensiona
 	vec2 cloudMap = texture(cloudMapLo, rayPos.xz * rcp(64e3)).xy;
 
 	// Coverage profile
-	vec2 stepEdge = mix(vec2(0.7, 1.0) - CLOUD_CU_COVERAGE * 0.5, vec2(0.1, 0.4), sqr(wetness));
+	vec2 stepEdge = mix(vec2(0.7, 1.0) - CLOUD_CU_COVERAGE * 0.5, vec2(0.1, 0.3), sqr(wetness));
 	float coverage = linearstep(stepEdge.x, stepEdge.y, cloudMap.x);
 	if (coverage < 0.1) return 0.0;
 

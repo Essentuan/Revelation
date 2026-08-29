@@ -31,7 +31,7 @@ vec2 CalculateFogDensity(vec3 rayPos, float uniformFog) {
 #endif
 
 	density.y *= sqr(noise) * (0.5 + biomeSandstorm * 2.0 + biomeSnowstorm);
-	density += uniformFog * linearstep(512.0, 384.0, rayPos.y + planetRadius);
+	density += uniformFog * linearstep(512.0, 384.0, rayPos.y);
 
 	return density;
 }
