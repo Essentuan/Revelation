@@ -78,9 +78,9 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 		float depthBack = texelFetch(vxDepthTexOpaque, texelPos, 0).x;
 		vec3 viewPosBack = ScreenToViewPos(vec3(screenCoord, depthBack));
 		vec3 worldPosBack = transMAD(gbufferModelViewInverse, viewPosBack);
-		float waterDepth = distance(worldPos, worldPosBack);
 
-		waterOut = vec4(waterDepth * rcp255, Pack2x8(encodedWaterNormal), 0.0, 1.0);
+		float waterDepth = distance(worldPos, worldPosBack);
+		waterOut = vec4(waterDepth * rcp255, Pack2x8(encodedWaterNormal * 0.5 + 0.5), 0.0, 1.0);
 	} else {
 		albedoOut = baseColor;
 	}

@@ -97,6 +97,29 @@ void CalculateTranslucentRefraction(inout vec3 sceneColor, ivec2 texelPos, vec3 
     ivec2 refractedTexel = uvToTexelScaled(refractedCoord);
 	float confidence = smoothstep(0.8, 1.0, maxOf(abs(refractedCoord * 2.0 - 1.0)));
     sceneColor = mix(loadSceneMain(refractedTexel), sceneColor, confidence);
+
+    // Skybox reflection for occluded water
+    if (!waterMask && isEyeInWater == 0) {
+	    vec2 waterData = texelFetch(colortex12, refractedTexel, 0).xy;
+        if (waterData.x > 0.0) {
+            vec3 worldNormal = OctDecodeUnorm(Unpack2x8(waterData.y));
+
+            vec3 worldDir = mat3(gbufferModelViewInverse) * ScreenToViewDir(refractedCoord);
+
+            float NdotV = abs(dot(worldNormal, worldDir));
+            vec3 rayDir = worldDir + worldNormal * NdotV * 2.0;
+
+            vec2 skyViewCoord = ProjectCubemap(rayDir, 96.0);
+            vec3 skyRadiance = textureBicubic(skyEnvMapTex, skyViewCoord).rgb;
+
+            vec2 lightmap = Unpack2x8U(loadMaterialPack(refractedTexel).x);
+
+            vec3 reflection = skyRadiance * smoothstep(0.3, 0.7, lightmap.y);
+            float fresnel = FresnelDielectricN(NdotV, WATER_IOR);
+
+            sceneColor = mix(sceneColor, reflection, fresnel);
+        }
+    }
 }
 
 #if defined VOLUMETRIC_FOG || defined UW_VOLUMETRIC_FOG

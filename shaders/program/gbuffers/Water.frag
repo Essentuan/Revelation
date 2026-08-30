@@ -124,7 +124,8 @@ void main() {
 		vec2 encodedNormal = OctEncodeSnorm(worldNormal);
 		normalOut.zw = encodedNormal;
 
-		waterOut = vec4(distance(worldPos, worldPosBack) * rcp255, Pack2x8(encodedNormal), 0.0, 1.0);
+        float waterDepth = distance(worldPos, worldPosBack) * rcp255;
+		waterOut = vec4(waterDepth, Pack2x8(encodedNormal * 0.5 + 0.5), 0.0, 1.0);
 	} else {
 		albedoOut = textureGrad(tex, texCoord, deltaUv1, deltaUv2) * vertColor;
 
