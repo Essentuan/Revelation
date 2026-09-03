@@ -9,9 +9,6 @@
 --------------------------------------------------------------------------------
 */
 
-#ifndef UTILITY_INCLUDE
-#define UTILITY_INCLUDE
-
 #include "/settings.glsl"
 
 #if defined VOXY || defined DISTANT_HORIZONS
@@ -49,5 +46,3 @@
 #include "/lib/utility/Load.glsl"
 #include "/lib/utility/Compute.glsl"
 #include "/lib/utility/RenderScale.glsl"
-
-#endif

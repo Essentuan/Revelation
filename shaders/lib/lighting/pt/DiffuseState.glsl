@@ -23,13 +23,17 @@ void DiffuseStateApplySurface(inout DiffuseState state, vec4 surface) {
 }
 
 void DiffuseStateApplyTranslucency(inout DiffuseState state, vec4 surface) {
-    state.runningColor *= surface.rgb;
+    vec3 albedo = sRGBToLinear(surface.rgb) * sRGB_2_Rec2020;
+    state.runningColor *= exp2(log2(albedo * oms(0.125 * surface.a)) * approxSqrt(surface.a + 0.25));
 }
 
 vec3 DiffuseStateCalculateRadiance(DiffuseState state, vec4 surface, vec4 specular) {
     if (specular.a == 1.0f) return vec3(0.0f);
 
-    return surface.rgb * specular.a * 10.0f * state.runningColor;
+    specular.a = pow(specular.a, EMISSIVE_CURVE) * EMISSIVE_BRIGHTNESS;
+    specular.a *= luminance(surface.rgb) * 4.0;
+
+    return sRGBToLinearApprox(surface.rgb) * specular.a * state.runningColor;
 }
 
 vec3 DiffuseStateCalculateSunLight(DiffuseState state, vec3 rtPos, vec3 normal, float skylight, inout uint rndState) {

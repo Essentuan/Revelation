@@ -64,6 +64,7 @@ void sample_indirect(
             firstNormal = normal;
         }
 
+        DiffuseStateApplyWeight(diffuseState, 1.0f / albedo.a);
         vec3 directSample = DiffuseStateCalculateRadiance(diffuseState, albedo, voxel_data_specular(voxelData));
 
         if (i == -1) {
