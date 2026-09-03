@@ -58,7 +58,7 @@ out vec3 sceneOut;
 #include "/photonics/rendering/frag/frag_data.glsl"
 #include "/photonics/samplers.glsl"
 
-vec3 UpscaleDiffuse(vec2 coord, vec3 worldPos, vec3 worldNormal, vec3 geoNormal) {
+vec3 UpscaleDiffuse(vec2 coord, vec3 worldPos, vec3 worldNormal, vec3 geoNormal, bool handMask) {
     vec3 sum = vec3(0.0);
     float sumWeight = 0.0;
 
@@ -76,9 +76,9 @@ vec3 UpscaleDiffuse(vec2 coord, vec3 worldPos, vec3 worldNormal, vec3 geoNormal)
         FragData sampleFrag;
         frag_data_load(sampleFrag, sampleTexel);
 
-        vec3 dist = worldPos - frag_data_player_pos(sampleFrag);
+        #define plane_dist dot(worldPos - frag_data_player_pos(sampleFrag), geoNormal)
 
-        float weight = step(abs(dot(dist, geoNormal)), 0.25f);
+        float weight = handMask ? float(frag_data_is_hand(sampleFrag)) : step(abs(plane_dist), 0.25f);
         weight *= pow4(saturate(dot(frag_data_tex_normal(sampleFrag), worldNormal)));
         weight *= bilinearWeight[i];
 
@@ -317,7 +317,7 @@ void main() {
         }
 
         // Photonics
-        diffuseRadiance += UpscaleDiffuse(screenCoord, worldPos, worldNormal, geoNormal);
+        diffuseRadiance += UpscaleDiffuse(screenCoord, worldPos, worldNormal, geoNormal, handMask);
 
 		// Handheld light
 		#ifdef HANDHELD_LIGHTING
