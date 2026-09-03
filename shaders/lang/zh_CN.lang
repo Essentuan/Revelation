@@ -267,17 +267,6 @@ option.GTAO_SLICES=GTAO方向采样数
 option.GTAO_DIRECTION_SAMPLES=GTAO步进采样数
 option.GTAO_RADIUS=GTAO半径
 
-option.SSILVB_ENABLED=SSILVB全局光照
-option.SSILVB_SLICE_COUNT=方向采样数
-option.SSILVB_SAMPLE_COUNT=步进采样数
-option.SSILVB_SECTOR_COUNT=位掩码质量
-option.SSILVB_HIT_THICKNESS=命中厚度
-option.SSILVB_BLENDED_LIGHTMAP=Lightmap混合
-option.SSILVB_MAX_ACCUM_FRAMES=最大累积帧数
-
-option.SVGF_ENABLED=时空方差导向过滤(SVGF)
-
-
 # Materials
 option.TEXTURE_FORMAT=PBR纹理格式
 value.TEXTURE_FORMAT.0=labPBR

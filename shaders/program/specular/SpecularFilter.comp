@@ -124,7 +124,9 @@ void main() {
             vec2 randOffset = vec2(0.0);
         #endif
 
-        SpecularFilter(specularData, texelPos, material.roughness, worldNormal, worldDir, filterSize, randOffset);
+        //SpecularFilter(specularData, texelPos, material.roughness, worldNormal, worldDir, filterSize, randOffset);
+        specularData = vec4(0.0f);
+
 		imageStore(colorimg0, texelPos, specularData);
 	}
 }
