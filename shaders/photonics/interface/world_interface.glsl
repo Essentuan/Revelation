@@ -4,26 +4,27 @@
 #include "/lib/universal/Fetch.glsl"
 #include "/lib/universal/SSBO.glsl"
 
-vec3 load_player_position() {
-    ivec2 texel = ivec2(gl_FragCoord.xy);
-    vec2 uv = texelToUv(texel) / RENDER_SCALE;
+ivec2 texel = ivec2(gl_FragCoord.xy);
+vec2 uv = texelToUv(texel) / RENDER_SCALE_HALF;
+ivec2 scaledTexel = uvToTexel(uv);
 
-    vec3 screenPos = vec3(uv, loadDepth0(texel));
+vec3 load_player_position() {
+    vec3 screenPos = vec3(uv, loadDepth0(scaledTexel));
     vec3 viewPos = ScreenToViewPos(screenPos);
 
     return transMAD(gbufferModelViewInverse, viewPos);
 }
 
 void load_fragment_data(out vec3 geometry_normal, out vec3 texture_normal) {
-    FetchNormalData(ivec2(gl_FragCoord.xy), geometry_normal, texture_normal);
+    FetchNormalData(scaledTexel, geometry_normal, texture_normal);
 }
 
 bool is_in_world() {
-    return loadDepth0(ivec2(gl_FragCoord.xy)) < 1.0f;
+    return loadDepth0(scaledTexel) < 1.0f;
 }
 
 bool is_hand_at() {
-    return loadDepth0(ivec2(gl_FragCoord.xy)) < 0.56;
+    return loadDepth0(scaledTexel) < 0.56;
 }
 
 vec2 get_taa_jitter() {

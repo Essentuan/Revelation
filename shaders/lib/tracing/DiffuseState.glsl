@@ -33,6 +33,9 @@ vec3 DiffuseStateCalculateRadiance(DiffuseState state, vec4 surface, vec4 specul
 }
 
 vec3 DiffuseStateCalculateSunLight(DiffuseState state, vec3 rtPos, vec3 normal, float skylight, inout uint rndState) {
+    const float skylight_cutoff = 4.0f / 15.0f;
+    if (skylight < skylight_cutoff) return vec3(0.0f);
+
     float NdotL = dot(normal, shadowDirWorld);
     if (NdotL <= 0.0f) return vec3(0.0f);
 

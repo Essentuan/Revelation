@@ -15,7 +15,7 @@ void main() {
     setup_frag_data(2);
     if (!frag_is_in_world) discard;
 
-    float reservoir_data = texelFetch(prev_di_reservoirs0, frag_tex_coord, 0).a;
+//    float reservoir_data = texelFetch(prev_di_reservoirs0, frag_tex_coord, 0).a;
 
     uvec4 samples;
     neighbor_load_samples(frag_tex_coord, samples);
@@ -24,8 +24,8 @@ void main() {
     DirectReservoir direct_result = direct_reservoir_empty();
     DirectReservoir reuse_direct = direct_reservoir_empty();
 
-    int max_samples = direct_reservoir_is_disoccluded(reservoir_data) ? PH_RESTIR_SPATIAL_REUSE_SAMPLES : 1;
-    for (int i = 0; i < max_samples; i++) {
+//    int max_samples = direct_reservoir_is_disoccluded(reservoir_data) ? PH_RESTIR_SPATIAL_REUSE_SAMPLES : 1;
+    for (int i = 0; i < PH_RESTIR_SPATIAL_REUSE_SAMPLES; i++) {
         if (samples[i] != 0) {
             ivec2 sample_texel = neighbor_next_sample(samples[i]);
             if (!direct_reservoir_load_previous(reuse_direct, sample_texel, false)) continue;

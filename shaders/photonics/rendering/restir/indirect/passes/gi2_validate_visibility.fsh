@@ -29,7 +29,7 @@ void main() {
         indirect_reservoir_validate_visiblity(reused_reservoir, frag_rt_pos);
         indirect_reservoir_merge(indirect_result, reused_reservoir, 1.0f, rng, indirect_sample_weight);
 
-        gi_output.w = floatBitsToUint(float(reused_reservoir.weight >= MINIMUM_RESERVOIR_WEIGHT));
+        gi_output.w = floatBitsToUint(indirect_sample_weight == 0.0f ? 1.0f : rng);
     }
 #endif
 
