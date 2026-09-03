@@ -1,5 +1,5 @@
 #include "/photonics/tracing.glsl"
-#include "/lib/tracing/DiffuseState.glsl"
+#include "/lib/lighting/pt/DiffuseState.glsl"
 
 bool shouldPassThrough(RayResult hit, vec4 albedo, inout uint rndState) {
     return ray_result_is_transparent(hit) && (ph_rand_next_float(rndState) > albedo.a);
