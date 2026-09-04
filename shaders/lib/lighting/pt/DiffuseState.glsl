@@ -67,7 +67,7 @@ vec3 DiffuseStateCalculateRadiance(DiffuseState state, vec4 surface, vec4 specul
     specular.a = pow(specular.a, EMISSIVE_CURVE) * EMISSIVE_BRIGHTNESS;
     specular.a *= luminance(surface.rgb) * 4.0;
 
-    return DiffuseStateApplyToRadiance(state, sRGBToLinearApprox(surface.rgb) * specular.a);
+    return DiffuseStateApplyToRadiance(state, surface.rgb * specular.a);
 }
 
 vec3 DiffuseStateCalculateSunLight(DiffuseState state, vec3 rtPos, vec3 normal, float skylight, inout uint rndState) {
