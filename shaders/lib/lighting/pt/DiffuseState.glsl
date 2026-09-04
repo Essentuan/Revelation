@@ -8,10 +8,11 @@
 
 struct DiffuseState {
     vec3 runningColor;
+    uint lastColor;
 };
 
 DiffuseState DiffuseStateEmpty() {
-    return DiffuseState(vec3(1.0f));
+    return DiffuseState(vec3(1.0f), 0u);
 }
 
 void DiffuseStateApplyWeight(inout DiffuseState state, float weight) {
@@ -22,13 +23,37 @@ void DiffuseStateApplySurface(inout DiffuseState state, vec4 surface) {
     state.runningColor *= surface.rgb;
 }
 
-void DiffuseStateApplyTranslucency(inout DiffuseState state, vec4 surface) {
-    vec3 albedo = sRGBToLinear(surface.rgb) * sRGB_2_Rec2020;
-    state.runningColor *= exp2(log2(albedo * oms(0.125 * surface.a)) * approxSqrt(surface.a + 0.25));
+bool DiffuseStateApplyTranslucency(
+    inout DiffuseState state,
+    inout RayIterator itr,
+
+    RayResult hit,
+    vec3 geoNormal,
+
+    VoxelData voxelData,
+    vec4 albedo,
+    vec4 specular,
+    inout uint rndState
+) {
+    const uint ALPHA_MASK = 0xffffffu;
+
+    if (!ray_result_is_transparent(hit)) return false;
+    if (state.lastColor == (voxelData.y & ALPHA_MASK)) return true;
+
+    if (specular.a < 1.0f && specular.a > 0.0001f && ph_rand_next_float(rndState) > albedo.a) {
+        DiffuseStateApplyWeight(state, 1.0f / albedo.a);
+        return false;
+    }
+
+    albedo.rgb = sRGBToLinear(albedo.rgb) * sRGB_2_Rec2020;
+    state.runningColor *= exp2(log2(albedo.rgb * oms(0.125 * albedo.a)) * approxSqrt(albedo.a + 0.25));
+    state.lastColor = voxelData.y & ALPHA_MASK;
+
+    return true;
 }
 
 vec3 DiffuseStateCalculateRadiance(DiffuseState state, vec4 surface, vec4 specular) {
-    if (specular.a == 1.0f) return vec3(0.0f);
+    if (specular.a == 1.0f || specular.a < 0.0001f) return vec3(0.0f);
 
     specular.a = pow(specular.a, EMISSIVE_CURVE) * EMISSIVE_BRIGHTNESS;
     specular.a *= luminance(surface.rgb) * 4.0;
