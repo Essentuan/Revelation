@@ -86,19 +86,19 @@ vec4 CalculateSpecularReflections(
 
     if (itr.iterations > 0 && ray_result_is_hit(lastHit)) {
         vec3 hitPos = ray_result_position(lastHit);
-        vec3 hitNormal = normalize(hitPos - rtPos);
+        vec3 hitDir = normalize(hitPos - rtPos);
         float hitDistance = distance(rtPos, hitPos);
 
         hitPos -= rt_camera_position;
 
-        vec3 geoNormal = ray_result_normal(lastHit);
-        vec3 worldNormal = rtTexNormal(voxelData, geoNormal);
+        vec3 hitGeoNormal = ray_result_normal(lastHit);
+        vec3 hitTexNormal = rtTexNormal(voxelData, hitGeoNormal);
 
         vec3 albedo = voxel_data_albedo(voxelData).rgb;
         vec4 specular = voxel_data_specular(voxelData);
 
         uint materialID = uint(voxel_data_block_id(voxelData) - 10000);
-        Material material = GetMaterialData(specular, albedo);
+        Material hitMaterial = GetMaterialData(specular, albedo);
 
         vec2 lightmap = vec2(0.0f, ray_result_skylight(lastHit)) / 15.0f;
 
@@ -130,7 +130,7 @@ vec4 CalculateSpecularReflections(
         // Remap sss amount to [0, 1] range
         sssAmount = linearstep(64.0 * rcp255, 1.0, sssAmount) * eyeSkylightSmooth * SUBSURFACE_SCATTERING_STRENGTH;
 
-        vec3 diffuseRadiance = IrcLoad(WorldPosToIrcTexel(hitPos + geoNormal * 0.03f)).rgb;
+        vec3 diffuseRadiance = IrcLoad(WorldPosToIrcTexel(hitPos + hitGeoNormal * 0.03f)).rgb;
 
         // Cloud shadows
         #ifdef CLOUD_SHADOWS
@@ -143,11 +143,9 @@ vec4 CalculateSpecularReflections(
 
         vec3 sunlightBase = cloudShadow * saturate(lightmap.y * 1e6 + float(isEyeInWater)) * global.directIlluminance;
 
-        const float distanceFade = 0.0f;
-
-        float NdotV = dot(worldNormal, -hitNormal);
-        float NdotL = dot(worldNormal, shadowDirWorld);
-        float LdotV = dot(shadowDirWorld, -hitNormal);
+        float NdotV = dot(hitTexNormal, -hitDir);
+        float NdotL = dot(hitTexNormal, shadowDirWorld);
+        float LdotV = dot(shadowDirWorld, -hitDir);
 
         // Must use unclamped NdotL & NdotV
         float invLenH = inversesqrt(2.0 + 2.0 * LdotV);
@@ -164,7 +162,7 @@ vec4 CalculateSpecularReflections(
             const float normalOffsetBase = 0.03f;
 
             // PCSS
-            shadow *= mix(CalculatePCSS(hitPos, geoNormal * normalOffsetBase, dither, surfaceDepth), vec3(1.0), distanceFade);
+            shadow *= CalculatePCSS(hitPos, hitGeoNormal * normalOffsetBase, dither, surfaceDepth), vec3(1.0);
 
             const float contactShadow = 1.0;
 
@@ -177,25 +175,23 @@ vec4 CalculateSpecularReflections(
                 float phase = HenyeyGreensteinPhase(-LdotV, 0.7) * 0.25 + uniformPhase * 0.75;
                 vec3 sss = sigmaS * phase * exp2(-rLOG2 * surfaceDepth * (sigmaS + sigmaA));
 
-                float cutout = float(clamp(materialID, 1000u, 1003u) == materialID || clamp(materialID, 27u, 28u) == materialID);
-                sss *= mix(1.0, contactShadow, saturate(distanceFade + cutout * 0.75));
-
                 diffuseRadiance += sunlightBase * sss * SUBSURFACE_SCATTERING_BRIGHTNESS;
             }
 
             if (dot(shadow, vec3(1.0)) > EPS) {
                 shadow *= sunlightBase;
 
-                diffuseRadiance += shadow * DiffuseHammon(NdotV, NdotL, VdotH, NdotH, material.roughness, albedo) * NdotL;
+                diffuseRadiance += shadow * DiffuseHammon(NdotV, NdotL, VdotH, NdotH, hitMaterial.roughness, albedo) * NdotL;
             }
         }
 
         // Minimal ambient light
-        diffuseRadiance += (lightmap.y * 0.4 + 0.6) * max(MINIMUM_AMBIENT_BRIGHTNESS, 5e-3 * nightVision);
+        diffuseRadiance += saturate((hitTexNormal.y * 0.4 + 0.6)) * max(MINIMUM_AMBIENT_BRIGHTNESS, 5e-3 * nightVision);
+        diffuseRadiance *= albedo;
 
         // Emissive
         #if EMISSIVE_MODE > 0 && defined MC_SPECULAR_MAP
-            diffuseRadiance += material.emissive * albedo;
+            diffuseRadiance += hitMaterial.emissive * albedo;
         #endif
         #if EMISSIVE_MODE < 2
             // Hard-coded emissive
@@ -203,7 +199,7 @@ vec4 CalculateSpecularReflections(
         #endif
 
         return vec4(
-            DiffuseStateApplyToRadiance(diffuseState, diffuseRadiance) * albedo,
+            DiffuseStateApplyToRadiance(diffuseState, diffuseRadiance),
             hitDistance
         );
     }
