@@ -92,8 +92,6 @@ void SampleIrradianceCache(ivec3 ircTexel, vec3 rtPos, inout vec3 resultRadiance
         vec4 specular = voxel_data_specular(voxelData);
 
         if (DiffuseStateApplyTranslucency(diffuseState, itr, lastHit, hitNormal, voxelData, albedo, specular, rndState)) {
-            ray_iter_set_direction(itr, itr.direction);
-
             ray_iter_skip_block(itr);
             ray_iter_offset_position(itr, itr.direction * 0.1f);
 

@@ -78,8 +78,6 @@ vec4 CalculateSpecularReflections(
         if (!DiffuseStateApplyTranslucency(diffuseState, itr, lastHit, hitNormal, voxelData, albedo, specular, rndState))
             break;
 
-        ray_iter_set_direction(itr, itr.direction);
-
         ray_iter_skip_block(itr);
         ray_iter_offset_position(itr, itr.direction * 0.1f);
     }

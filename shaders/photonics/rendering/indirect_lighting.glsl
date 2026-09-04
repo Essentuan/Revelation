@@ -76,8 +76,6 @@ void sample_indirect(
             if (bounces < MAX_BOUNCES)
                 itr.direction = processNextDirection(diffuseState, rndState, normal);
         }
-
-        ray_iter_set_direction(itr, itr.direction);
     }
 
     if (hitSky) {
