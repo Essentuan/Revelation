@@ -6,6 +6,8 @@
 
 #include "/lib/lighting/shadow/Render.glsl"
 
+#include "/lib/lighting/pt/Ray.glsl"
+
 struct DiffuseState {
     vec3 runningColor;
     uint lastColor;
@@ -50,15 +52,13 @@ bool DiffuseStateApplyTranslucency(
     state.lastColor = voxelData.y & ALPHA_MASK;
 
     // Refraction
-    vec3 tang = geoNormal.y != 0 ? vec3(-1.,0.,0.) : geoNormal.z != 0 ? vec3(-1.,0.,0.) : vec3(0.,0.,-1.);
-    vec3 bitan = geoNormal.y != 0 ? vec3(0.,0.,-1.) : geoNormal.z != 0 ? vec3(0.,-1.,0.) : vec3(0.,-1.,0.);
-
-    mat3 tbn = mat3(tang.xyz, bitan.xyz, geoNormal.xyz);
-    vec3 normal = normalize(tbn * voxel_data_normal(voxelData).xyz);
-
-    itr.direction = refract(itr.direction, normal, 1.0f / GLASS_IOR);
+    itr.direction = refract(itr.direction, rtTexNormal(voxelData, geoNormal), 1.0f / GLASS_IOR);
 
     return true;
+}
+
+vec3 DiffuseStateApplyToRadiance(DiffuseState state, vec3 radiance) {
+    return state.runningColor * radiance;
 }
 
 vec3 DiffuseStateCalculateRadiance(DiffuseState state, vec4 surface, vec4 specular) {
@@ -67,7 +67,7 @@ vec3 DiffuseStateCalculateRadiance(DiffuseState state, vec4 surface, vec4 specul
     specular.a = pow(specular.a, EMISSIVE_CURVE) * EMISSIVE_BRIGHTNESS;
     specular.a *= luminance(surface.rgb) * 4.0;
 
-    return sRGBToLinearApprox(surface.rgb) * specular.a * state.runningColor;
+    return DiffuseStateApplyToRadiance(state, sRGBToLinearApprox(surface.rgb) * specular.a);
 }
 
 vec3 DiffuseStateCalculateSunLight(DiffuseState state, vec3 rtPos, vec3 normal, float skylight, inout uint rndState) {
@@ -94,9 +94,9 @@ vec3 DiffuseStateCalculateSunLight(DiffuseState state, vec3 rtPos, vec3 normal, 
     float ignored;
     shadow *= CalculatePCSS(rtPos, normal * 0.01f, dither, ignored);
 
-    return global.directIlluminance * shadow * state.runningColor;
+    return DiffuseStateApplyToRadiance(state, global.directIlluminance * shadow);
 }
 
 vec3 DiffuseStateCalculateSkyLight(DiffuseState state, vec3 rtPos, vec3 rayDir) {
-    return textureBicubic(skyEnvMapTex, saturate(ProjectCubemap(rayDir, 96.0))).rgb * state.runningColor;
+    return DiffuseStateApplyToRadiance(state, textureBicubic(skyEnvMapTex, saturate(ProjectCubemap(rayDir, 96.0))).rgb);
 }

@@ -1,5 +1,6 @@
 #include "/photonics/tracing.glsl"
 #include "/lib/lighting/pt/DiffuseState.glsl"
+#include "/lib/lighting/pt/IRCache.glsl"
 
 vec3 processNextDirection(
     inout DiffuseState diffuseState,
@@ -72,7 +73,8 @@ void sample_indirect(
             DiffuseStateApplySurface(diffuseState, albedo);
             indirectColor += DiffuseStateCalculateSunLight(diffuseState, rtPos, normal, ray_result_skylight(hit) / 15.0f, rndState);
 
-            itr.direction = processNextDirection(diffuseState, rndState, normal);
+            if (bounces < MAX_BOUNCES)
+                itr.direction = processNextDirection(diffuseState, rndState, normal);
         }
 
         ray_iter_set_direction(itr, itr.direction);
@@ -87,5 +89,8 @@ void sample_indirect(
             firstHit = vec3(infinity);
             firstNormal = -itr.direction;
         }
+    } else if (itr.iterations > 0) {
+        vec3 ircSample = IrcLoad(WorldPosToIrcTexel(rtPos + normal * 0.03f - rt_camera_position)).rgb;
+        indirectColor += DiffuseStateApplyToRadiance(diffuseState, ircSample);
     }
 }

@@ -1,0 +1,151 @@
+/*
+--------------------------------------------------------------------------------
+
+	Revelation Shaders
+
+	Copyright (C) 2026 HaringPro
+	Apache License 2.0
+
+	Pass: Sample IRC
+
+--------------------------------------------------------------------------------
+*/
+
+//======// Input //===============================================================================//
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+const ivec3 workGroups = ivec3(16, 16, 16);
+
+//======// Utility //=============================================================================//
+
+#include "/lib/Utility.glsl"
+
+//======// Uniform //=============================================================================//
+
+#include "/lib/universal/Uniform.glsl"
+
+//======// IR Cache //============================================================================//
+
+#include "/lib/lighting/pt/IRCache.glsl"
+
+//======// Function //============================================================================//
+
+#include "/lib/universal/Transform.glsl"
+#include "/lib/universal/Fetch.glsl"
+#include "/lib/universal/SSBO.glsl"
+#include "/lib/universal/MonteCarlo.glsl"
+#include "/photonics/utility/random.glsl"
+
+#include "/photonics/tracing.glsl"
+#include "/lib/lighting/pt/DiffuseState.glsl"
+
+const vec3[] SubChunkFaces = vec3[](
+    vec3(0, 0, 0),
+    vec3(-4, 0, 0),
+    vec3(4, 0, 0),
+    vec3(0, -4, 0),
+    vec3(0, 4, 0),
+    vec3(0, 0, -4),
+    vec3(0, 0, 4)
+);
+
+bool shouldTraceTexel(vec3 rtPos) {
+    if (IsBlockSolid(rtPos)) return false;
+
+    for (int i = 0; i < SubChunkFaces.length(); i++)
+        if (IsSubChunkOccupied(rtPos + SubChunkFaces[i]))
+            return true;
+
+    return false;
+}
+
+void SampleIrradianceCache(ivec3 ircTexel, vec3 rtPos, inout vec3 resultRadiance, inout uint rndState) {
+    vec2 dither = vec2(ph_rand_next_float(rndState), ph_rand_next_float(rndState));
+
+    RayIterator itr;
+    ray_iter_begin(itr, rtPos, SampleUniformSphere(dither));
+    ray_iter_offset_position(itr, itr.direction * 0.4f);
+
+    bool hitSky = false;
+
+    VoxelData voxelData = voxel_data_empty();
+    RayResult lastHit = missed_ray_result();
+
+    DiffuseState diffuseState = DiffuseStateEmpty();
+
+    #define MAX_INTERACTIONS 8
+    for (int interactions = 0; interactions < MAX_INTERACTIONS; interactions++) {
+        ray_iter_offset_position(itr, itr.direction * 0.03f);
+        lastHit = ray_iter_next(itr);
+
+        if (!ray_result_is_hit(lastHit)) {
+            hitSky = true;
+            lastHit = missed_ray_result();
+
+            break;
+        }
+
+        vec3 hitNormal = ray_result_normal(lastHit);
+
+        voxelData = ray_result_voxel_data(lastHit);
+        vec4 albedo = voxel_data_albedo(voxelData);
+        vec4 specular = voxel_data_specular(voxelData);
+
+        if (DiffuseStateApplyTranslucency(diffuseState, itr, lastHit, hitNormal, voxelData, albedo, specular, rndState)) {
+            ray_iter_skip_block(itr);
+            ray_iter_offset_position(itr, itr.direction * 0.1f);
+
+            continue;
+        }
+
+        resultRadiance+= DiffuseStateCalculateRadiance(diffuseState, albedo, specular);
+        break;
+    }
+
+    if (itr.iterations <= 0) return;
+
+    if (hitSky) {
+        resultRadiance+= DiffuseStateCalculateSkyLight(diffuseState, rtPos, itr.direction);
+    } else if (ray_result_is_hit(lastHit)) {
+        vec3 hitPosition = ray_result_position(lastHit);
+        vec3 hitNormal = ray_result_normal(lastHit);
+
+        vec3 ircSample = IrcReproject(WorldPosToIrcTexel(hitPosition + hitNormal * 0.03f - rt_camera_position)).rgb;
+
+        DiffuseStateApplySurface(diffuseState, voxel_data_albedo(voxelData));
+        resultRadiance += DiffuseStateCalculateSunLight(diffuseState, hitPosition, hitNormal, ray_result_skylight(lastHit) / 15.0f, rndState);
+        resultRadiance += DiffuseStateApplyToRadiance(diffuseState, ircSample * 0.7f);
+    }
+}
+
+//======// Main //================================================================================//
+void main() {
+    ivec3 ircTexel = ivec3(gl_WorkGroupID * gl_WorkGroupSize + RemapThread3D(gl_LocalInvocationIndex));
+    vec3 rtPos = IrcTexelToWorldPos(ircTexel) + rt_camera_position;
+
+    uint rndState = ph_new_rand_state(
+        vec2(ircTexel.xy),
+        frameCounter,
+        ircTexel.z
+    );
+
+    vec4 ircHistory;
+
+    vec3 ircColor = vec3(0.0f);
+    if (shouldTraceTexel(rtPos)) {
+        ircHistory = IrcReproject(ircTexel);
+
+        for (int i = 0; i < IRC_SAMPLES; i++)
+            SampleIrradianceCache(ircTexel, rtPos, ircColor.rgb, rndState);
+
+        ircColor /= float(IRC_SAMPLES);
+
+        // Prevents sky leaking when first loading shader
+        if (frameCounter > 5) {
+            ircHistory.a = min(ircHistory.a + 1.0f, IRC_HISTORY_LENGTH);
+            ircHistory.rgb = mix(ircHistory.rgb, ircColor.rgb, 1.0f / ircHistory.a);
+        } else ircHistory.rgb = ircColor;
+    } else ircHistory = vec4(0.0f);
+
+    IrcStore(ircTexel, ircHistory);
+}

@@ -147,6 +147,19 @@ const float realShadowMapRes = float(shadowMapResolution) * MC_SHADOW_QUALITY;
 
 	// #define SHADOW_BACKFACE_CULLING
 
+/* Irradiance Cache */
+    #define IRC_WIDTH 128
+    #define IRC_HEIGHT 128
+
+    #define IRC_SAMPLES 1
+    #define IRC_HISTORY_LENGTH 128
+
+    const ivec3 ircSizeInt = ivec3(IRC_WIDTH, IRC_HEIGHT, IRC_WIDTH);
+    const ivec3 ircSizeHalfInt = ircSizeInt >> 1;
+
+    const vec3 ircSize = vec3(ircSizeInt);
+    const vec3 ircSizeHalf = vec3(ircSizeHalfInt);
+
 //======// Materials //===========================================================================//
 
 	#define TEXTURE_FORMAT 0 // [0 1 2]
