@@ -34,14 +34,17 @@ out vec4 specularOut;
 
 #include "/lib/universal/Transform.glsl"
 #include "/lib/universal/Fetch.glsl"
-#include "/lib/universal/Random.glsl"
-
-#include "/lib/atmosphere/Common.glsl"
 
 #include "/lib/surface/Material.glsl"
 
+#include "/photonics/utility/random.glsl"
+#include "/photonics/tracing.glsl"
+#include "/lib/lighting/pt/DiffuseState.glsl"
+#include "/lib/lighting/pt/IRCache.glsl"
+
 #include "/lib/lighting/BRDF.glsl"
 #include "/lib/lighting/SSR.glsl"
+
 
 //======// Main //================================================================================//
 void main() {
@@ -70,6 +73,15 @@ void main() {
 		vec2 lightmap = Unpack2x8U(loadMaterialPack(texelPos).x);
 
 		float dither = BlueNoise(texelPos, frameCounter);
-		specularOut = CalculateSpecularReflections(material, worldNormal, screenPos, worldDir, viewPos, lightmap.y, dither);
+		specularOut = CalculateSpecularReflections(
+            material,
+            worldNormal,
+            screenPos,
+            worldDir,
+            viewPos,
+            lightmap.y,
+            dither,
+            uint(SSRT_MAX_SAMPLES * oms(material.roughness * 0.75))
+        );
 	}
 }

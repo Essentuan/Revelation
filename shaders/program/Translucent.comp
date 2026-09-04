@@ -37,45 +37,22 @@ writeonly uniform image2D colorimg3; // Lighting output
 
 #include "/lib/universal/Transform.glsl"
 #include "/lib/universal/Fetch.glsl"
-#include "/lib/universal/Random.glsl"
-
-#include "/lib/atmosphere/Common.glsl"
-#include "/lib/atmosphere/AtmosphericFog.glsl"
-
-#include "/lib/water/WaterFog.glsl"
 
 #include "/lib/surface/Material.glsl"
-
 #include "/lib/lighting/Common.glsl"
-#include "/lib/lighting/shadow/Render.glsl"
 
-#include "/lib/lighting/SSRT.glsl"
 
-vec4 CalculateSpecularReflections(vec3 screenPos, vec3 viewPos, vec3 worldNormal, vec3 worldDir, float dither, float skylight, bool waterMask) {
-	float NdotV = abs(dot(worldNormal, worldDir));
-	vec3 rayDir = worldDir + worldNormal * NdotV * 2.0;
+#include "/photonics/utility/random.glsl"
+#include "/photonics/tracing.glsl"
+#include "/lib/lighting/pt/DiffuseState.glsl"
+#include "/lib/lighting/pt/IRCache.glsl"
 
-	if (dot(worldNormal, rayDir) < EPS) return vec4(0.0, 0.0, 0.0, 1.0);
+#include "/lib/atmosphere/AtmosphericFog.glsl"
+#include "/lib/water/WaterFog.glsl"
 
-	vec3 reflection = vec3(0.0);
-	if (skylight > EPS && isEyeInWater == 0) {
-		vec3 skyRadiance = textureBicubic(skyEnvMapTex, ProjectCubemap(rayDir, 96.0)).rgb;
-		reflection = skyRadiance * smoothstep(0.3, 0.7, skylight);
-	}
+#undef ROUGH_REFLECTIONS
 
-	float ior = waterMask ? isEyeInWater == 1 ? 1.0 / WATER_IOR : WATER_IOR : GLASS_IOR;
-	float fresnel = FresnelDielectricN(NdotV, ior);
-	uint raySteps = uint(SSRT_MAX_SAMPLES * (fresnel * 0.5 + 0.5));
-
-	viewPos += mat3(gbufferModelView) * worldNormal * saturate(length(viewPos) * 3e-4);
-	if (ScreenSpaceRaytrace(viewPos, mat3(gbufferModelView) * rayDir, dither, raySteps, screenPos)) {
-		float edgeFade = screenPos.x * screenPos.y * oms(screenPos.x) * oms(screenPos.y);
-		edgeFade *= 1e2 + cube(saturate(1.0 - gbufferModelViewInverse[2].y)) * 2e3;
-		reflection += (texture(colortex4, scaleScreenUv(screenPos.xy)).rgb - reflection) * saturate(edgeFade);
-	}
-
-	return vec4(reflection * fresnel, 1.0 - fresnel);
-}
+#include "/lib/lighting/SSR.glsl"
 
 //======// Main //================================================================================//
 void main() {
@@ -148,15 +125,26 @@ void main() {
 
 	if (notParticle) {
 		// Specular indirect
-		lightingOut = CalculateSpecularReflections(screenPos, viewPos, worldNormal, worldDir, dither, lightmap.y, waterMask);
+        float NdotV = abs(dot(worldNormal, worldDir));
+
+        float ior = waterMask ? isEyeInWater == 1 ? 1.0 / WATER_IOR : WATER_IOR : GLASS_IOR;
+        float fresnel = FresnelDielectricN(NdotV, ior);
+
+		lightingOut = CalculateSpecularReflections(
+            worldNormal,
+            screenPos,
+            worldDir,
+            viewPos,
+            lightmap.y,
+            dither,
+            uint(SSRT_MAX_SAMPLES * (fresnel * 0.5 + 0.5))
+        ) * fresnel;
+
+        lightingOut.a = 1.0f - fresnel;
 
 		NdotL = dot(worldNormal, shadowDirWorld);
 	} else {
-//		// Skylight
-//		lightingOut.rgb = global.skyUpIlluminance * cube(lightmap.y);
-//
-//		// Blocklight
-//		lightingOut.rgb += CalculateBlocklightFalloff(lightmap.x) * blocklightColor;
+        lightingOut.rgb = IrcLoad(WorldPosToIrcTexel(worldPos + geoNormal * 0.03f)).rgb;
 	}
 
 	// Cloud shadows
