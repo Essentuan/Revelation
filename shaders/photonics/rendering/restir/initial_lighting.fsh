@@ -31,9 +31,6 @@ void main() {
         hit_normal
     );
 
-    initial_direct = max(initial_direct, 0.0f);
-    initial_indirect = max(initial_indirect, 0.0f);
-
     if (isinf(hit_data.x)) {
         vec3 direction = ph_rand_direction(frag_rnd_state, frag_tex_normal);
         hit_data.xyz = frag_rt_pos + (direction * restir_sky_distance);
@@ -44,4 +41,7 @@ void main() {
     float exposure = get_exposure();
     initial_direct *= exposure;
     initial_indirect *= exposure;
+
+    initial_direct = clamp(initial_direct, 0.0f, FP16_MAX);
+    initial_indirect = clamp(initial_indirect, 0.0f, FP16_MAX);
 }

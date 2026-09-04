@@ -148,7 +148,7 @@ void indirect_reservoir_finalize_weight(
 }
 
 vec3 indirect_reservoir_get_final_color(inout IndirectReservoir reservoir) {
-    return indirect_sample_get_color(reservoir.smple) * reservoir.weight;
+    return clamp(indirect_sample_get_color(reservoir.smple) * reservoir.weight, 0.0f, FP16_MAX);
 }
 
 void indirect_reservoir_encode(IndirectReservoir reservoir, out vec4 data0, out uvec3 data1) {
