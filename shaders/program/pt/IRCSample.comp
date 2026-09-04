@@ -13,8 +13,8 @@
 
 //======// Input //===============================================================================//
 
-layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
-const ivec3 workGroups = ivec3(16, 16, 16);
+layout(local_size_x = 16, local_size_y = 1, local_size_z = 16) in;
+const ivec3 workGroups = ivec3(8, 128, 8);
 
 //======// Utility //=============================================================================//
 
@@ -53,8 +53,8 @@ bool shouldTraceTexel(vec3 rtPos) {
     if (IsBlockSolid(rtPos)) return false;
 
     for (int i = 0; i < SubChunkFaces.length(); i++)
-        if (IsSubChunkOccupied(rtPos + SubChunkFaces[i]))
-            return true;
+    if (IsSubChunkOccupied(rtPos + SubChunkFaces[i]))
+    return true;
 
     return false;
 }
@@ -98,7 +98,7 @@ void SampleIrradianceCache(ivec3 ircTexel, vec3 rtPos, inout vec3 resultRadiance
             continue;
         }
 
-        resultRadiance+= DiffuseStateCalculateRadiance(diffuseState, albedo, specular);
+        resultRadiance += DiffuseStateCalculateRadiance(diffuseState, albedo, specular);
         break;
     }
 
@@ -107,7 +107,7 @@ void SampleIrradianceCache(ivec3 ircTexel, vec3 rtPos, inout vec3 resultRadiance
     DiffuseStateApplyWeight(diffuseState, 0.7);
 
     if (hitSky) {
-        resultRadiance+= DiffuseStateCalculateSkyLight(diffuseState, rtPos, itr.direction);
+        resultRadiance += DiffuseStateCalculateSkyLight(diffuseState, rtPos, itr.direction);
     } else if (ray_result_is_hit(lastHit)) {
         vec3 hitPosition = ray_result_position(lastHit);
         vec3 hitNormal = ray_result_normal(lastHit);
@@ -125,30 +125,29 @@ void main() {
     ivec3 ircTexel = ivec3(gl_WorkGroupID * gl_WorkGroupSize + RemapThread3D(gl_LocalInvocationIndex));
     vec3 rtPos = IrcTexelToWorldPos(ircTexel) + rt_camera_position;
 
+    if (!shouldTraceTexel(rtPos)) {
+        IrcStore(ircTexel, vec4(0.0f));
+        return;
+    }
+
+    vec4 ircHistory = IrcReproject(ircTexel);
+
     uint rndState = ph_new_rand_state(
         vec2(ircTexel.xy),
         frameCounter,
         ircTexel.z
     );
 
-    vec4 ircHistory;
-
     vec3 ircColor = vec3(0.0f);
-    if (shouldTraceTexel(rtPos)) {
-        ircHistory = IrcReproject(ircTexel);
+    for (int i = 0; i < IRC_SAMPLES; i++)
+    SampleIrradianceCache(ircTexel, rtPos, ircColor.rgb, rndState);
 
-        for (int i = 0; i < IRC_SAMPLES; i++)
-            SampleIrradianceCache(ircTexel, rtPos, ircColor.rgb, rndState);
+    ircColor /= float(IRC_SAMPLES);
+    ircColor = max(ircColor, 0.0f);
 
-        ircColor /= float(IRC_SAMPLES);
-        ircColor = max(ircColor, 0.0f);
-
-        // Prevents sky leaking when first loading shader
-        if (frameCounter > 5) {
-            ircHistory.a = min(ircHistory.a + 1.0f, IRC_HISTORY_LENGTH);
-            ircHistory.rgb = mix(ircHistory.rgb, ircColor.rgb, 1.0f / ircHistory.a);
-        } else ircHistory.rgb = ircColor;
-    } else ircHistory = vec4(0.0f);
+    // Prevents sky leaking when first loading shader
+    ircHistory.a = min(ircHistory.a + 1.0f, frameCounter <= 5 ? 1.0f : IRC_HISTORY_LENGTH);
+    ircHistory.rgb = mix(ircHistory.rgb, ircColor.rgb, 1.0f / ircHistory.a);
 
     IrcStore(ircTexel, ircHistory);
 }
