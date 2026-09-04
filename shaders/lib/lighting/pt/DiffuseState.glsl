@@ -49,6 +49,15 @@ bool DiffuseStateApplyTranslucency(
     state.runningColor *= exp2(log2(albedo.rgb * oms(0.125 * albedo.a)) * approxSqrt(albedo.a + 0.25));
     state.lastColor = voxelData.y & ALPHA_MASK;
 
+    // Refraction
+    vec3 tang = geoNormal.y != 0 ? vec3(-1.,0.,0.) : geoNormal.z != 0 ? vec3(-1.,0.,0.) : vec3(0.,0.,-1.);
+    vec3 bitan = geoNormal.y != 0 ? vec3(0.,0.,-1.) : geoNormal.z != 0 ? vec3(0.,-1.,0.) : vec3(0.,-1.,0.);
+
+    mat3 tbn = mat3(tang.xyz, bitan.xyz, geoNormal.xyz);
+    vec3 normal = normalize(tbn * voxel_data_normal(voxelData).xyz);
+
+    itr.direction = refract(itr.direction, normal, 1.0f / GLASS_IOR);
+
     return true;
 }
 
