@@ -82,7 +82,7 @@ vec3 UpscaleDiffuse(vec2 coord, vec3 worldPos, vec3 worldNormal, vec3 geoNormal,
         weight *= pow4(saturate(dot(frag_data_tex_normal(sampleFrag), worldNormal)));
         weight *= bilinearWeight[i];
 
-        vec3 sampleLight = max(uintBitsToFloat(texelFetch(denoise_result, sampleTexel, 0).rgb), vec3(0.0f));
+        vec3 sampleLight = uintBitsToFloat(texelFetch(denoise_result, sampleTexel, 0).rgb);
 
         sum += sampleLight * weight;
         sumWeight += weight;

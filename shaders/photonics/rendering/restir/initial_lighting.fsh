@@ -31,6 +31,9 @@ void main() {
         hit_normal
     );
 
+    initial_direct = max(initial_direct, 0.0f);
+    initial_indirect = max(initial_indirect, 0.0f);
+
     if (isinf(hit_data.x)) {
         vec3 direction = ph_rand_direction(frag_rnd_state, frag_tex_normal);
         hit_data.xyz = frag_rt_pos + (direction * restir_sky_distance);
