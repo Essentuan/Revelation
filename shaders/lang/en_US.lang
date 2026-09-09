@@ -443,6 +443,7 @@ value.TONE_MAPPER.17=ACES 2.0
 value.TONE_MAPPER.32=GT
 value.TONE_MAPPER.33=GT7
 value.TONE_MAPPER.48=Lottes
+value.TONE_MAPPER.64=TonyMcMapface
 
 option.HDR_TONE_MAPPER=HDR Tone-Mapper
 option.HDR_TONE_MAPPER.comment=Only applied when HDR is enabled.

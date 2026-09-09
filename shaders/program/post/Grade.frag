@@ -15,7 +15,7 @@
 
 #include "/lib/Utility.glsl"
 
-#define TONE_MAPPER 1 // [0 1 2 3 16 17 32 33 48]
+#define TONE_MAPPER 1 // [0 1 2 3 16 17 32 33 48 64]
 #define HDR_TONE_MAPPER 33 // [0 3 16 17 32 33]
 
 // 0: disables gamut compression, 1: Rec.2020, 2: P3-D65
@@ -141,6 +141,7 @@ vec3 Lottes(vec3 x) {
 #include "/lib/post/ACES.glsl"
 #include "/lib/post/AgX.glsl"
 #include "/lib/post/GT.glsl"
+#include "/lib/post/TonyMcMapface.glsl"
 
 #ifdef HDR_ENABLED
 	#define REAL_TONE_MAPPER HDR_TONE_MAPPER
@@ -164,6 +165,8 @@ vec3 Lottes(vec3 x) {
 	#define TONEMAPPING_FN GT7
 #elif REAL_TONE_MAPPER == 48
 	#define TONEMAPPING_FN Lottes
+#elif REAL_TONE_MAPPER == 64
+    #define TONE_MAPPER TonyMcMapface
 #else
 	#define TONEMAPPING_FN None
 #endif
@@ -230,7 +233,7 @@ void main() {
 	#endif
 
     // Tone mapping
-    color = TONEMAPPING_FN(color);
+    color = TonyMcMapface(color);
 
     // Contrast
     #if COLOR_CONTRAST != 100
