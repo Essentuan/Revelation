@@ -89,7 +89,8 @@ void main() {
     currPixel += 0.5 - cloud.upscaleJitter;
 
     vec2 currCoord = currPixel * originTexelSize;
-    #ifdef CLOUD_TAAU_ENABLED
+
+    #if defined CLOUD_TAAU_ENABLED && !(SR_ENABLE)
         currCoord *= float(CLOUD_TAAU_SCALE);
     #endif
 

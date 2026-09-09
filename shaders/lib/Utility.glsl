@@ -20,7 +20,6 @@
 
 #if SR_INSTALLED && SR_ENABLE
     #undef TAA_ENABLED
-    #undef CLOUD_TAAU_ENABLED
     #undef CAS_ENABLED
 #endif
 
