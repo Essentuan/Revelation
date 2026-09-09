@@ -49,7 +49,7 @@ mat2x3 RaymarchAtmosphericFog(vec3 rayStart, vec3 rayEnd, float dither, uint ste
 
 	vec3 rayDir = (rayEnd - rayStart) * norm;
 
-	float maxDist = lodRenderDist;
+	float maxDist = far;
 	rayLength = min(rayLength, maxDist);
 
     float stepCount = float(steps);
