@@ -79,8 +79,6 @@ bool TracePtReflection(
     float hitSkylight = RayResultSkylight(lastHit);
 
     vec4 hitAlbedo = VoxelDataAlbedo(lastVoxelData);
-    hitAlbedo.rgb = sRGBToLinear(hitAlbedo.rgb) * sRGB_2_Rec2020;
-
     vec4 hitSpecularTex = VoxelDataSpecular(lastVoxelData);
 
     vec3 hitWorldDir = normalize(hitWorldPos - worldPos);

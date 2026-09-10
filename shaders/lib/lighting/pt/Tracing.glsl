@@ -7,7 +7,13 @@ uint VoxelDataMaterialId(VoxelData voxelData) {
 }
 
 #define VoxelDataBlockId(voxelData)
-#define VoxelDataAlbedo(voxelData) voxel_data_albedo(voxelData)
+
+vec4 VoxelDataAlbedo(VoxelData voxelData) {
+    vec4 result = voxel_data_albedo(voxelData);
+    result.rgb = sRGBToLinear(result.rgb) * sRGB_2_Rec2020;
+
+    return result;
+}
 
 vec4 VoxelDataNormal(VoxelData voxelData, vec3 geoNormal) {
     vec4 normal = voxel_data_normal(voxelData).xyzz;

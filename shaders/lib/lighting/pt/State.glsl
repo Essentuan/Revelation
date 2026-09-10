@@ -37,7 +37,6 @@ bool PathStateAcceptTranslucent(
         return false;
     }
 
-    albedo.rgb = sRGBToLinear(albedo.rgb) * sRGB_2_Rec2020;
     path.runningColor *= exp2(log2(albedo.rgb * oms(0.125 * albedo.a)) * approxSqrt(albedo.a + 0.25));
     path.lastColor = voxelData.y & ALPHA_MASK;
 
@@ -91,10 +90,10 @@ vec3 PathStateCalculateShadowColor(PathState path, vec3 rtPos, vec3 normal, floa
 
     // Cloud shadows
     #ifdef CLOUD_SHADOWS
-    vec2 cloudShadowCoord = WorldToCloudShadowScreenPos(rtPos).xy + (dither - 0.5) / textureSize(cloudShadowTex, 0);
-    shadow *= textureBicubic(cloudShadowTex, saturate(cloudShadowCoord)).x;
+        vec2 cloudShadowCoord = WorldToCloudShadowScreenPos(rtPos).xy + (dither - 0.5) / textureSize(cloudShadowTex, 0);
+        shadow *= textureBicubic(cloudShadowTex, saturate(cloudShadowCoord)).x;
     #else
-    shadow *= 1.0 - wetness * 0.96;
+        shadow *= 1.0 - wetness * 0.96;
     #endif
 
     float ignored;
