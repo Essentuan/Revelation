@@ -49,45 +49,9 @@ out vec3 sceneOut;
 #include "/lib/lighting/Common.glsl"
 #include "/lib/lighting/shadow/Render.glsl"
 
-#if AO_ENABLED > 0 && !defined SSILVB_ENABLED
+#if AO_ENABLED > 0
 	#include "/lib/lighting/SSAO.glsl"
 	#include "/lib/lighting/GTAO.glsl"
-#endif
-
-#if defined SSILVB_ENABLED && defined SVGF_ENABLED
-	vec3 UpscaleDiffuseIndirect(vec2 coord, vec3 worldNormal, float viewZ) {
-		vec3 sum = vec3(0.0);
-		float sumWeight = 0.0;
-
-		ivec2 texelEnd = ivec2(scaledHalfViewSize) - 2;
-		coord = coord * scaledViewSize * 0.5 - 0.5;
-
-		ivec2 floorTexel = ivec2(floor(coord));
-		vec2 fractTexel = coord - vec2(floorTexel);
-
-		vec4 bilinearWeight = bilinear(fractTexel);
-
-		float invThresholdZ = 8.0 / viewZ;
-
-		for (uint i = 0u; i < 4u; ++i) {
-			ivec2 sampleTexel = clamp(floorTexel + offset2x2[i], ivec2(1), texelEnd);
-
-			vec3 sampleAux = texelFetch(colortex14, sampleTexel, 0).rgb;
-
-			float weight = pow4(saturate(dot(OctDecodeSnorm(sampleAux.xy), worldNormal)));
-			weight *= saturate(fma(distance(sampleAux.z, viewZ), invThresholdZ, 1.0));
-			weight *= bilinearWeight[i];
-
-			vec3 sampleLight = texelFetch(colortex3, sampleTexel, 0).rgb;
-
-			sum += sampleLight * weight;
-			sumWeight += weight;
-		}
-
-		if (sumWeight < EPS) return vec3(0.0);
-
-		return sum * rcp(sumWeight);
-	}
 #endif
 
 //======// Main //================================================================================//
@@ -274,7 +238,7 @@ void main() {
 		}
 
 		// Ambient occlusion
-		#if AO_ENABLED > 0 && !defined SSILVB_ENABLED
+		#if AO_ENABLED > 0
 			vec3 ao = vec3(1.0);
 			#if AO_ENABLED == 1
 				ao.x = CalculateSSAO(screenCoord, viewPos, viewNormal, SampleStbnUnitvec2(texelPos, frameCounter));
@@ -292,22 +256,20 @@ void main() {
 		#endif
 
 		// Skylight & Blocklight
-		#ifndef SSILVB_ENABLED
-			if (lightmap.y > EPS) {
-				// Spherical harmonics skylight
-				vec3 skylight = ConvolvedReconstructSH3(global.skySH, worldNormal);
-				diffuseRadiance += skylight * cube(lightmap.y) * ao;
+        if (lightmap.y > EPS) {
+            // Spherical harmonics skylight
+            vec3 skylight = ConvolvedReconstructSH3(global.skySH, worldNormal);
+            diffuseRadiance += skylight * cube(lightmap.y) * ao;
 
-				// Fake bounced light
-				float bounce = CalculateFakeBouncedLight(worldNormal);
-				diffuseRadiance += bounce * pow5(lightmap.y) * sunlightBase * ao;
-			}
+            // Fake bounced light
+            float bounce = CalculateFakeBouncedLight(worldNormal);
+            diffuseRadiance += bounce * pow5(lightmap.y) * sunlightBase * ao;
+		}
 
-			if (lightmap.x > EPS) {
-				lightmap.x = CalculateBlocklightFalloff(lightmap.x);
-				diffuseRadiance += lightmap.x * (ao * oms(lightmap.x) + lightmap.x) * blocklightColor;
-			}
-		#endif
+        if (lightmap.x > EPS) {
+            lightmap.x = CalculateBlocklightFalloff(lightmap.x);
+            diffuseRadiance += lightmap.x * (ao * oms(lightmap.x) + lightmap.x) * blocklightColor;
+        }
 
 		// Handheld light
 		#ifdef HANDHELD_LIGHTING
@@ -329,15 +291,6 @@ void main() {
 		#endif
 
 		// Indirect diffuse lighting
-		#ifdef SSILVB_ENABLED
-			#ifdef SVGF_ENABLED
-				vec3 radiance = UpscaleDiffuseIndirect(screenCoord, worldNormal, viewPos.z);
-                radiance *= rcp(maxEps(1.0 - radiance.x)); // Inverse tonemapping
-			#else
-				vec3 radiance = texelFetch(colortex3, texelPos >> 1, 0).rgb;
-			#endif
-			diffuseRadiance += YCoCgToRGB(radiance);
-		#endif
 
 		// Minimal ambient light
 		diffuseRadiance += (worldNormal.y * 0.4 + 0.6) * max(MINIMUM_AMBIENT_BRIGHTNESS, 5e-3 * nightVision) * ao;

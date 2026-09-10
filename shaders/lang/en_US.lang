@@ -263,17 +263,6 @@ option.GTAO_SLICES=GTAO Direction Samples
 option.GTAO_DIRECTION_SAMPLES=GTAO Marching Samples
 option.GTAO_RADIUS=GTAO Radius
 
-option.SSILVB_ENABLED=SSILVB GI
-option.SSILVB_SLICE_COUNT=Direction Samples
-option.SSILVB_SAMPLE_COUNT=Marching Samples
-option.SSILVB_SECTOR_COUNT=Sector Count
-option.SSILVB_HIT_THICKNESS=Hit Thickness
-option.SSILVB_BLENDED_LIGHTMAP=Blended Lightmap
-option.SSILVB_MAX_ACCUM_FRAMES=Max Accumulated Frames
-
-option.SVGF_ENABLED=Spatio-Temporal Variance-Guided Filtering
-
-
 # Materials
 option.TEXTURE_FORMAT=PBR Texture Format
 value.TEXTURE_FORMAT.0=labPBR

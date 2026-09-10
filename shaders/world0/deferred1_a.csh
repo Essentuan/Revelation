@@ -1,3 +1,3 @@
 #version 460 compatibility
 
-#include "/program/diffuse/DiffuseIndirect.comp"
+#include "/program/ReprojectScene.comp"
