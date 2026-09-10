@@ -2,7 +2,11 @@
 
 #define VoxelDataEmpty() voxel_data_empty()
 
-#define VoxelDataBlockId(voxelData) voxel_data_block_id(voxelData)
+uint VoxelDataMaterialId(VoxelData voxelData) {
+    return uint(max(voxel_data_block_id(voxelData) - 10000, 1));
+}
+
+#define VoxelDataBlockId(voxelData)
 #define VoxelDataAlbedo(voxelData) voxel_data_albedo(voxelData)
 
 vec4 VoxelDataNormal(VoxelData voxelData, vec3 geoNormal) {

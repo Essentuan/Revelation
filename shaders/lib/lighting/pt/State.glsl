@@ -4,6 +4,7 @@
 #include "/lib/atmosphere/Celestial.glsl"
 #include "/lib/atmosphere/clouds/Common.glsl"
 
+#include "/lib/lighting/Common.glsl"
 #include "/lib/lighting/shadow/Render.glsl"
 
 #include "/lib/lighting/pt/Tracing.glsl"
@@ -62,12 +63,30 @@ vec3 PathStateApplyTo(PathState path, vec3 radiance) {
     return path.runningColor * radiance;
 }
 
-vec3 PathStateCalculateBlockRadiance(PathState state, vec4 albedo, vec4 specular) {
-    specular.a = pow(specular.a, EMISSIVE_CURVE) * EMISSIVE_BRIGHTNESS;
-    specular.a *= luminance(albedo.rgb) * 4.0;
+vec3 PathStateCalculateBlockRadiance(
+    PathState state,
+    vec3 rtPos,
+    uint materialID,
+
+    vec4 albedo,
+    vec4 specular
+) {
+    vec3 radiance = vec3(0.0f);
     albedo.rgb = pow(albedo.rgb, vec3(2.2f));
 
-    return PathStateApplyTo(state, albedo.rgb * specular.a);
+    #if EMISSIVE_MODE > 0 && defined MC_SPECULAR_MAP
+        specular.a = pow(specular.a, EMISSIVE_CURVE) * EMISSIVE_BRIGHTNESS;
+        specular.a *= luminance(albedo.rgb) * 4.0;
+
+        radiance+= albedo.rgb * specular.a;
+    #endif
+
+    #if EMISSIVE_MODE < 2
+        // Hard-coded emissive
+        radiance += HardCodeEmissive(materialID, albedo.rgb, rtPos - rt_camera_position) * EMISSIVE_BRIGHTNESS * albedo.rgb;
+    #endif
+
+    return PathStateApplyTo(state, radiance);
 }
 
 vec3 PathStateCalculateSunRadiance(PathState path, vec3 rtPos, vec3 normal, float skylight, inout uint rndState) {

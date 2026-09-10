@@ -48,7 +48,14 @@ void sample_indirect(
             RaySkipBlock(ray);
             RayOffsetPosition(ray, ray.direction * 0.1f);
         } else {
-            indirectColor += PathStateCalculateBlockRadiance(path, albedo, specular);
+            indirectColor += PathStateCalculateBlockRadiance(
+                path,
+                rtPos,
+                VoxelDataMaterialId(voxelData),
+
+                albedo,
+                specular
+            );
 
             PathStateAcceptSurface(path, albedo);
             PathStateAcceptWeight(path, bounces++ < MAX_BOUNCES ? rPI : 1.0f);
