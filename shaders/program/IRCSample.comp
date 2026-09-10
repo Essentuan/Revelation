@@ -1,0 +1,152 @@
+#define IRC_COMPUTE_SHADER
+
+#include "/lib/Utility.glsl"
+#include "/lib/universal/Uniform.glsl"
+#include "/lib/universal/Transform.glsl"
+#include "/lib/universal/Fetch.glsl"
+#include "/lib/universal/SSBO.glsl"
+
+#include "/photonics/utility/random.glsl"
+#include "/lib/universal/MonteCarlo.glsl"
+
+#include "/lib/lighting/pt/IrCache.glsl"
+#include "/lib/lighting/pt/State.glsl"
+
+const vec3[] SubChunkFaces = vec3[](
+    vec3(0, 0, 0),
+    vec3(-4, 0, 0),
+    vec3(4, 0, 0),
+    vec3(0, -4, 0),
+    vec3(0, 4, 0),
+    vec3(0, 0, -4),
+    vec3(0, 0, 4)
+);
+
+bool ShouldTraceTexel(vec3 rtPos) {
+    if (IsBlockSolid(rtPos)) return false;
+
+    for (int i = 0; i < SubChunkFaces.length(); i++)
+        if (IsSubChunkOccupied(rtPos + SubChunkFaces[i]))
+            return true;
+
+    return false;
+}
+
+void SampleIrradianceCache(
+    ivec3 ircTexel,
+    vec3 rtPos,
+    inout IrcEntry resultEntry,
+    inout uint rndState
+) {
+    float jitter0 = ph_rand_next_float(rndState);
+    float jitter1 = ph_rand_next_float(rndState);
+
+    Ray ray = CreateRay(rtPos, SampleUniformSphere(vec2(jitter0, jitter1)));
+    RayOffsetPosition(ray, ray.direction * 0.4f);
+
+    bool hitSky = false;
+
+    VoxelData voxelData = VoxelDataEmpty();
+    RayResult lastHit = RayResultEmpty();
+
+    PathState path = PathStateEmpty();
+
+    #define MAX_INTERACTIONS 8
+    for (int interactions = 0; interactions < MAX_INTERACTIONS; interactions++) {
+        RayOffsetPosition(ray, ray.direction * 0.03f);
+        lastHit = RayNext(ray);
+
+        if (!RayResultIsHit(lastHit)) {
+            hitSky = ray.iterations > 0;
+            lastHit = RayResultEmpty();
+
+            break;
+        }
+
+        vec3 hitNormal = RayResultNormal(lastHit);
+
+        voxelData = RayResultVoxelData(lastHit);
+        vec4 albedo = VoxelDataAlbedo(voxelData);
+        vec4 specular = VoxelDataSpecular(voxelData);
+
+        if (PathStateAcceptTranslucent(path, ray, lastHit, hitNormal, voxelData, albedo, specular, rndState)) {
+            RaySkipBlock(ray);
+            RayOffsetPosition(ray, ray.direction * 0.1f);
+
+            continue;
+        }
+
+        resultEntry.radiance += PathStateCalculateBlockRadiance(
+            path,
+            RayResultPosition(lastHit),
+            VoxelDataMaterialId(voxelData),
+
+            albedo,
+            specular
+        );
+
+        break;
+    }
+
+    PathStateAcceptWeight(path, 0.7f);
+
+    if (hitSky && ray.iterations > 0) {
+        resultEntry.skyColor += path.runningColor;
+    } else if (ray.iterations > 0) {
+        vec3 hitPos = RayResultPosition(lastHit);
+        vec3 hitNormal = RayResultNormal(lastHit);
+
+        ivec3 ircTexel = WorldPosToIrcTexel(hitPos + hitNormal * 0.03f - rt_camera_position);
+        uvec4[2] ircEntryRaw = IrcReprojectRaw(ircTexel);
+
+        PathStateAcceptSurface(path, VoxelDataAlbedo(voxelData));
+        resultEntry.sunColor += PathStateApplyTo(
+            path,
+            PathStateCalculateShadowColor(
+                path,
+                hitPos,
+                hitNormal,
+                RayResultSkylight(lastHit),
+                rndState
+            )
+        );
+
+        IrcEntry ircEntry = IrcEntryDecode(ircEntryRaw[0], ircEntryRaw[1]);
+        resultEntry.radiance += PathStateApplyTo(path, ircEntry.radiance);
+        resultEntry.sunColor += PathStateApplyTo(path, ircEntry.sunColor);
+        resultEntry.skyColor += PathStateApplyTo(path, ircEntry.skyColor);
+    }
+}
+
+layout(local_size_x = IRC_LOCALSIZE_X, local_size_y = IRC_LOCALSIZE_Y, local_size_z = IRC_LOCALSIZE_Z) in;
+const ivec3 workGroups = ivec3(IRC_WORKGROUPS_X, IRC_WORKGROUPS_Y, IRC_WORKGROUPS_Z);
+
+void main() {
+    ivec3 ircTexel = RemapIrcThread();
+    vec3 rtPos = IrcTexelToWorldPos(ircTexel) + rt_camera_position;
+
+    IrcEntry ircHistory = IrcEntryEmpty();
+    if (ShouldTraceTexel(rtPos)) {
+        uvec4[2] ircHistoryRaw = IrcReprojectRaw(ircTexel);
+
+        uint rndState = ph_new_rand_state(
+            vec2(ircTexel.xy),
+            frameCounter,
+            ircTexel.z
+        );
+
+        IrcEntry ircSample = IrcEntryEmpty();
+        for (int i = 0; i < IRC_SAMPLES; i++)
+            SampleIrradianceCache(ircTexel, rtPos, ircSample, rndState);
+
+        ircSample.radiance = max0(ircSample.radiance) / float(IRC_SAMPLES);
+        ircSample.sunColor = max0(ircSample.sunColor) / float(IRC_SAMPLES);
+        ircSample.skyColor = max0(ircSample.skyColor) / float(IRC_SAMPLES);
+
+        ircHistory = IrcEntryDecode(ircHistoryRaw[0], ircHistoryRaw[1]);
+        IrcEntryAddSample(ircHistory, ircSample);
+    }
+
+    IrcStore(ircTexel, ircHistory);
+}
+

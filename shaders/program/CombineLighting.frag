@@ -48,6 +48,7 @@ out vec3 sceneOut;
 
 #include "/lib/lighting/Common.glsl"
 #include "/lib/lighting/shadow/Render.glsl"
+#include "/lib/lighting/pt/IrCache.glsl"
 
 #if AO_ENABLED > 0
 	#include "/lib/lighting/SSAO.glsl"
@@ -298,7 +299,21 @@ void main() {
 		#endif
 
 		// Indirect diffuse lighting
-        diffuseRadiance += sample_photonics_direct(screenCoord);
+
+        #ifdef DEBUG_IRC
+            ivec3 ircTexel = WorldPosToIrcTexel(worldPos + geoNormal * 0.03f);
+
+            if (IrcContainsTexel(ircTexel)) {
+                IrcEntry ircEntry = IrcLoad(ircTexel);
+                diffuseRadiance += IrcEntryCalculateRadiance(
+                    ircEntry,
+                    global.directIlluminance,
+                    ConvolvedReconstructSH3(global.skySH, worldNormal)
+                );
+            }
+        #else
+            diffuseRadiance += sample_photonics_direct(screenCoord);
+        #endif
 
 		// Minimal ambient light
 		diffuseRadiance += (worldNormal.y * 0.4 + 0.6) * max(MINIMUM_AMBIENT_BRIGHTNESS, 5e-3 * nightVision) * ao;

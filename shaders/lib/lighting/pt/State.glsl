@@ -89,7 +89,7 @@ vec3 PathStateCalculateBlockRadiance(
     return PathStateApplyTo(state, radiance);
 }
 
-vec3 PathStateCalculateSunRadiance(PathState path, vec3 rtPos, vec3 normal, float skylight, inout uint rndState) {
+vec3 PathStateCalculateShadowColor(PathState path, vec3 rtPos, vec3 normal, float skylight, inout uint rndState) {
     float NdotL = dot(normal, shadowDirWorld);
     if (NdotL <= 0.0f) return vec3(0.0f);
 
@@ -102,18 +102,47 @@ vec3 PathStateCalculateSunRadiance(PathState path, vec3 rtPos, vec3 normal, floa
 
     // Cloud shadows
     #ifdef CLOUD_SHADOWS
-        vec2 cloudShadowCoord = WorldToCloudShadowScreenPos(rtPos).xy + (dither - 0.5) / textureSize(cloudShadowTex, 0);
-        shadow *= textureBicubic(cloudShadowTex, saturate(cloudShadowCoord)).x;
+    vec2 cloudShadowCoord = WorldToCloudShadowScreenPos(rtPos).xy + (dither - 0.5) / textureSize(cloudShadowTex, 0);
+    shadow *= textureBicubic(cloudShadowTex, saturate(cloudShadowCoord)).x;
     #else
-        shadow *= 1.0 - wetness * 0.96;
+    shadow *= 1.0 - wetness * 0.96;
     #endif
 
     float ignored;
     shadow *= CalculatePCSS(rtPos, normal * 0.01f, dither, ignored);
 
-    return PathStateApplyTo(path, global.directIlluminance * shadow);
+    return shadow;
+}
+
+vec3 PathStateCalculateSunRadiance(PathState path, vec3 rtPos, vec3 normal, float skylight, inout uint rndState) {
+    return PathStateApplyTo(
+        path,
+        global.directIlluminance * PathStateCalculateShadowColor(
+            path,
+            rtPos,
+            normal,
+            skylight,
+            rndState
+        )
+    );
 }
 
 vec3 PathStateCalculateSkyRadiance(PathState path, vec3 rayDir) {
     return PathStateApplyTo(path, textureBicubic(skyEnvMapTex, saturate(ProjectCubemap(rayDir, 96.0))).rgb);
 }
+
+vec3 PathStateCalculateIrcEntry(
+    PathState path,
+    IrcEntry entry,
+    vec3 worldNormal
+) {
+    return PathStateApplyTo(
+        path,
+        IrcEntryCalculateRadiance(
+            entry,
+            global.directIlluminance,
+            ConvolvedReconstructSH3(global.skySH, worldNormal)
+        )
+    );
+}
+

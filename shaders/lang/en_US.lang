@@ -492,6 +492,5 @@ option.DEBUG_BLOOM_TILES=Debug Bloom Tiles
 option.DEBUG_CLOUD_MAP=Debug Cloud Map
 option.DEBUG_CLOUD_NOISE=Debug Cloud Noise
 option.DEBUG_CLOUD_SHADOWS=Debug Cloud Shadows
-option.DEBUG_VOXELIZATION=Debug Voxelization
-option.DEBUG_RADIANCE_CACHE=Debug Radiance Cache
 option.DEBUG_TONE_MAPPING_PLOT=Debug Tone Mapping Plot
+option.DEBUG_IRC=Debug IRC

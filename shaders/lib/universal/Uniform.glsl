@@ -46,6 +46,14 @@ uniform sampler2D cloudPhaseLut;
 uniform sampler2D skyEnvMapTex;
 uniform sampler2D cloudShadowTex;
 
+uniform usampler3D irCacheMainTex;
+uniform usampler3D irCacheAltTex;
+
+// Images
+
+layout (rgba32ui) restrict uniform uimage3D irCacheMainImg;
+layout (rgba32ui) restrict uniform uimage3D irCacheAltImg;
+
 //================================================================================================//
 
 uniform int heldItemId;                         // held item ID (main hand), used only for items defined in "item.properties"

@@ -7,6 +7,7 @@ uvec2 RemapThread16x16(uint idx) {
 	return RemapThread8x8(idx & 63) + (uvec2((idx >> 6) & 1, idx >> 7) << 3);
 }
 
+
 // https://developer.nvidia.com/blog/optimizing-compute-shaders-for-l2-locality-using-thread-group-id-swizzling/
 // https://github.com/LouisBavoil/ThreadGroupIDSwizzling/blob/master/ThreadGroupTilingX.hlsl
 

@@ -1,3 +1,4 @@
+#include "/lib/lighting/pt/IrCache.glsl"
 #include "/lib/lighting/pt/State.glsl"
 
 void sample_indirect(
@@ -74,5 +75,13 @@ void sample_indirect(
 
     if (hitSky) {
         indirectColor += PathStateCalculateSkyRadiance(path, ray.direction);
+    }  else if (ray.iterations > 0) {
+        ivec3 ircTexel = WorldPosToIrcTexel(rtPos - rt_camera_position + normal * 0.03f);
+
+        indirectColor += PathStateCalculateIrcEntry(
+            path,
+            IrcLoad(ircTexel),
+            normal
+        );
     }
 }
