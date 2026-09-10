@@ -146,11 +146,22 @@ void main() {
 
 		NdotL = dot(worldNormal, shadowDirWorld);
 	} else {
-		// Skylight
-		lightingOut.rgb = global.skyUpIlluminance * cube(lightmap.y);
+        ivec3 ircTexel = WorldPosToIrcTexel(worldPos + geoNormal * 0.03f);
 
-		// Blocklight
-		lightingOut.rgb += CalculateBlocklightFalloff(lightmap.x) * blocklightColor;
+        if (IrcContainsTexel(ircTexel)) {
+            IrcEntry ircEntry = IrcLoad(ircTexel);
+            lightingOut.rgb = IrcEntryCalculateRadiance(
+                ircEntry,
+                global.directIlluminance,
+                global.skyUpIlluminance
+            );
+        } else {
+            // Skylight
+            lightingOut.rgb = global.skyUpIlluminance * cube(lightmap.y);
+
+            // Blocklight
+            lightingOut.rgb += CalculateBlocklightFalloff(lightmap.x) * blocklightColor;
+        }
 	}
 
 	// Cloud shadows
