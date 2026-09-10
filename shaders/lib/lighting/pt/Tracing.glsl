@@ -10,7 +10,8 @@ uint VoxelDataMaterialId(VoxelData voxelData) {
 #define VoxelDataAlbedo(voxelData) voxel_data_albedo(voxelData)
 
 vec4 VoxelDataNormal(VoxelData voxelData, vec3 geoNormal) {
-    vec4 normal = voxel_data_normal(voxelData);
+    vec4 normal = voxel_data_normal(voxelData).xyzz;
+    normal.z = sqrt(1.0 - dot(normal.xy, normal.xy));
 
     vec3 tang = geoNormal.y != 0 ? vec3(-1.,0.,0.) : geoNormal.z != 0 ? vec3(-1.,0.,0.) : vec3(0.,0.,-1.);
     vec3 bitan = geoNormal.y != 0 ? vec3(0.,0.,-1.) : geoNormal.z != 0 ? vec3(0.,-1.,0.) : vec3(0.,-1.,0.);

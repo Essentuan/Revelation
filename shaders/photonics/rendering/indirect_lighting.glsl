@@ -1,4 +1,15 @@
 #include "/lib/lighting/pt/IrCache.glsl"
+
+#include "/lib/universal/Random.glsl"
+
+#include "/lib/atmosphere/Common.glsl"
+#include "/lib/atmosphere/Celestial.glsl"
+#include "/lib/atmosphere/clouds/Common.glsl"
+
+#include "/lib/lighting/Common.glsl"
+#include "/lib/lighting/shadow/Render.glsl"
+
+#include "/lib/lighting/pt/Tracing.glsl"
 #include "/lib/lighting/pt/State.glsl"
 
 void sample_indirect(

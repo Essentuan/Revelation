@@ -35,13 +35,17 @@ out vec4 specularOut;
 #include "/lib/universal/Transform.glsl"
 #include "/lib/universal/Fetch.glsl"
 #include "/lib/universal/Random.glsl"
+#include "/photonics/utility/random.glsl"
 
 #include "/lib/atmosphere/Common.glsl"
+#include "/lib/atmosphere/Celestial.glsl"
+#include "/lib/atmosphere/clouds/Common.glsl"
 
 #include "/lib/surface/Material.glsl"
 
-#include "/lib/lighting/BRDF.glsl"
-#include "/lib/lighting/SSR.glsl"
+#include "/lib/lighting/Common.glsl"
+#include "/lib/lighting/shadow/Render.glsl"
+#include "/lib/lighting/Reflections.glsl"
 
 //======// Main //================================================================================//
 void main() {
@@ -68,8 +72,19 @@ void main() {
 		vec3 worldNormal = FetchSurfaceNormal(texelPos);
 
 		vec2 lightmap = Unpack2x8U(loadMaterialPack(texelPos).x);
+        float dither = BlueNoise(texelPos, frameCounter);
 
-		float dither = BlueNoise(texelPos, frameCounter);
-		//specularOut = CalculateSpecularReflections(material, worldNormal, worldDir, viewPos, lightmap.y, dither);
+        vec3 halfway = worldNormal;
+        #ifdef ROUGH_REFLECTIONS
+            if (!material.mirrorMask) {
+                mat3 tbnMatrix = BuildOrthonormalBasis(worldNormal);
+
+                vec2 noise = SampleStbnVec2(ivec2(gl_FragCoord.xy), frameCounter + 3);
+                halfway = tbnMatrix * SampleVisibleGGX(-worldDir * tbnMatrix, material.roughness, noise);
+            }
+        #endif
+
+        vec3 rayDir = reflect(worldDir, halfway);
+		specularOut = CalculateSpecularReflections(rayDir, material.roughness, worldNormal, worldDir, viewPos, lightmap.y, dither);
 	}
 }
