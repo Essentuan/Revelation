@@ -1,4 +1,4 @@
-#include "/photonics/tracing.glsl"
+#include "/lib/lighting/pt/State.glsl"
 
 void sample_indirect(
     inout vec3 directColor,
@@ -11,23 +11,61 @@ void sample_indirect(
     out vec3 firstHit,
     out vec3 firstNormal
 ) {
-    RayIterator itr;
-    ray_iter_begin(itr, rtPos, ph_rand_direction(rndState, normal));
+    Ray ray = CreateRay(rtPos, ph_rand_direction(rndState, normal));
 
-    const float infinity = intBitsToFloat(0x7f800000);
-    firstHit = vec3(infinity);
-    firstNormal = -itr.direction;
+    firstHit = vec3(FLT_POS_INF);
+    firstNormal = -ray.direction;
 
-    RayResult result = ray_iter_next(itr);
-    if (!ray_result_is_hit(result)) return;
+    PathState path = PathStateEmpty();
+    bool hitSky = false;
 
-    firstHit = ray_result_position(result);
-    firstNormal = ray_result_normal(result);
+    #define MAX_BOUNCES 1
+    #define MAX_INTERACTIONS 16
 
-    VoxelData voxelData = ray_result_voxel_data(result);
-    vec4 albedo = voxel_data_albedo(voxelData);
-    vec4 specular = voxel_data_specular(voxelData);
+    int bounces = -1;
+    for (int i = 0; i < MAX_INTERACTIONS && bounces < MAX_BOUNCES; i++) {
+        RayOffsetPosition(ray, ray.direction * 0.03f);
+        RayResult hit = RayNext(ray);
 
-    if (specular.a == 1.0f) return;
-    indirectColor += pow(albedo.rgb, vec3(2.2f)) * specular.a * 10.0f;
+        if (!RayResultIsHit(hit)) {
+            hitSky = ray.iterations > 0;
+            break;
+        }
+
+        rtPos = RayResultPosition(hit);
+        normal = RayResultNormal(hit);
+
+        if (i == 0) {
+            firstHit = rtPos;
+            firstNormal = normal;
+        }
+
+        VoxelData voxelData = RayResultVoxelData(hit);
+        vec4 albedo = VoxelDataAlbedo(voxelData);
+        vec4 specular = VoxelDataSpecular(voxelData);
+
+        if (PathStateAcceptTranslucent(path, ray, hit, normal, voxelData, albedo, specular, rndState)) {
+            RaySkipBlock(ray);
+            RayOffsetPosition(ray, ray.direction * 0.1f);
+        } else {
+            indirectColor += PathStateCalculateBlockRadiance(path, albedo, specular);
+
+            PathStateAcceptSurface(path, albedo);
+            PathStateAcceptWeight(path, bounces++ < MAX_BOUNCES ? rPI : 1.0f);
+
+            indirectColor += PathStateCalculateSunRadiance(
+                path,
+                rtPos,
+                normal,
+                RayResultSkylight(hit),
+                rndState
+            );
+
+            ray.direction = ph_rand_direction(rndState, normal);
+        }
+    }
+
+    if (hitSky) {
+        indirectColor += PathStateCalculateSkyRadiance(path, ray.direction);
+    }
 }

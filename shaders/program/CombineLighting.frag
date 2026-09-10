@@ -116,6 +116,8 @@ void main() {
 			if (lodMask) {
 				screenPos.z = ViewToScreenDepth(ScreenToViewDepthLod(loadDepth0Lod(texelPos)));
 			}
+        #else
+            const bool lodMask = false;
 		#endif
 
 		// Hand-depth correction
@@ -258,20 +260,20 @@ void main() {
 		#endif
 
 		// Skylight & Blocklight
-//        if (lightmap.y > EPS) {
-//            // Spherical harmonics skylight
-//            vec3 skylight = ConvolvedReconstructSH3(global.skySH, worldNormal);
-//            diffuseRadiance += skylight * cube(lightmap.y) * ao;
-//
-//            // Fake bounced light
-//            float bounce = CalculateFakeBouncedLight(worldNormal);
-//            diffuseRadiance += bounce * pow5(lightmap.y) * sunlightBase * ao;
-//		}
+        if (lightmap.y > EPS && lodMask) {
+            // Spherical harmonics skylight
+            vec3 skylight = ConvolvedReconstructSH3(global.skySH, worldNormal);
+            diffuseRadiance += skylight * cube(lightmap.y) * ao * 0.5f;
 
-//        if (lightmap.x > EPS) {
-//            lightmap.x = CalculateBlocklightFalloff(lightmap.x);
-//            diffuseRadiance += lightmap.x * (ao * oms(lightmap.x) + lightmap.x) * blocklightColor;
-//        }
+            // Fake bounced light
+            float bounce = CalculateFakeBouncedLight(worldNormal);
+            diffuseRadiance += bounce * pow5(lightmap.y) * sunlightBase * ao;
+		}
+
+        if (lightmap.x > EPS && lodMask) {
+            lightmap.x = CalculateBlocklightFalloff(lightmap.x);
+            diffuseRadiance += lightmap.x * (ao * oms(lightmap.x) + lightmap.x) * blocklightColor;
+        }
 
 		// Handheld light
 		#ifdef HANDHELD_LIGHTING
