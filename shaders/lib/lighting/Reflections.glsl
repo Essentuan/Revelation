@@ -19,10 +19,13 @@ bool TraceScreenSpaceReflection(
     vec3 hitPos;
     if (!ScreenSpaceRaytrace(viewPos, mat3(gbufferModelView) * rayDir, dither, stepCount, hitPos)) return false;
 
+    ivec2 texel = uvToTexelScaled(hitPos.xy);
+    float hitDepth = loadDepth0(texel);
+    if (hitDepth < 0.56f) return false;
+
     reflection.rgb = texture(colortex4, scaleScreenUv(hitPos.xy)).rgb;
 
-    ivec2 texel = uvToTexelScaled(hitPos.xy);
-    vec3 reflectViewPos = ScreenToViewPos(vec3(hitPos.xy, loadDepth0(texel)));
+    vec3 reflectViewPos = ScreenToViewPos(vec3(hitPos.xy, hitDepth));
     reflection.a = distance(reflectViewPos, viewPos);
 
     return true;
