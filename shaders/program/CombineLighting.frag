@@ -54,6 +54,8 @@ out vec3 sceneOut;
 	#include "/lib/lighting/GTAO.glsl"
 #endif
 
+#include "/photonics/samplers.glsl"
+
 //======// Main //================================================================================//
 void main() {
 	ivec2 texelPos = ivec2(gl_FragCoord.xy);
@@ -256,20 +258,20 @@ void main() {
 		#endif
 
 		// Skylight & Blocklight
-        if (lightmap.y > EPS) {
-            // Spherical harmonics skylight
-            vec3 skylight = ConvolvedReconstructSH3(global.skySH, worldNormal);
-            diffuseRadiance += skylight * cube(lightmap.y) * ao;
+//        if (lightmap.y > EPS) {
+//            // Spherical harmonics skylight
+//            vec3 skylight = ConvolvedReconstructSH3(global.skySH, worldNormal);
+//            diffuseRadiance += skylight * cube(lightmap.y) * ao;
+//
+//            // Fake bounced light
+//            float bounce = CalculateFakeBouncedLight(worldNormal);
+//            diffuseRadiance += bounce * pow5(lightmap.y) * sunlightBase * ao;
+//		}
 
-            // Fake bounced light
-            float bounce = CalculateFakeBouncedLight(worldNormal);
-            diffuseRadiance += bounce * pow5(lightmap.y) * sunlightBase * ao;
-		}
-
-        if (lightmap.x > EPS) {
-            lightmap.x = CalculateBlocklightFalloff(lightmap.x);
-            diffuseRadiance += lightmap.x * (ao * oms(lightmap.x) + lightmap.x) * blocklightColor;
-        }
+//        if (lightmap.x > EPS) {
+//            lightmap.x = CalculateBlocklightFalloff(lightmap.x);
+//            diffuseRadiance += lightmap.x * (ao * oms(lightmap.x) + lightmap.x) * blocklightColor;
+//        }
 
 		// Handheld light
 		#ifdef HANDHELD_LIGHTING
@@ -291,6 +293,7 @@ void main() {
 		#endif
 
 		// Indirect diffuse lighting
+        diffuseRadiance += sample_photonics_direct(screenCoord);
 
 		// Minimal ambient light
 		diffuseRadiance += (worldNormal.y * 0.4 + 0.6) * max(MINIMUM_AMBIENT_BRIGHTNESS, 5e-3 * nightVision) * ao;
