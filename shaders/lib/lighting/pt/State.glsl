@@ -23,7 +23,7 @@ void PathStateAcceptWeight(inout PathState path, float weight) {
 }
 
 void PathStateAcceptSurface(inout PathState path, vec4 surface) {
-    path.runningColor *= pow(surface.rgb, vec3(2.2f));
+    path.runningColor *= surface.rgb;
 }
 
 bool PathStateAcceptTranslucent(
