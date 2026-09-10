@@ -241,6 +241,19 @@ option.SHADOW_DISTORTION_STRENGTH=Shadow Distortion Strength
 option.SCREEN_SPACE_SHADOWS=Screen-Space Shadows
 option.SCREEN_SPACE_SHADOWS_SAMPLES=Screen-Space Shadows Samples
 
+option.IRC_SAMPLES = IRC Samples
+option.IRC_HISTORY_LENGTH = IRC History Length
+suffix.IRC_HISTORY_LENGTH = §r Frames
+
+option.DIFFUSE_SPR_SAMPLES = Spatial Reuse Samples
+value.DIFFUSE_SPR_SAMPLES.0 = Off
+
+option.DIFFUSE_SPR_RADIUS = Spatial Reuse Radius
+option.DIFFUSE_HISTORY_LENGTH = History Length
+suffix.DIFFUSE_HISTORY_LENGTH = §r Frames
+option.DIFFUSE_DENOISER_PASSES = Denoiser Passes
+value.DIFFUSE_DENOISER_PASSES.0 = Off
+
 option.BLOCKLIGHT_BRIGHTNESS=Blocklight Brightness
 option.BLOCKLIGHT_COLOR_R=Blocklight Color §4Red
 option.BLOCKLIGHT_COLOR_G=Blocklight Color §2Green
