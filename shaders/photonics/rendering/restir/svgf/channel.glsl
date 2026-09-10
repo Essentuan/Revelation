@@ -89,7 +89,7 @@ void diffuse_channel_accumulate(
 
     float weight_sum = 0.0f;
     for (int i = 0; i < offsets.length(); i++) {
-        if (offset_weights[i] == 0.0f) continue;
+        offset_weights[i] = max(offset_weights[i], 0.001f);
 
         ivec2 sample_texel = prev_texel + offsets[i];
         uvec4 sample_data = texelFetch(prev_channel, sample_texel, 0);
