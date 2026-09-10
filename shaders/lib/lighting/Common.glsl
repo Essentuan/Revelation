@@ -71,6 +71,9 @@ vec3 HardCodeEmissive(uint materialID, vec3 albedo, vec3 worldPos) {
 			vec2 midBlockPosXZ = abs(fract(worldPos.xz + cameraPosition.xz) - 0.5);
 			return vec3(step(maxOf(midBlockPosXZ), 0.063) * albedoLuminance);
 		}
+        // Copper lights
+        case 35u:
+            return vec3(albedoLuminance * step(0.2, albedo.b) * 2.0);
 		// End emissive
 		case 46u:
 			return vec3(64.0 * albedoLuminance);
