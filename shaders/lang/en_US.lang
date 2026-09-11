@@ -3,6 +3,10 @@ profile.Default=Default
 
 
 # SCREENS
+screen.Copyright=Copyright (C) 2026 HaringPro
+screen.License=Apache License 2.0
+
+
 screen.Environment=Environment
 screen.Lighting=Lighting
 screen.Materials=Materials
