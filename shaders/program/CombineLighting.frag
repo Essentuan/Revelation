@@ -55,7 +55,8 @@ out vec3 sceneOut;
 	#include "/lib/lighting/GTAO.glsl"
 #endif
 
-#include "/photonics/samplers.glsl"
+#include "/lib/lighting/pt/Upsampling.glsl"
+
 
 //======// Main //================================================================================//
 void main() {
@@ -312,7 +313,7 @@ void main() {
                 );
             }
         #else
-            diffuseRadiance += sample_photonics_direct(screenCoord);
+            diffuseRadiance += UpscaleDiffuse(screenCoord, worldPos, worldNormal, geoNormal, handMask);
         #endif
 
 		// Minimal ambient light
