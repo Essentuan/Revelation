@@ -1,4 +1,8 @@
-#define IrUseMainTex ((frameCounter & 1) == 0)
+#define IrCache ((frameCounter & 1) == 0 ? irCacheMainImg : irCacheAltImg)
+#define IrCachePrev ((frameCounter & 1) != 0 ? irCacheMainImg : irCacheAltImg)
+
+#define IrCacheTex ((frameCounter & 1) == 0 ? irCacheMainTex : irCacheAltTex)
+#define IrCachePrevTex ((frameCounter & 1) != 0 ? irCacheMainTex : irCacheAltTex)
 
 struct IrcEntry {
     vec3 radiance;
@@ -74,34 +78,20 @@ bool IrcContainsTexel(ivec3 ircTexel) {
 IrcEntry IrcLoad(ivec3 texel) {
     texel.x <<= 1;
 
-    if (IrUseMainTex) {
-        return IrcEntryDecode(
-            texelFetchOffset(irCacheMainTex, texel, 0, ivec3(0, 0, 0)),
-            texelFetchOffset(irCacheMainTex, texel, 0, ivec3(1, 0, 0))
-        );
-    } else {
-        return IrcEntryDecode(
-            texelFetchOffset(irCacheAltTex, texel, 0, ivec3(0, 0, 0)),
-            texelFetchOffset(irCacheAltTex, texel, 0, ivec3(1, 0, 0))
-        );
-    }
+    return IrcEntryDecode(
+            texelFetchOffset(IrCacheTex, texel, 0, ivec3(0, 0, 0)),
+            texelFetchOffset(IrCacheTex, texel, 0, ivec3(1, 0, 0))
+    );
 }
 
 uvec4[2] IrcReprojectRaw(ivec3 texel) {
     texel += cameraPositionInt - previousCameraPositionInt;
     texel.x <<= 1;
 
-    if (!IrUseMainTex) {
-        return uvec4[](
-            texelFetchOffset(irCacheMainTex, texel, 0, ivec3(0, 0, 0)),
-            texelFetchOffset(irCacheMainTex, texel, 0, ivec3(1, 0, 0))
-        );
-    } else {
-        return uvec4[](
-            texelFetchOffset(irCacheAltTex, texel, 0, ivec3(0, 0, 0)),
-            texelFetchOffset(irCacheAltTex, texel, 0, ivec3(1, 0, 0))
-        );
-    }
+    return uvec4[](
+            texelFetchOffset(IrCachePrevTex, texel, 0, ivec3(0, 0, 0)),
+            texelFetchOffset(IrCachePrevTex, texel, 0, ivec3(1, 0, 0))
+    );
 }
 
 IrcEntry IrcReproject(ivec3 texel) {
@@ -110,19 +100,13 @@ IrcEntry IrcReproject(ivec3 texel) {
 }
 
 void IrcStore(ivec3 texel, IrcEntry entry) {
-    texel.x <<= 1;
-
     uvec4 data0;
     uvec4 data1;
     IrcEntryEncode(entry, data0, data1);
 
-    if (IrUseMainTex) {
-        imageStore(irCacheMainImg, texel + ivec3(0, 0, 0), data0);
-        imageStore(irCacheMainImg, texel + ivec3(1, 0, 0), data1);
-    } else {
-        imageStore(irCacheAltImg, texel + ivec3(0, 0, 0), data0);
-        imageStore(irCacheAltImg, texel + ivec3(1, 0, 0), data1);
-    }
+    texel.x <<= 1;
+    imageStore(IrCache, texel + ivec3(0, 0, 0), data0);
+    imageStore(IrCache, texel + ivec3(1, 0, 0), data1);
 }
 
 #if defined IRC_COMPUTE_SHADER
