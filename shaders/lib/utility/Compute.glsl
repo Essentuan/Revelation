@@ -1,10 +1,10 @@
 // Remap thread index to 2D index following Z-order curve.
 uvec2 RemapThread8x8(uint idx) {
-	return uvec2((((idx >> 2) & 0x7) & 0xFFFE) | (idx & 0x1), ((idx >> 1) & 0x3) | (((idx >> 3) & 0x7) & 0xFFFC));
+	return uvec2((((idx >> 2u) & 0x7u) & 0xFFFEu) | (idx & 0x1u), ((idx >> 1u) & 0x3u) | (((idx >> 3u) & 0x7u) & 0xFFFCu));
 }
 
 uvec2 RemapThread16x16(uint idx) {
-	return RemapThread8x8(idx & 63) + (uvec2((idx >> 6) & 1, idx >> 7) << 3);
+	return RemapThread8x8(idx & 63u) + (uvec2((idx >> 6u) & 1u, idx >> 7u) << 3u);
 }
 
 
