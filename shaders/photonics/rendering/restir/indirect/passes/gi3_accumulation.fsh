@@ -6,7 +6,7 @@
 
 uniform usampler2D gi_temporal_history;
 uniform usampler2D prev_gi_temporal_history;
-uniform usampler2D prev_gi_shadow_history;
+uniform sampler2D prev_gi_shadow_history;
 
 layout(location = INDIRECT_CHANNEL_OUT) out uvec4 gi_temporal_out;
 layout(location = INDIRECT_SHADOW_OUT) out float gi_shadow_out;

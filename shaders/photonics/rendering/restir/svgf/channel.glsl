@@ -95,7 +95,7 @@ void diffuse_channel_accumulate(
         uvec4 sample_data = texelFetch(prev_channel, sample_texel, 0);
         float sample_shadow = texelFetch(prev_shadow, sample_texel, 0).r;
 
-        DiffuseChannel sample_channel;
+        DiffuseChannel sample_channel = diffuse_channel_empty();
         diffuse_channel_decode(sample_channel, sample_data);
 
         channel.color += sample_channel.color * offset_weights[i];
