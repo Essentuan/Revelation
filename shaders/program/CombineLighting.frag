@@ -246,20 +246,17 @@ void main() {
 		// Ambient occlusion
 		#if AO_ENABLED > 0
 			vec3 ao = vec3(1.0);
+            #if AO_ENABLED == 1
+                ao.x = CalculateSSAO(screenCoord, viewPos, viewNormal, SampleStbnUnitvec2(texelPos, frameCounter));
+			#else
+                ao.x = CalculateGTAO(screenCoord, viewPos, viewNormal, SampleStbnVec2(texelPos, frameCounter));
+            #endif
 
-            if (lodMask) {
-                #if AO_ENABLED == 1
-                    ao.x = CalculateSSAO(screenCoord, viewPos, viewNormal, SampleStbnUnitvec2(texelPos, frameCounter));
-			    #else
-				    ao.x = CalculateGTAO(screenCoord, viewPos, viewNormal, SampleStbnVec2(texelPos, frameCounter));
-			    #endif
-
-			    #ifdef AO_MULTI_BOUNCE
-				    ao = ApproxMultiBounce(ao.x, albedo);
-			    #else
-				    ao = vec3(ao.x);
-                #endif
-            }
+			#ifdef AO_MULTI_BOUNCE
+				ao = ApproxMultiBounce(ao.x, albedo);
+			#else
+				ao = vec3(ao.x);
+            #endif
 		#else
 			const float ao = 1.0;
 		#endif
@@ -313,7 +310,7 @@ void main() {
                 );
             }
         #else
-            diffuseRadiance += UpscaleDiffuse(screenCoord, worldPos, worldNormal, geoNormal, handMask);
+            diffuseRadiance += UpscaleDiffuse(screenCoord, worldPos, worldNormal, geoNormal, handMask) * ao;
         #endif
 
 		// Minimal ambient light
