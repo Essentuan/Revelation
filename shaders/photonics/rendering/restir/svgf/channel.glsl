@@ -21,28 +21,32 @@ DiffuseChannel diffuse_channel_empty() {
 }
 
 void diffuse_channel_add_sample(inout DiffuseChannel channel, vec4 smple, uint frame_count) {
-    const float fast_history_samples = clamp(floor(PH_RESTIR_ACCUMULATION_FRAMES * 0.25f), 1.0f, 8.0f);
-    const float min_fast_mix_factor = 1.0f / fast_history_samples;
-    const float min_shadow_mix_factor = 1.0f / 3.0f;
+    const float shadow_mix_factor = 1.0f / 16.0f;
 
     float mix_factor = 1.0f / max(float(frame_count), 1.0f);
     channel.color = mix(channel.color, smple.rgb, mix_factor);
-    channel.fast_color = mix(channel.fast_color, smple.rgb, max(mix_factor, min_fast_mix_factor));
+    channel.fast_color = smple.rgb;
 
     float luminance = ph_luminance(smple.rgb);
+    float history_luminance = dot(channel.color.rgb, Rec2020_2_XYZ[1]);
+
     channel.moments = mix(channel.moments, vec2(luminance, luminance * luminance), mix_factor);
     channel.moments.y = max(channel.moments.y, frame_count <= 1 ? 100.0f : 0.0f);
 
-    channel.shadow = mix(channel.shadow, smple.a, min(mix_factor, min_shadow_mix_factor));
+    channel.shadow = mix(channel.shadow, smple.a, max(mix_factor, shadow_mix_factor));
+}
 
-    const float fast_shadow_weight = 1f;
-    const float fast_light_weight = 1.0f / 2.0f;
+float diffuse_channel_calculate_confidence(DiffuseChannel channel, float cutoff) {
+    float running_luminance = max(ph_luminance(channel.color), 0.0001f);
+    float fast_luminance = max(ph_luminance(channel.fast_color), 0.0001f);
 
-    channel.color = clamp(
-        channel.color,
-        channel.fast_color * fast_light_weight,
-        channel.fast_color * fast_shadow_weight
-    );
+    float confidence = (running_luminance / fast_luminance);
+    confidence = (confidence < 1.0f ? 1.0f / confidence : confidence) * 0.45f;
+    confidence = float(1.0f - clamp(confidence, 0.0f, 1.0f));
+
+    confidence = confidence >= cutoff ? 1.0f : confidence;
+
+    return confidence;
 }
 
 void diffuse_channel_encode(DiffuseChannel channel, out uvec4 result) {

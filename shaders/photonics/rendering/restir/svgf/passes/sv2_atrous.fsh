@@ -62,7 +62,7 @@ void atrous_state_filter_neighbor(
         uint frame_count
 ) {
     const float phi_normal = 24.0f;
-    const float phi_depth = abs(1.0f * dot(depth_gradient, offset)) + 0.1f;
+    const float phi_depth = 0.5f;
     const float phi_luminance = state.phi_luminance;
     const float phi_shadow = svgf_shadow_phi(atrous_iteration, frame_count);
 

@@ -46,12 +46,12 @@ float svgf_depth_edge_stopping_weight(float center_depth, float sample_depth, fl
 
 float svgf_luma_edge_stopping_weight(float center_luma, float sample_luma, float phi)
 {
-    return min(exp(-abs(center_luma - sample_luma) / phi), 10000.0f);
+    return exp(-abs(center_luma - sample_luma) / phi);
 }
 
 float svgf_shadow_stopping_weight(float center_vis, float sample_vis, float phi)
 {
-    return min(exp(-abs(center_vis - sample_vis) / phi), 100.0f);
+    return min(exp(-abs(center_vis - sample_vis) / phi), 10.0f);
 }
 
 uint svgf_pack_shadow_normal(float di_shadow, float gi_shadow, uint packed_normal) {
