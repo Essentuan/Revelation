@@ -74,7 +74,7 @@ void atrous_state_filter_neighbor(
           weight *= svgf_normal_edge_stopping_weight(N0, Ni, phi_normal); // Normal weight
           weight *= svgf_depth_edge_stopping_weight(D0, Di, phi_depth); // Position weight
           weight *= svgf_luma_edge_stopping_weight(L0, Li, phi_luminance); // Color (luminance) weight
-          weight *= frame_count > 4 ? svgf_shadow_stopping_weight(S0, Si, phi_shadow) : 1.0f; // Shadow weight
+          weight *= svgf_shadow_stopping_weight(S0, Si, phi_shadow); // Shadow weight
 
     state.C_sum += Ci * weight;
     state.W_sum += weight;
