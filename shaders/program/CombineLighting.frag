@@ -252,10 +252,10 @@ void main() {
                 ao.x = CalculateGTAO(screenCoord, viewPos, viewNormal, SampleStbnVec2(texelPos, frameCounter));
             #endif
 
-			#ifdef AO_MULTI_BOUNCE
-				ao = ApproxMultiBounce(ao.x, albedo);
-			#else
-				ao = vec3(ao.x);
+            #ifdef AO_MULTI_BOUNCE
+                ao = ApproxMultiBounce(ao.x, albedo, lodMask);
+            #else
+			    ao = vec3(ao.x);
             #endif
 		#else
 			const float ao = 1.0;

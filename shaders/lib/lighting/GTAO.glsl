@@ -87,10 +87,14 @@ float CalculateGTAO(vec2 coord, vec3 viewPos, vec3 normal, vec2 dither) {
 	return 0.25 * rSliceCount * visibility;
 }
 
-vec3 ApproxMultiBounce(float ao, vec3 albedo) {
-	vec3 a = 2.0404 * albedo - 0.3324;
-	vec3 b = 4.7951 * albedo - 0.6417;
-	vec3 c = 2.7552 * albedo + 0.6903;
+vec3 ApproxMultiBounce(float ao, vec3 albedo, bool lodMask) {
+    if (lodMask) {
+	    vec3 a = 2.0404 * albedo - 0.3324;
+	    vec3 b = 4.7951 * albedo - 0.6417;
+	    vec3 c = 2.7552 * albedo + 0.6903;
 
-	return max(vec3(ao), ((ao * a - b) * ao + c) * ao);
+	    return max(vec3(ao), ((ao * a - b) * ao + c) * ao);
+    } else {
+        return vec3(ao);
+    }
 }
