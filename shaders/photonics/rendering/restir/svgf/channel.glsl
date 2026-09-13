@@ -35,8 +35,8 @@ void diffuse_channel_add_sample(inout DiffuseChannel channel, vec4 smple, uint f
 
     channel.shadow = mix(channel.shadow, smple.a, min(mix_factor, min_shadow_mix_factor));
 
-    const float fast_shadow_weight = 1.5f;
-    const float fast_light_weight = 1.0f / 1.5f;
+    const float fast_shadow_weight = 1f;
+    const float fast_light_weight = 1.0f / 2.0f;
 
     channel.color = clamp(
         channel.color,

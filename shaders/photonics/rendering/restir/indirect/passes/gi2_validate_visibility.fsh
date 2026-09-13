@@ -18,12 +18,18 @@ void main() {
     setup_frag_data(3);
     if (!frag_is_in_world) return;
 
-    float indirect_sample_weight = 0.0f;
+    vec4 indirect_color = vec4(0.0f);
     IndirectReservoir indirect_result = indirect_reservoir_empty();
     IndirectReservoir reused_reservoir = indirect_reservoir_empty();
 
-    float rng;
+
     indirect_reservoir_load(reused_reservoir, frag_tex_coord);
+    if (reused_reservoir.weight < 100.0f && reused_reservoir.total_samples > 10.0f) {
+        indirect_color += vec4(indirect_reservoir_get_final_color(reused_reservoir), 1.0f);
+    }
+
+    float rng;
+    float indirect_sample_weight = 0.0f;
     indirect_reservoir_merge(indirect_result, reused_reservoir, 1.0f, true, rng, indirect_sample_weight);
 
 #if PH_RESTIR_SPATIAL_REUSE_SAMPLES > 0
@@ -38,13 +44,13 @@ void main() {
     indirect_reservoir_clamp_samples(indirect_result);
     indirect_reservoir_finalize_weight(indirect_result, indirect_sample_weight);
 
-    vec3 color = indirect_reservoir_get_final_color(indirect_result);
+    indirect_color += vec4(indirect_reservoir_get_final_color(indirect_result), 1.0f);
+    indirect_color.rgb /= indirect_color.a;
 
     #ifndef PH_RESTIR_GI_MODIFIER_DISABLED
-        modify_restir_gi(color);
+        modify_restir_gi(indirect_color.rgb);
     #endif
 
-    gi_output.xyz = floatBitsToUint(color);
-
+    gi_output.xyz = floatBitsToUint(indirect_color.rgb);
     indirect_reservoir_encode(indirect_result, gi_reservoir_0, gi_reservoir_1);
 }
