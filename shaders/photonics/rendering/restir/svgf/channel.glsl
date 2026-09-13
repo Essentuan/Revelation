@@ -31,7 +31,7 @@ void diffuse_channel_add_sample(inout DiffuseChannel channel, vec4 smple, uint f
     float history_luminance = dot(channel.color.rgb, Rec2020_2_XYZ[1]);
 
     channel.moments = mix(channel.moments, vec2(luminance, luminance * luminance), mix_factor);
-    channel.moments.y = max(channel.moments.y, frame_count <= 1 ? 100.0f : 0.0f);
+    channel.moments.y = max(channel.moments.y, frame_count <= 1 ? 1000.0f : 0.0f);
 
     channel.shadow = mix(channel.shadow, smple.a, max(mix_factor, shadow_mix_factor));
 }

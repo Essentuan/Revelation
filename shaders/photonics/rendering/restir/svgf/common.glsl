@@ -27,11 +27,11 @@ const ivec2 offset[9] = ivec2[](
 
 #define SVGF_CENTER_INDEX 4
 
-float svgf_shadow_phi(int iteration, uint frame_count) {
+float svgf_dynamic_phi(float base_phi, int iteration, uint frame_count) {
     float frame_factor = min(float(frame_count) / (PH_RESTIR_ACCUMULATION_FRAMES * 0.5f), 1.0f);
     float step_size = float(1 << min(iteration, 3));
 
-    return 0.25f / (step_size * frame_factor);
+    return base_phi / (step_size * frame_factor);
 }
 
 float svgf_normal_edge_stopping_weight(vec3 center_normal, vec3 sample_normal, float phi)
@@ -46,7 +46,7 @@ float svgf_depth_edge_stopping_weight(float center_depth, float sample_depth, fl
 
 float svgf_luma_edge_stopping_weight(float center_luma, float sample_luma, float phi)
 {
-    return exp(-abs(center_luma - sample_luma) / phi);
+    return min(exp(-abs(center_luma - sample_luma) / phi), 10000.0f);
 }
 
 float svgf_shadow_stopping_weight(float center_vis, float sample_vis, float phi)
